@@ -1,0 +1,50 @@
+{
+  "name": "symmio-analytics-dashboard",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^16.0.4",
+    "@angular/common": "^16.0.4",
+    "@angular/compiler": "^16.0.4",
+    "@angular/core": "^16.0.4",
+    "@angular/forms": "^16.0.4",
+    "@angular/platform-browser": "^16.0.4",
+    "@angular/platform-browser-dynamic": "^16.0.4",
+    "@angular/router": "^16.0.4",
+    "@apollo/client": "^3.7.15",
+    "@types/node": "^20.2.5",
+    "apollo-angular": "^5.0.0",
+    "bignumber.js": "^9.1.1",
+    "echarts": "^5.4.2",
+    "graphql": "^16.6.0",
+    "ngx-echarts": "^15.0.3",
+    "primeflex": "^3.3.1",
+    "primeicons": "^6.0.1",
+    "primeng": "^16.0.0-rc.2",
+    "rxjs": "~7.8.1",
+    "ts-node": "^10.9.1",
+    "tslib": "^2.5.3",
+    "vazirmatn": "^33.0.3",
+    "zone.js": "^0.13.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^16.0.4",
+    "@angular/cli": "~16.0.4",
+    "@angular/compiler-cli": "^16.0.4",
+    "@types/jasmine": "~4.3.2",
+    "jasmine-core": "~4.5.0",
+    "karma": "~6.4.2",
+    "karma-chrome-launcher": "~3.1.1",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.0.0",
+    "typescript": "~4.9.5"
+  }
+}

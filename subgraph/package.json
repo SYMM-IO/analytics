@@ -1,0 +1,28 @@
+{
+  "name": "symmio_analytics_subgarph",
+  "license": "UNLICENSED",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ navid-fkh/symmio_analytics",
+    "create-local": "graph create --node http://localhost:8020/ navid-fkh/symmio_analytics",
+    "remove-local": "graph remove --node http://localhost:8020/ navid-fkh/symmio_analytics",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 navid-fkh/symmio_analytics",
+    "test": "graph test",
+    "prepare:bsc": "mustache ./config/bsc.json template.yaml > subgraph.yaml; mustache ./config/bsc.json src/contract_utils.template.ts > src/contract_utils.ts;graph build",
+    "deploy:bsc": "graph deploy --product hosted-service navid-fkh/symmetrical_bsc",
+    "prepare:fantom": "mustache ./config/fantom.json template.yaml > subgraph.yaml; mustache ./config/fantom.json src/contract_utils.template.ts > src/contract_utils.ts;graph build",
+    "deploy:fantom": "graph deploy --product hosted-service navid-fkh/symmetrical_fantom",
+    "prepare:fantom_test": "mustache ./config/fantom_test.json template.yaml > subgraph.yaml; mustache ./config/fantom_test.json src/contract_utils.template.ts > src/contract_utils.ts;graph build",
+    "deploy:fantom_test": "graph deploy --product hosted-service navid-fkh/symmetrical_fantom_test",
+    "prepare:base": "mustache ./config/base.json template.yaml > subgraph.yaml; mustache ./config/base.json src/contract_utils.template.ts > src/contract_utils.ts;graph build",
+    "deploy:base": "graph deploy --product hosted-service navid-fkh/symmetrical_base"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "0.50.1",
+    "@graphprotocol/graph-ts": "0.30.0"
+  },
+  "devDependencies": {
+    "matchstick-as": "0.5.0"
+  }
+}

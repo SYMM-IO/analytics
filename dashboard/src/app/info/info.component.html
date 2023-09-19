@@ -1,0 +1,68 @@
+<div class="flex flex-column p-2 gap-1">
+    <span class="text-base text-color-secondary">{{title}}</span>
+    <ng-container *ngIf="totalValue != null && todayValue != null">
+        <ng-container *ngIf="formatMoney">
+            <span class="text-xl font-semibold">
+                ${{unDecimal(totalValue).toFormat(3)}}
+            </span>
+            <div class="flex flex-row gap-1">
+                <span class="text-sm text-color-secondary">
+                    Today:
+                </span>
+                <span class="text-sm">
+                    ${{unDecimal(todayValue).toFormat(3)}}
+                </span>
+
+                <ng-container *ngIf="lastDayValue!= null && lastDayValue.gt(0) && todayValue.gt(0)">
+                    <div class="flex flex-row gap-1 red-text" *ngIf="todayValue.lt(lastDayValue)">
+                        <span class="text-sm">
+                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%
+                        </span>
+                        <span class="pi pi-arrow-down"></span>
+                    </div>
+
+                    <div class="flex flex-row gap-1 green-text" *ngIf="todayValue.gt(lastDayValue)">
+                        <span class="text-sm">
+                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%
+                        </span>
+                        <span class="pi pi-arrow-up"></span>
+                    </div>
+                </ng-container>
+
+            </div>
+        </ng-container>
+        <ng-container *ngIf="!formatMoney">
+            <span class="text-xl font-semibold">
+                {{totalValue.toFormat()}}
+            </span>
+            <div class="flex flex-row gap-1">
+                <span class="text-sm text-color-secondary">
+                    Today:
+                </span>
+                <span class="text-sm">
+                    {{todayValue.toFormat()}}
+                </span>
+
+                <ng-container *ngIf="lastDayValue!= null && lastDayValue.gt(0) && todayValue.gt(0)">
+                    <div class="flex flex-row gap-1 red-text" *ngIf="todayValue.lt(lastDayValue)">
+                        <span class="text-sm">
+                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%
+                        </span>
+                        <span class="pi pi-arrow-down"></span>
+                    </div>
+
+                    <div class="flex flex-row gap-1 green-text" *ngIf="todayValue.gt(lastDayValue)">
+                        <span class="text-sm">
+                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%
+                        </span>
+                        <span class="pi pi-arrow-up"></span>
+                    </div>
+                </ng-container>
+            </div>
+        </ng-container>
+    </ng-container>
+    <ng-container *ngIf="(loadingService.loading$() | async) && todayValue == null">
+        <p-skeleton width="8rem" styleClass="mb-2"></p-skeleton>
+        <p-skeleton width="12rem" styleClass="mb-2"></p-skeleton>
+    </ng-container>
+</div>

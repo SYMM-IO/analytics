@@ -1,0 +1,33 @@
+.root {
+  max-height: 100%;
+}
+
+.body {
+}
+
+.side-bar-menu {
+  ::ng-deep .p-menu {
+    width: 100%;
+    background: none;
+    border: none;
+  }
+}
+
+.clover-logo {
+  height: 28px;
+  left: 46px;
+  top: 6px;
+
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 36px;
+}
+
+.powered-by {
+}
+
+.symmio-logo {
+  width: 20px;
+  height: 20px;
+}

@@ -1,0 +1,135 @@
+type User @entity {
+    id: ID!
+    timestamp: BigInt!
+    lastActivityTimestamp: BigInt!
+    transaction: Bytes!
+}
+
+type Account @entity {
+    id: ID!
+    user: String!
+    timestamp: BigInt!
+    name: String
+    quotesCount: BigInt!
+    positionsCount: BigInt!
+    lastActivityTimestamp: BigInt!
+    deposit: BigInt!
+    withdraw: BigInt!
+    allocated: BigInt!
+    deallocated: BigInt!
+    transaction: Bytes!
+    updateTimestamp: BigInt!
+    accountSource: Bytes
+}
+
+type BalanceChange @entity {
+    id: ID!
+    type: String!
+    account: String!
+    amount: BigInt!
+    timestamp: BigInt!
+    blockNumber: BigInt!
+    transaction: Bytes!
+}
+
+type TradeHistory @entity {
+    id: ID!
+    account: String!
+    volume: BigInt!
+    timestamp: BigInt!
+    updateTimestamp: BigInt!
+    blockNumber: BigInt!
+    transaction: Bytes!
+    quoteStatus: Int!
+    quote: BigInt!
+}
+
+type Quote @entity {
+    id: ID!
+    account: String!
+    partyBsWhiteList: [Bytes!]
+    symbolId: BigInt!
+    positionType: Int!
+    orderType: Int!
+    price: BigInt!
+    marketPrice: BigInt!
+    openPrice: BigInt
+    deadline: BigInt!
+    quantity: BigInt!
+    cva: BigInt!
+    mm: BigInt!
+    lf: BigInt!
+    maxInterestRate: BigInt!
+    quoteStatus: Int!
+    blockNumber: BigInt!
+    closedAmount: BigInt!
+    avgClosedPrice: BigInt!
+    timestamp: BigInt!
+    updateTimestamp: BigInt!
+    transaction: Bytes!
+    partyB: Bytes
+    liquidatedSide: Int
+}
+
+type DailyHistory @entity {
+    id: ID!
+    quotesCount: BigInt!
+    tradeVolume: BigInt!
+    openTradeVolume: BigInt!
+    closeTradeVolume: BigInt!
+    deposit: BigInt!
+    withdraw: BigInt!
+    allocate: BigInt!
+    deallocate: BigInt!
+    activeUsers: BigInt!
+    newUsers: BigInt!
+    newAccounts: BigInt!
+    platformFee: BigInt!
+    openInterest: BigInt!
+    accountSource: Bytes
+    updateTimestamp: BigInt!
+    timestamp: BigInt!
+}
+
+type TotalHistory @entity {
+    id: ID!
+    quotesCount: BigInt!
+    tradeVolume: BigInt!
+    openTradeVolume: BigInt!
+    closeTradeVolume: BigInt!
+    deposit: BigInt!
+    withdraw: BigInt!
+    allocate: BigInt!
+    deallocate: BigInt!
+    users: BigInt!
+    accounts: BigInt!
+    platformFee: BigInt!
+    openInterest: BigInt!
+    accountSource: Bytes
+    updateTimestamp: BigInt!
+    timestamp: BigInt!
+}
+
+type Symbol @entity {
+    id: ID!
+    name: String!
+    tradingFee: BigInt!
+    timestamp: BigInt!
+    updateTimestamp: BigInt!
+}
+
+type SymbolTradeVolume @entity {
+    id: ID!
+    symbolId: BigInt!
+    timestamp: BigInt!
+    updateTimestamp: BigInt!
+    volume: BigInt!
+    accountSource: Bytes
+}
+
+type OpenInterest @entity {
+    id: ID!
+    amount: BigInt!
+    accumulatedAmount: BigInt!
+    timestamp: BigInt!
+}

@@ -1,0 +1,12 @@
+{
+  "network": "fantom",
+  "symmioAddress": "0x762407bEd807184F90F3eDcF2D7Ac9CB9d8901c6",
+  "symmioStartBlock": "57685538",
+  "multiAccounts": [
+    {
+      "symmioMultiAccountAddress": "0x0937bC09b8D073E4F1abE85470969475f714Ca6c",
+      "symmioMultiAccountStartBlock": "57794244",
+      "symmioMultiAccountName": "MultiAccount1"
+    }
+  ]
+}

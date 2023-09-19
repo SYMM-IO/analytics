@@ -1,0 +1,56 @@
+<div class="flex flex-column flex-grow gap-2">
+    <div class="infos flex flex-row gap-2 w-full flex-grow-1 flex-wrap">
+        <div class="info-card h-full flex-grow-1 surface-card">
+            <app-info title="Deposits" [totalValue]="totalDeposits" [todayValue]="todayHistory?.deposit"
+                      [lastDayValue]="lastDayHistory?.deposit" [formatMoney]="true" [decimals]="collateralDecimals">
+            </app-info>
+        </div>
+        <div class="info-card h-full flex-grow-1 surface-card">
+            <app-info title="Traded Volume" [totalValue]="totalVolume" [todayValue]="todayHistory?.tradeVolume"
+                      [lastDayValue]="lastDayHistory?.tradeVolume" [formatMoney]="true">
+            </app-info>
+        </div>
+        <div class="info-card h-full flex-grow-1 surface-card">
+            <app-info title="Quotes" [totalValue]="totalQuotes" [todayValue]="todayHistory?.quotesCount"
+                      [lastDayValue]="lastDayHistory?.quotesCount">
+            </app-info>
+        </div>
+        <div class="info-card h-full flex-grow-1 surface-card">
+            <app-info title="Users" [totalValue]="totalUsers" [todayValue]="todayHistory?.newUsers"
+                      [lastDayValue]="lastDayHistory?.newUsers">
+            </app-info>
+        </div>
+        <div class="info-card h-full flex-grow-1 surface-card">
+            <app-info title="Accounts" [totalValue]="totalAccounts" [todayValue]="todayHistory?.newAccounts"
+                      [lastDayValue]="lastDayHistory?.newAccounts">
+            </app-info>
+        </div>
+    </div>
+    <div class="top-charts flex flex-row gap-2 w-full flex-wrap flex-grow-1">
+        <div class="chart-card flex-grow-1 surface-card">
+            <app-quotesCountChart class="h-full w-full" *ngIf="dailyHistories"
+                                  [dailyHistories]="dailyHistories"></app-quotesCountChart>
+        </div>
+        <div class="chart-card flex-grow-1 surface-card">
+            <app-tradeVolumeChart class="h-full w-full" *ngIf="dailyHistories"
+                                  [dailyHistories]="dailyHistories"></app-tradeVolumeChart>
+        </div>
+        <div class="chart-card flex-grow-1 surface-card">
+            <app-platformFeeChart class="h-full w-full" *ngIf="dailyHistories"
+                                  [dailyHistories]="dailyHistories"></app-platformFeeChart>
+        </div>
+        <div class="chart-card flex-grow-1 surface-card">
+            <app-openInterestChart class="h-full w-full" *ngIf="dailyHistories"
+                                   [dailyHistories]="dailyHistories"></app-openInterestChart>
+        </div>
+        <div class="chart-card flex-grow-1 surface-card">
+            <app-activeUsersChart class="h-full w-full" *ngIf="dailyHistories"
+                                  [dailyHistories]="dailyHistories"></app-activeUsersChart>
+        </div>
+        <div class="chart-card flex-grow-1 surface-card">
+            <app-newUsersChart class="h-full w-full" *ngIf="dailyHistories"
+                               [dailyHistories]="dailyHistories"></app-newUsersChart>
+        </div>
+    </div>
+</div>
+
