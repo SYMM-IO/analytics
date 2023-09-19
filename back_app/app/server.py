@@ -26,7 +26,7 @@ create_tables()
 if __name__ == "__main__":
     scheduler = BackgroundScheduler()
     scheduler.add_job(func=fetch_data, trigger="interval", seconds=fetch_data_interval)
-    # scheduler.add_job(func=calculate_paid_funding, trigger="interval", seconds=funding_fetch_data_interval)
+    scheduler.add_job(func=calculate_paid_funding, trigger="interval", seconds=funding_fetch_data_interval)
     # scheduler.add_job(func=update_binance_deposit, trigger="interval", seconds=update_binance_deposit_interval)
     scheduler.add_listener(listener, EVENT_JOB_ERROR)
     scheduler.start()
