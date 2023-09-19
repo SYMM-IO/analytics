@@ -68,7 +68,6 @@ export function getTotalHistory(timestamp: BigInt, accountSource: Bytes | null):
 		th.users = BigInt.zero();
 		th.accounts = BigInt.zero();
 		th.platformFee = BigInt.zero();
-		th.openInterest = BigInt.zero();
 		th.accountSource = accountSource;
 		th.save();
 	}

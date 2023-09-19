@@ -104,7 +104,6 @@ type TotalHistory @entity {
     users: BigInt!
     accounts: BigInt!
     platformFee: BigInt!
-    openInterest: BigInt!
     accountSource: Bytes
     updateTimestamp: BigInt!
     timestamp: BigInt!

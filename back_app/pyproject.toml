@@ -4,7 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Navid <mojtaba.farokhi99@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "back_app" }]
+packages = []
 
 [tool.poetry.dependencies]
 python = ">=3.8, <4"

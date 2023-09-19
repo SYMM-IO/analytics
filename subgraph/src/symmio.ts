@@ -174,12 +174,12 @@ export function handleSendQuote(event: SendQuote): void {
 	const dh = getDailyHistoryForTimestamp(event.block.timestamp, account.accountSource);
 	dh.quotesCount = dh.quotesCount.plus(BigInt.fromString("1"));
 	dh.updateTimestamp = event.block.timestamp;
+	dh.save();
 
 	const th = getTotalHistory(event.block.timestamp, account.accountSource);
 	th.quotesCount = th.quotesCount.plus(BigInt.fromString("1"));
 	th.updateTimestamp = event.block.timestamp;
-
-	dh.save();
+	th.save();
 }
 
 export function handleDiamondCut(event: DiamondCut): void {
