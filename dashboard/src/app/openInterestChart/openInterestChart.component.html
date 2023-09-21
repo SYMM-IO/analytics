@@ -1,5 +1,7 @@
-<div class="chart-container w-full h-full p-2" style="position: relative">
-    <div echarts [options]="chartOption" theme="dark" [autoResize]="true" #chart (chartInit)="onChartInit($event)"
-         class="chart h-full w-full">
-    </div>
-</div>
+<app-chart [series]="series"
+           [hasGroupByMonthAction]="true"
+           (groupByMonth)="onGroupByMonthChanged($event)"
+           [chartTitle]="'Open Interest'"
+           [tooltipFormatter]="tooltipFormatter">
+
+</app-chart>

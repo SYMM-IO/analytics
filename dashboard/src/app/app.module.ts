@@ -27,6 +27,7 @@ import {ActiveUsersChartComponent} from "./activeUsersChart/activeUsersChart.com
 import {NewUsersChartComponent} from "./newUsersChart/newUsersChart.component";
 import {ENVIRONMENT} from "./services/enviroment.service";
 import {environment} from "../environments/environment";
+import { ChartComponent } from './chart/chart.component';
 
 @NgModule({
     declarations: [
@@ -38,7 +39,8 @@ import {environment} from "../environments/environment";
         PlatformFeeChartComponent,
         OpenInterestChartComponent,
         ActiveUsersChartComponent,
-        NewUsersChartComponent
+        NewUsersChartComponent,
+        ChartComponent
     ],
     imports: [
         BrowserModule,
