@@ -7,7 +7,7 @@ from urllib.parse import urlencode
 import requests
 from peewee import fn
 
-from app.models import BinanceDeposit, BinanceWithdraw, BinanceTransfer, FundingRate, AccountTrade, SymbolPrice
+from app.models import BinanceDeposit, BinanceWithdraw, BinanceTransfer, FundingRate, BinanceTrade, SymbolPrice
 from config.local_settings import binance_email, binance_is_master, from_unix_timestamp, binance_api_key, \
     binance_api_secret
 from config.settings import proxies
@@ -20,7 +20,7 @@ def _get_signature(query_string, api_secret):
 
 
 def fetch_account_trades():
-    latest_record = AccountTrade.select().order_by(AccountTrade.timestamp.desc()).first()
+    latest_record = BinanceTrade.select().order_by(BinanceTrade.timestamp.desc()).first()
     if latest_record:
         start_time = round(latest_record.timestamp.timestamp() * 1000)
         last_id = latest_record.id
@@ -55,7 +55,7 @@ def fetch_account_trades():
         for trade in new_trades:
             if last_id == trade['id'] and last_symbol == trade['symbol']:
                 continue
-            AccountTrade.create(
+            BinanceTrade.create(
                 symbol=trade['symbol'],
                 id=str(trade['id']),
                 order_id=str(trade['orderId']),

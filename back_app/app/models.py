@@ -289,9 +289,9 @@ class BinanceTransfer(BaseModel):
         return False
 
 
-class AccountTrade(BaseModel):
+class BinanceTrade(BaseModel):
     symbol = CharField()
-    id = CharField()
+    id = CharField(primary_key=True)
     order_id = CharField()
     side = CharField()
     position_side = CharField()
@@ -317,19 +317,6 @@ class SymbolPrice(BaseModel):
 class FundingRate(BaseModel):
     symbol = CharField()
     rate = DecimalField(max_digits=20, decimal_places=10)
-    timestamp = DateTimeField()
-
-    @staticmethod
-    def is_timeseries():
-        return False
-
-
-class BinanceTrade(BaseModel):
-    id = CharField(primary_key=True)
-    price = FloatField()
-    quantity = FloatField()
-    symbol = CharField()
-    side = CharField()
     timestamp = DateTimeField()
 
     @staticmethod

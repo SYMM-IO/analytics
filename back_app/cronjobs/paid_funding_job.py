@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from tqdm import tqdm
 
-from app.models import FundingRate, AccountTrade, SymbolPrice, PaidFundingRate
+from app.models import FundingRate, BinanceTrade, SymbolPrice, PaidFundingRate
 from config.local_settings import from_unix_timestamp
 from utils.binance_utils import fetch_account_trades, fetch_symbol_price_history, fetch_funding_rate_history
 
@@ -12,7 +12,7 @@ from utils.binance_utils import fetch_account_trades, fetch_symbol_price_history
 def fetch_new_data():
     print(f"Paid Funding:: fetching trades")
     fetch_account_trades()
-    all_trades = AccountTrade.select().order_by(AccountTrade.timestamp.asc())
+    all_trades = BinanceTrade.select().order_by(BinanceTrade.timestamp.asc())
     symbols = list({t.symbol for t in all_trades})
 
     for i in tqdm(range(len(symbols)), "Getting funding rate for symbols"):
@@ -25,7 +25,7 @@ def calculate_paid_funding():
     print('Calculate paid funding')
     fetch_new_data()
 
-    all_trades = AccountTrade.select().order_by(AccountTrade.timestamp.asc())
+    all_trades = BinanceTrade.select().order_by(BinanceTrade.timestamp.asc())
     latest_paid_funding = PaidFundingRate.select().order_by(PaidFundingRate.timestamp.desc()).first()
 
     if latest_paid_funding:
@@ -51,7 +51,7 @@ def calculate_paid_funding():
         return
     epochs = (e for e in sorted(frs))
     next_epoch = next(epochs)
-    for trade in all_trades:  # type: AccountTrade
+    for trade in all_trades:  # type: BinanceTrade
         while trade.timestamp.timestamp() * 1000 > next_epoch:
             for fr in frs[next_epoch]:  # type: FundingRate
                 price = prices[fr.symbol].get(next_epoch)

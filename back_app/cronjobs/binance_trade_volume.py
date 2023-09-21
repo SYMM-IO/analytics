@@ -1,5 +1,6 @@
 import time
 from datetime import datetime
+from decimal import Decimal
 
 from peewee import fn
 
@@ -30,11 +31,13 @@ def fetch_and_save_all_trades(trades_start_time, period=7 * 24 * 60 * 60 * 1000)
             if trade['id'] not in seen_ids:
                 seen_ids.add(trade['id'])
                 BinanceTrade(
-                    id=trade['id'],
-                    price=float(trade['price']),
-                    quantity=float(trade['qty']),
                     symbol=trade['symbol'],
+                    id=str(trade['id']),
+                    order_id=str(trade['orderId']),
                     side=trade['side'],
+                    position_side=trade['positionSide'],
+                    qty=Decimal(trade['qty']),
+                    price=Decimal(trade['price']),
                     timestamp=datetime.utcfromtimestamp(trade['time'] / 1000),
                 ).upsert()
 
@@ -54,4 +57,4 @@ def calculate_binance_trade_volume():
     else:
         start_time = from_unix_timestamp
     fetch_and_save_all_trades(start_time)
-    return BinanceTrade.select(fn.SUM(BinanceTrade.price * BinanceTrade.quantity)).scalar() or 0
+    return BinanceTrade.select(fn.SUM(BinanceTrade.price * BinanceTrade.qty)).scalar() or 0
