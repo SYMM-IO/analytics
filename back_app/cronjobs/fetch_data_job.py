@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 import peewee
+import requests
 import web3
 from multicallable import Multicallable
 from peewee import fn
@@ -140,6 +141,18 @@ def calculate_diff(old_data: AggregateData, new_data: AggregateData):
     )
 
     return diff_data
+
+
+def real_time_funding_rate(symbol: str) -> Decimal:
+    url = f"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}"
+    response = requests.get(url)
+    funding_rate = Decimal(0)
+    if response.status_code == 200:
+        data = response.json()
+        funding_rate = Decimal(data['lastFundingRate'])
+    else:
+        print("An error occurred:", response.status_code)
+    return funding_rate
 
 
 def calculate_aggregate_data(config):
@@ -493,28 +506,20 @@ def calculate_aggregate_data(config):
         fn.Sum(PaidFundingRate.amount)
     ).where(PaidFundingRate.timestamp > from_time).scalar() or Decimal(0)
 
-    positions = binance_client.futures_position_information(version=2)
-    funding_rates = binance_client.futures_funding_rate(limit=len(positions) // 2)
-    open_positions = [p for p in positions if Decimal(p["notional"]) != 0]
+    positions = binance_client.futures_position_information()
+    open_positions = [p for p in positions if Decimal(p['notional']) != 0]
 
-    total_funding_rates = Decimal(0)
-    symbol_funding_rates = {}
+    total_funding_rate_fees = 0
+    open_positions_fee = {}
     for pos in open_positions:
-        notional, symbol, side = (
-            Decimal(pos["notional"]),
-            pos["symbol"],
-            pos["positionSide"],
-        )
-        if pos["symbol"] not in symbol_funding_rates:
-            for f in funding_rates:
-                if f["symbol"] == pos["symbol"]:
-                    symbol_funding_rates[pos["symbol"]] = Decimal(f["fundingRate"])
-                    break
-        funding_rate = pos["fundingRate"] = Decimal(symbol_funding_rates[pos["symbol"]])
+        notional, symbol, side = Decimal(pos['notional']), pos["symbol"], pos["positionSide"]
+        funding_rate = pos['fundingRate'] = real_time_funding_rate(symbol=symbol)
+        symbol_side = f'{symbol}-{"S" if side == "SHORT" else "L"}'
         funding_rate_fee = -1 * notional * funding_rate
-        total_funding_rates += funding_rate_fee
+        pos['fundingRateFee'] = open_positions_fee[symbol_side] = funding_rate_fee
+        total_funding_rate_fees += funding_rate_fee
 
-    data.next_funding_rate = total_funding_rates * 10 ** 18
+    data.next_funding_rate = total_funding_rate_fees * 10 ** 18
 
     data.timestamp = datetime.utcnow()
     aggregate_data = AggregateData.create(**data)

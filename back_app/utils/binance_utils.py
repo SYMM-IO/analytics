@@ -2,14 +2,12 @@ import hmac
 import time
 from datetime import datetime, timedelta
 from decimal import Decimal
-from urllib.parse import urlencode
 
 import requests
 from peewee import fn
 
-from app.models import BinanceDeposit, BinanceWithdraw, BinanceTransfer, FundingRate, BinanceTrade, SymbolPrice
-from config.local_settings import binance_email, binance_is_master, from_unix_timestamp, binance_api_key, \
-    binance_api_secret
+from app.models import BinanceDeposit, BinanceWithdraw, BinanceTransfer, FundingRate, SymbolPrice
+from config.local_settings import binance_email, binance_is_master, from_unix_timestamp
 from config.settings import proxies
 from context.context import binance_client
 from utils.common_utils import load_config
@@ -17,61 +15,6 @@ from utils.common_utils import load_config
 
 def _get_signature(query_string, api_secret):
     return hmac.new(api_secret.encode('utf-8'), query_string.encode('utf-8'), digestmod='sha256').hexdigest()
-
-
-def fetch_account_trades():
-    latest_record = BinanceTrade.select().order_by(BinanceTrade.timestamp.desc()).first()
-    if latest_record:
-        start_time = round(latest_record.timestamp.timestamp() * 1000)
-        last_id = latest_record.id
-        last_symbol = latest_record.symbol
-    else:
-        start_time = from_unix_timestamp
-        last_id = 0
-        last_symbol = ''
-
-    limit = 1000
-    endpoint = 'https://fapi.binance.com/fapi/v1/userTrades'
-    headers = {'X-MBX-APIKEY': binance_api_key}
-
-    timestamp = round(time.time() * 1000)
-    while start_time < timestamp:
-        timestamp = round(time.time() * 1000)
-        params = {
-            'startTime': start_time,
-            'timestamp': timestamp,
-            'limit': limit,
-        }
-        query_string = urlencode(params)
-        signature = _get_signature(query_string, binance_api_secret)
-        url = f'{endpoint}?{query_string}&signature={signature}'
-        response = requests.get(url, headers=headers, proxies=proxies)
-        if not response:
-            continue
-
-        new_trades = response.json()
-        assert type(new_trades) == list
-
-        for trade in new_trades:
-            if last_id == trade['id'] and last_symbol == trade['symbol']:
-                continue
-            BinanceTrade.create(
-                symbol=trade['symbol'],
-                id=str(trade['id']),
-                order_id=str(trade['orderId']),
-                side=trade['side'],
-                position_side=trade['positionSide'],
-                qty=Decimal(trade['qty']),
-                price=Decimal(trade['price']),
-                timestamp=datetime.fromtimestamp(trade['time'] / 1000)
-            )
-        if new_trades:
-            last_id = new_trades[-1]['id']
-            last_symbol = new_trades[-1]['symbol']
-        if len(new_trades) == limit:
-            start_time = new_trades[-1]['time']
-        else:
-            start_time += 7 * 24 * 60 * 60 * 1000
 
 
 def fetch_funding_rate_history(symbol: str):
@@ -85,6 +28,7 @@ def fetch_funding_rate_history(symbol: str):
     history = []
     limit = 10000
     while True:
+        # data = binance_client.history(symbol=symbol, page=page, rows=limit)
         json_data = {
             'symbol': symbol,
             'page': page,
@@ -122,21 +66,27 @@ def fetch_symbol_price_history(symbol: str):
         start_time = round(latest_record.timestamp.timestamp() * 1000) + 1000
     else:
         start_time = from_unix_timestamp
-    url = 'https://fapi.binance.com/fapi/v1/klines'
+    # url = 'https://fapi.binance.com/fapi/v1/klines'
     timestamp = round(time.time() * 1000)
     while start_time < timestamp:
-        params = {
-            'symbol': symbol,
-            'interval': '1h',
-            'limit': 1500,
-            'startTime': start_time,
-        }
-        response = requests.get(url, params=params, proxies=proxies)
-        if not response.json():
+        data = binance_client.futures_klines(
+            symbol=symbol,
+            interval='1h',
+            limit=1500,
+            startTime=start_time
+        )
+        # params = {
+        #     'symbol': symbol,
+        #     'interval': '1h',
+        #     'limit': 1500,
+        #     'startTime': start_time,
+        # }
+        # response = requests.get(url, params=params, proxies=proxies)
+        if not data:
             break
-        for data in response.json():
-            close_price = Decimal(data[4])
-            close_time = data[6]
+        for item in data:
+            close_price = Decimal(item[4])
+            close_time = item[6]
             SymbolPrice.create(
                 symbol=symbol,
                 price=close_price,
