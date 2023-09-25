@@ -3,9 +3,12 @@
         <div class="p-toolbar-group-start align-items-end flex flex-row gap-2">
             <!-- <button pButton icon="pi pi-bars" class="p-button-outlined" (click)="display = true"></button> -->
             <img [src]="'../assets/'+assetsFolder+'/logo.svg'" class="clover-logo">
-            <div class="align-items-center flex flex-row gap-1 h-full">
+            <div class="align-items-center flex flex-row gap-1 h-full" *ngIf="!aggregated">
                 <span class="text-xs powered-by">Powered by SYMMIO</span>
                 <img src="../assets/poweredByLogo.svg" class="symmio-logo">
+            </div>
+            <div class="flex flex-row gap-1 h-full" *ngIf="aggregated">
+                <span class="text-xs powered-by">Analytics</span>
             </div>
         </div>
 

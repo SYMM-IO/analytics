@@ -2,8 +2,7 @@
     <div class="infos flex flex-row gap-2 w-full flex-grow-1 flex-wrap">
         <div class="info-card h-full flex-grow-1 surface-card">
             <app-info title="Deposits" [totalValue]="totalDeposits" [todayValue]="todayHistory?.deposit"
-                      [lastDayValue]="lastDayHistory?.deposit" [formatMoney]="true"
-                      [decimals]="environment.collateralDecimal!">
+                      [lastDayValue]="lastDayHistory?.deposit" [formatMoney]="true" [decimals]="18">
             </app-info>
         </div>
         <div class="info-card h-full flex-grow-1 surface-card">
@@ -30,39 +29,36 @@
     <div class="top-charts flex flex-row gap-2 w-full flex-wrap flex-grow-1">
         <div class="chart-card flex-grow-1 surface-card">
             <app-chart class="h-full w-full" *ngIf="dailyHistories"
-                       [dailyHistories]="dailyHistories" [fieldName]="'quotesCount'" [chartTitle]="'Quotes'"
-                       [fixedValueName]="'Quotes'">
+                       [dailyHistories]="dailyHistories" [fieldName]="'quotesCount'" [chartTitle]="'Quotes'">
             </app-chart>
         </div>
         <div class="chart-card flex-grow-1 surface-card">
             <app-chart class="h-full w-full" *ngIf="dailyHistories"
                        [dailyHistories]="dailyHistories" [fieldName]="'tradeVolume'" [chartTitle]="'Trade Volume'"
-                       [yAxisFormatter]="moneyValueFormatter" [decimals]="18" [fixedValueName]="'Trade Volume'">
+                       [yAxisFormatter]="moneyValueFormatter" [decimals]="18">
             </app-chart>
         </div>
         <div class="chart-card flex-grow-1 surface-card">
             <app-chart class="h-full w-full" *ngIf="dailyHistories"
                        [dailyHistories]="dailyHistories" [fieldName]="'platformFee'" [chartTitle]="'Platform Revenue'"
-                       [yAxisFormatter]="moneyValueFormatter" [decimals]="18" [fixedValueName]="'Platform Revenue'">
+                       [yAxisFormatter]="moneyValueFormatter" [decimals]="18">
             </app-chart>
         </div>
         <div class="chart-card flex-grow-1 surface-card">
             <app-chart class="h-full w-full" *ngIf="dailyHistories"
                        [dailyHistories]="dailyHistories" [fieldName]="'openInterest'" [chartTitle]="'Open Interest'"
-                       [yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasCumulative]="false"
-                       [fixedValueName]="'Open Interest'">
+                       [yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasCumulative]="false">
             </app-chart>
         </div>
         <div class="chart-card flex-grow-1 surface-card">
             <app-chart class="h-full w-full" *ngIf="dailyHistories"
                        [dailyHistories]="dailyHistories" [fieldName]="'activeUsers'" [chartTitle]="'Active Users'"
-                       [hasCumulative]="false" [fixedValueName]="'Active Users'">
+                       [hasCumulative]="false">
             </app-chart>
         </div>
         <div class="chart-card flex-grow-1 surface-card">
             <app-chart class="h-full w-full" *ngIf="dailyHistories"
-                       [dailyHistories]="dailyHistories" [fieldName]="'newUsers'" [chartTitle]="'New Users'"
-                       [fixedValueName]="'New Users'">
+                       [dailyHistories]="dailyHistories" [fieldName]="'newUsers'" [chartTitle]="'New Users'">
             </app-chart>
         </div>
     </div>

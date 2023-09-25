@@ -1,7 +1,11 @@
-import {Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild} from "@angular/core";
+import {Component, ElementRef, Input, OnDestroy, OnInit, ViewChild} from "@angular/core";
 import {EChartsOption} from "echarts";
-import {Observable, Subscription} from "rxjs";
+import {Observable} from "rxjs";
 import {EnvironmentService} from "../services/enviroment.service";
+import {DailyHistory} from "../services/graph-models";
+import BigNumber from "bignumber.js";
+import {aggregateDailyHistories} from "../utils";
+import {SubEnvironmentInterface} from "../../environments/environment-interface";
 
 @Component({
 	selector: 'app-chart',
@@ -13,22 +17,31 @@ export class ChartComponent implements OnInit, OnDestroy {
 
 	@ViewChild("chart") chartElement!: ElementRef;
 	chart: any;
-	subscription?: Subscription;
 
-	@Input() series!: Observable<any>;
+	@Input() fieldName!: string;
+	@Input() fixedValueName?: string;
+	@Input() decimals: number = 0;
 	@Input() chartTitle!: string;
-	@Input() tooltipFormatter?: (x: any, y: any) => string;
+	@Input() yAxisFormatter: (x: any) => string = (a) => a;
+	@Input() tooltipFormatter?: any;
 	@Input() hasGroupByMonthAction!: boolean;
-	@Output() groupByMonth = new EventEmitter<boolean>()
+	@Input() hasCumulative: boolean = true;
+
+	loadedResults?: DailyHistory[][];
+	@Input() dailyHistories!: Observable<DailyHistory[][]>;
+
+	environments: SubEnvironmentInterface[];
 
 	groupedByMonth: boolean = false;
 	mainColor: string;
 
 	constructor(readonly environmentService: EnvironmentService) {
 		this.mainColor = environmentService.getValue("mainColor");
+		this.environments = environmentService.getValue("environments");
 	}
 
 	ngOnInit(): void {
+		let that = this;
 		this.chartOption = {
 			backgroundColor: "transparent",
 			color: [this.mainColor, '#3398DB', '#7CFC00', '#FF7F50', '#8B0000', '#D2691E'],
@@ -65,15 +78,17 @@ export class ChartComponent implements OnInit, OnDestroy {
 			tooltip: {
 				trigger: "axis",
 				axisPointer: {
-					type: "shadow",
+					type: "line",
 				},
-				formatter: this.tooltipFormatter != null ? (params: any) => {
-					if (params != null && params[params.length - 1].data != null) {
-						const p = params[params.length - 1].data;
-						return this.tooltipFormatter!(p[0], p[1]);
-					}
-					return "";
-				} : undefined,
+				formatter: (params: any) => {
+					let date = params[0].data[0].toLocaleDateString();
+					let res = `Date: <b>${date}</b> <br/>`;
+					params.forEach(function (item: any) {
+						res += `<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:${item.color}"></span>`;
+						res += item.seriesName + ': ' + that.yAxisFormatter(item.value[1]) + '<br/>';
+					});
+					return res;
+				},
 			},
 			legend: {
 				show: true,
@@ -93,7 +108,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 						icon: "path://M10,90 L25,20 L42,75 L59,20 L74,90",
 						onclick: (params: any) => {
 							this.groupedByMonth = !this.groupedByMonth
-							this.groupByMonth.next(this.groupedByMonth)
+							this.onGroupByMonthChanged();
 							this.chart.setOption(
 								{
 									toolbox: {
@@ -127,25 +142,101 @@ export class ChartComponent implements OnInit, OnDestroy {
 				},
 			],
 		};
-
 	}
 
 	ngOnDestroy() {
-		this.subscription?.unsubscribe();
 	}
 
 	onChartInit(chart: any) {
 		this.chart = chart;
-		this.subscription = this.series.subscribe(
-			value => {
-				this.chart.setOption(
-					{
-						series: value,
-					},
-					false,
-					false
-				);
-			}
-		)
+		this.dailyHistories.subscribe((results) => {
+			this.loadedResults = results;
+			this.updateChart(results, this.fieldName);
+		});
+	}
+
+	onGroupByMonthChanged() {
+		if (this.loadedResults)
+			this.updateChart(this.loadedResults, this.fieldName)
+	}
+
+
+	prepareResults(results: DailyHistory[], fieldName: string) {
+		let data = results.map((dailyHistory) => ({...dailyHistory}));
+		if (this.groupedByMonth)
+			data = Object.values(
+				data.reduce((acc: any, curr: DailyHistory) => {
+					const date = new Date(DailyHistory.getTime(curr)!);
+					const year = date.getFullYear();
+					const month = date.getMonth();
+					const yearMonth = new Date(year, month, 1, 0, 0, 0, 0).getTime();
+					if (!acc[yearMonth]) {
+						acc[yearMonth] = {id: yearMonth + "_"};
+						acc[yearMonth][fieldName] = BigNumber(0);
+					}
+					acc[yearMonth][fieldName] = acc[yearMonth][fieldName].plus(
+						curr[fieldName]!
+					);
+					return acc;
+				}, {})
+			);
+		let sum = BigNumber(0);
+		let accumulatedData = data.map((dailyHistory) => ({...dailyHistory}));
+		accumulatedData = accumulatedData.map((dailyHistory: DailyHistory) => {
+			sum = sum.plus(dailyHistory[fieldName]!);
+			dailyHistory[fieldName] = sum;
+			return dailyHistory;
+		});
+		return {
+			data: data,
+			accumulatedData: accumulatedData,
+		};
+	}
+
+	updateChart(results: DailyHistory[][], fieldName: string) {
+		let series = [];
+		let i = 0;
+		let accumulatedData = [];
+		let prepared = [];
+		for (const result of results) {
+			let preparedResults = this.prepareResults(result, fieldName);
+			prepared.push(preparedResults);
+			series.push({
+				type: "bar",
+				stack: 'total',
+				color: this.environments[i].mainColor,
+				name: this.fixedValueName ? this.fixedValueName : this.environments[i].name,
+				data: preparedResults.data.map((dailyHistory: DailyHistory) => [
+					new Date(DailyHistory.getTime(dailyHistory)!),
+					(dailyHistory[fieldName]! as BigNumber).div(BigNumber(10).pow(this.decimals)).toNumber(),
+				]),
+				animation: true,
+			});
+			i += 1;
+		}
+		for (let j = 0; j < prepared[0].data.length; j++)
+			accumulatedData.push(aggregateDailyHistories(prepared.map(ls => ls.accumulatedData[j])));
+
+		if (this.hasCumulative) {
+			series.push({
+				type: "line",
+				name: "Cumulative",
+				color: "#00ffa2",
+				data: accumulatedData.map(
+					(dailyHistory: DailyHistory) => [
+						new Date(DailyHistory.getTime(dailyHistory)!),
+						(dailyHistory[fieldName]! as BigNumber).div(BigNumber(10).pow(this.decimals)).toNumber(),
+					]
+				),
+				animation: true,
+			})
+		}
+		this.chart.setOption(
+			{
+				series: series,
+			},
+			false,
+			false
+		);
 	}
 }

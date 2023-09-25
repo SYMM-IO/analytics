@@ -54,6 +54,41 @@
               ],
               "outputHashing": "all"
             },
+            "aggregate": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "5mb",
+                  "maximumError": "10mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.aggregate.ts"
+                }
+              ]
+            },
+            "aggregate_dev": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.aggregate.ts"
+                }
+              ],
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            },
             "alpha_thena": {
               "budgets": [
                 {
@@ -210,6 +245,9 @@
           "configurations": {
             "production": {
               "browserTarget": "symmio-analytics-dashboard:build:production"
+            },
+            "aggregate": {
+              "browserTarget": "symmio-analytics-dashboard:build:aggregate_dev"
             },
             "alpha_thena": {
               "browserTarget": "symmio-analytics-dashboard:build:alpha_thena_dev"

@@ -14,6 +14,7 @@ export class AppComponent {
     items: MenuItem[];
     readonly assetsFolder: string;
     readonly mainColor: string;
+    readonly aggregated: boolean;
 
     constructor(
         private primengConfig: PrimeNGConfig,
@@ -25,6 +26,7 @@ export class AppComponent {
         ];
         this.assetsFolder = environmentService.getValue("assetsFolder");
         this.mainColor = environmentService.getValue("mainColor");
+        this.aggregated = environmentService.getValue("aggregate");
         let favIcon: HTMLLinkElement = document.querySelector('#favIcon')!;
         favIcon.href = `assets/${this.assetsFolder}/favicon.ico`;
     }

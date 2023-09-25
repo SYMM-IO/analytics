@@ -1,8 +1,14 @@
 export interface EnvironmentInterface {
-    subgraphUrl: string;
-    collateralDecimal: number;
-    assetsFolder: string;
-    mainColor: string;
-    accountSource: string;
-    fromTimestamp: string | null;
+	assetsFolder: string;
+	aggregate?: boolean;
+	environments?: SubEnvironmentInterface[];
+}
+
+export interface SubEnvironmentInterface {
+	name?: string;
+	subgraphUrl?: string;
+	collateralDecimal?: number;
+	mainColor?: string;
+	accountSource?: string;
+	fromTimestamp: string | null;
 }
