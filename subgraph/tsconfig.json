@@ -1,7 +1,0 @@
-{
-  "compilerOptions": {
-    "resolveJsonModule": true
-  },
-  "extends": "@graphprotocol/graph-ts/types/tsconfig.base.json",
-  "include": ["src"]
-}
