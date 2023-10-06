@@ -16,7 +16,6 @@ from app.models import (
     Quote,
     Symbol,
     TradeHistory,
-    User,
 )
 from config.local_settings import (
     deposit_diff,
@@ -412,27 +411,22 @@ def calculate_aggregate_data(config):
                                )
                                .scalar()
                            ) or 0
-
     data.users_count = (
-                           Account.select(fn.count(User.id))
-                           .join(User)
+                           Account
+                           .select(fn.COUNT(fn.DISTINCT(Account.user)))
                            .where(
                                Account.accountSource == symmio_multi_account,
                                Account.timestamp > from_time,
-                           )
-                           .group_by(User.id)
-                           .scalar()
+                           ).scalar()
                        ) or 0
     data.active_users = (
-                            Account.select(fn.count(User.id))
-                            .join(User)
+                            Account
+                            .select(fn.COUNT(fn.DISTINCT(Account.user)))
                             .where(
                                 Account.accountSource == symmio_multi_account,
                                 Account.lastActivityTimestamp > active_timestamp,
                                 Account.timestamp > from_time,
-                            )
-                            .group_by(User.id)
-                            .scalar()
+                            ).scalar()
                         ) or 0
 
     # ------------------------------------------
