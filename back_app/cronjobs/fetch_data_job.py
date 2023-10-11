@@ -613,12 +613,12 @@ def report_aggregate_data(
     sb.append_line(
         f"Trade Volume: {format(data.trade_volume)} | {format(today_data.trade_volume)}"
     )
-    sb.append_line("---- 💸 Funding Rate 💸 ----")
+    sb.append_line("\n---- 💸 Funding Rate 💸 ----")
     sb.append_line(f"Next funding rate: {format(data.next_funding_rate)}")
     sb.append_line(
         f"Paid funding rate: {format(data.paid_funding_rate)} | {format(today_data.paid_funding_rate)}"
     )
-    sb.append_line("---- 💰 Deposits Of Hedger 💰 ----")
+    sb.append_line("\n---- 💰 Deposits Of Hedger 💰 ----")
     sb.append_line(
         f"Binance Deposit: {format(binance_deposit)} | {format(today_binance_deposit)}"
     )
@@ -639,13 +639,13 @@ def report_aggregate_data(
         f"Contract Withdraw: {format(data.hedger_contract_withdraw)} | {format(today_data.hedger_contract_withdraw)}"
     )
 
-    sb.append_line("---- 📝 Quotes stats 📝 ----")
+    sb.append_line("\n---- 📝 Quotes stats 📝 ----")
     for id, count in data.status_quotes.items():
         sb.append_line(
             f"{quote_status_names[int(id)]} : {count} | {today_data.status_quotes[id]}"
         )
 
-    sb.append_line("---- 🧮 Hedger PNL 🧮 ----")
+    sb.append_line("\n---- 🧮 Hedger PNL 🧮 ----")
     sb.append_line(
         f"UPNL of hedger: {format(data.hedger_upnl)} | {format(today_data.hedger_upnl)}"
     )
@@ -655,7 +655,7 @@ def report_aggregate_data(
     sb.append_line(
         f"PNL of liquidated quotes: {format(data.pnl_of_liquidated)} | {format(today_data.pnl_of_liquidated)}"
     )
-    sb.append_line("---- 💰 Notional Value 💰 ----")
+    sb.append_line("\n---- 💰 Notional Value 💰 ----")
     sb.append_line(
         f"Closed Notional Value: {format(data.closed_notional_value)} | {format(today_data.closed_notional_value)}"
     )
@@ -665,12 +665,12 @@ def report_aggregate_data(
     sb.append_line(
         f"Opened Notional Value: {format(data.opened_notional_value)} | {format(today_data.opened_notional_value)}"
     )
-    sb.append_line("---- ⚖️ Hedger CVA ⚖️ ----")
+    sb.append_line("\n---- ⚖️ Hedger CVA ⚖️ ----")
     sb.append_line(
         f"Earned CVA: {format(data.earned_cva)} | {format(today_data.earned_cva)}"
     )
     sb.append_line(f"Loss CVA: {format(data.loss_cva)} | {format(today_data.loss_cva)}")
-    sb.append_line("---- 🏦 All Accounts Report 🏦 ----")
+    sb.append_line("\n---- 🏦 All Accounts Report 🏦 ----")
     sb.append_line(
         f"All Accounts Deposit: {format(data.all_contract_deposit)} | {format(today_data.all_contract_deposit)}"
     )
@@ -680,7 +680,7 @@ def report_aggregate_data(
     sb.append_line(
         f"Contract Balance: {format(data.contract_balance)} | {format(today_data.contract_balance)}"
     )
-    sb.append_line("---- 👤 Users Report 👤 ----")
+    sb.append_line("\n---- 👤 Users Report 👤 ----")
     sb.append_line(f"Accounts: {data.accounts_count} | {today_data.accounts_count}")
     sb.append_line(
         f"    active (48H): {data.active_accounts} | {today_data.active_accounts}"
@@ -702,7 +702,7 @@ def report_aggregate_data(
                 f"    Current Allocated: {format(state['allocated'])} | {format(state2['allocated'] if 'allocated' in state2 else 0)}"
             )
 
-    sb.append_line("---- 🟡 Binance Info 🟡 ----")
+    sb.append_line("\n---- 🟡 Binance Info 🟡 ----")
     sb.append_line(
         f"Maintenance Margin : {format(data.binance_maintenance_margin)} | {format(today_data.binance_maintenance_margin)}"
     )
