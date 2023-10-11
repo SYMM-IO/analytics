@@ -600,28 +600,8 @@ def report_aggregate_data(
     sb.append_line(
         f"Total State - CVA: {format(total_state - data.earned_cva)} | {format(today_total_state - today_data.earned_cva)}"
     )
-
-    sb.append_line(
-        f"Binance Deposit: {format(binance_deposit)} | {format(today_binance_deposit)}"
-    )
-    sb.append_line(
-        f"Binance Balance: {format(data.binance_total_balance)} | {format(today_data.binance_total_balance)}"
-    )
     sb.append_line(
         f"Binance Profit: {format(binance_profit)} | {format(today_binance_profit)}"
-    )
-
-    sb.append_line(
-        f"Contract Deposit: {format(data.hedger_contract_deposit)} | {format(today_data.hedger_contract_deposit)}"
-    )
-    sb.append_line(
-        f"Contract Balance: {format(data.hedger_contract_balance)} | {format(today_data.hedger_contract_balance)}"
-    )
-    sb.append_line(
-        f"Contract Withdraw: {format(data.hedger_contract_withdraw)} | {format(today_data.hedger_contract_withdraw)}"
-    )
-    sb.append_line(
-        f"Contract Allocated: {format(data.hedger_contract_allocated)} | {format(today_data.hedger_contract_allocated)}"
     )
     sb.append_line(
         f"Contract Profit: {format(contract_profit)} | {format(today_contract_profit)}"
@@ -633,10 +613,30 @@ def report_aggregate_data(
     sb.append_line(
         f"Trade Volume: {format(data.trade_volume)} | {format(today_data.trade_volume)}"
     )
-
+    sb.append_line("---- 💸 Funding Rate 💸 ----")
     sb.append_line(f"Next funding rate: {format(data.next_funding_rate)}")
     sb.append_line(
         f"Paid funding rate: {format(data.paid_funding_rate)} | {format(today_data.paid_funding_rate)}"
+    )
+    sb.append_line("---- 💰 Deposits Of Hedger 💰 ----")
+    sb.append_line(
+        f"Binance Deposit: {format(binance_deposit)} | {format(today_binance_deposit)}"
+    )
+    sb.append_line(
+        f"Binance Balance: {format(data.binance_total_balance)} | {format(today_data.binance_total_balance)}"
+    )
+    sb.append_line("---- -------- ----")
+    sb.append_line(
+        f"Contract Allocated: {format(data.hedger_contract_allocated)} | {format(today_data.hedger_contract_allocated)}"
+    )
+    sb.append_line(
+        f"Contract Deposit: {format(data.hedger_contract_deposit)} | {format(today_data.hedger_contract_deposit)}"
+    )
+    sb.append_line(
+        f"Contract Balance: {format(data.hedger_contract_balance)} | {format(today_data.hedger_contract_balance)}"
+    )
+    sb.append_line(
+        f"Contract Withdraw: {format(data.hedger_contract_withdraw)} | {format(today_data.hedger_contract_withdraw)}"
     )
 
     sb.append_line("---- 📝 Quotes stats 📝 ----")
