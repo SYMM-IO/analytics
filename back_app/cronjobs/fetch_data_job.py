@@ -625,7 +625,7 @@ def report_aggregate_data(
     sb.append_line(
         f"Binance Balance: {format(data.binance_total_balance)} | {format(today_data.binance_total_balance)}"
     )
-    sb.append_line("---- -------- ----")
+    sb.append_line("--------")
     sb.append_line(
         f"Contract Allocated: {format(data.hedger_contract_allocated)} | {format(today_data.hedger_contract_allocated)}"
     )
