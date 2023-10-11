@@ -687,7 +687,7 @@ def report_aggregate_data(
     )
     sb.append_line(f"Users: {data.users_count} | {today_data.users_count}")
     sb.append_line(f"    active (48H): {data.active_users} | {today_data.active_users}")
-    sb.append_line("---- 💸  Liquidators state 💸  ----")
+    sb.append_line("\n---- 💸  Liquidators state 💸  ----")
     if data.liquidator_states:
         for ind, state in enumerate(data.liquidator_states):
             state2 = today_data.liquidator_states[ind]
