@@ -87,7 +87,18 @@ def calculate_paid_funding():
     remains = [next_epoch] + list(epochs)
     for next_epoch in remains:
         for fr in frs[next_epoch]:  # type: FundingRate
-            price = prices[fr.symbol][next_epoch]
+            symbol_prices = prices[fr.symbol]
+            price = symbol_prices.get(next_epoch)
+            if price is None:
+                try:
+                    key = next(filter(lambda x: x > next_epoch, sorted(symbol_prices.keys())))
+                except StopIteration:
+                    try:
+                        key = next(filter(lambda x: x < next_epoch, sorted(symbol_prices.keys())))
+                    except StopIteration:
+                        print(f'WARNING: can not find price for {fr.symbol} in time={next_epoch}')
+                        continue
+                price = symbol_prices[key]
             open_qty = open_amount[fr.symbol]
             if abs(open_qty) >= 1e-7:
                 calculated_funding_rate = fr.rate * price.price * Decimal(open_qty)
