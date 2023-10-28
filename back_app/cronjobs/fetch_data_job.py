@@ -29,7 +29,7 @@ from config.local_settings import (
     symmio_liquidators,
     symmio_multi_account,
 )
-from config.settings import erc20_abi, fetch_data_interval
+from config.settings import erc20_abi, fetch_data_interval, funding_rate_alert_threshold
 from context.context import binance_client
 from cronjobs.binance_trade_volume import calculate_binance_trade_volume
 from cronjobs.data_loaders import (
@@ -43,7 +43,7 @@ from cronjobs.data_loaders import (
 from utils.common_utils import load_config
 from utils.formatter_utils import format
 from utils.string_builder import StringBuilder
-from utils.telegram_utils import send_message
+from utils.telegram_utils import send_message, send_alert
 
 quote_status_names = {
     0: "PENDING",
@@ -514,6 +514,9 @@ def calculate_aggregate_data(config):
         total_funding_rate_fees += funding_rate_fee
 
     data.next_funding_rate = total_funding_rate_fees * 10 ** 18
+
+    if abs(total_funding_rate_fees) > funding_rate_alert_threshold:
+        send_alert(f"Next funding rate is high: {total_funding_rate_fees}")
 
     data.timestamp = datetime.utcnow()
     aggregate_data = AggregateData.create(**data)

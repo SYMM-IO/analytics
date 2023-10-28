@@ -18,7 +18,7 @@ binance_email = ""
 binance_is_master = True
 
 telegram_group_id = ''
-telegram_notifier_url = ''
+telegram_error_group_id = ''
 telegram_bot_token = ''
 telegram_api_auth_token = ''
 
