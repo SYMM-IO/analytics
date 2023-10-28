@@ -13,6 +13,7 @@ from namespaces import config_namespace
 
 def listener(event):
     print(f'Job {event.job_id} raised {event.exception.__class__.__name__}')
+    raise event.exception
 
 
 app = Flask(__name__)

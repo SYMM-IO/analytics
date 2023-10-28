@@ -95,7 +95,7 @@ class GraphQlClient:
             load_from_database=True,
             save_to_database=True
     ):
-        from models import BaseModel
+        from app.models import BaseModel
         model: BaseModel
 
         if not pagination_field_name_std:
