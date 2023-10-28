@@ -40,10 +40,11 @@ from cronjobs.data_loaders import (
     load_trade_histories,
     load_users,
 )
+from cronjobs.state_indicator import StateIndicator, IndicatorMode
 from utils.common_utils import load_config
 from utils.formatter_utils import format
 from utils.string_builder import StringBuilder
-from utils.telegram_utils import send_message, send_alert
+from utils.telegram_utils import send_message, escape_markdown_v1
 
 quote_status_names = {
     0: "PENDING",
@@ -498,7 +499,7 @@ def calculate_aggregate_data(config):
     # ------------------------------------------
     data.paid_funding_rate = PaidFundingRate.select(
         fn.Sum(PaidFundingRate.amount)
-    ).where(PaidFundingRate.timestamp > from_time).scalar() or Decimal(0)
+    ).where(PaidFundingRate.timestamp > from_time, PaidFundingRate.amount < 0).scalar() or Decimal(0)
 
     positions = binance_client.futures_position_information()
     open_positions = [p for p in positions if Decimal(p['notional']) != 0]
@@ -514,9 +515,6 @@ def calculate_aggregate_data(config):
         total_funding_rate_fees += funding_rate_fee
 
     data.next_funding_rate = total_funding_rate_fees * 10 ** 18
-
-    if abs(total_funding_rate_fees) > funding_rate_alert_threshold:
-        send_alert(f"Next funding rate is high: {total_funding_rate_fees}")
 
     data.timestamp = datetime.utcnow()
     aggregate_data = AggregateData.create(**data)
@@ -575,6 +573,21 @@ def report_aggregate_data(
     print("Reporting aggregate data...")
     sb = StringBuilder()
 
+    indicators = []
+    funding_indicator = StateIndicator("FundingRate")
+    if data.next_funding_rate < -(funding_rate_alert_threshold * 10 ** 18):
+        funding_indicator.set_mode(IndicatorMode.RED)
+    else:
+        funding_indicator.set_mode(IndicatorMode.GREEN)
+
+    indicators.append(funding_indicator)
+
+    mentions = set()
+    for indicator in indicators:
+        mentions.update(funding_indicator.get_mentions())
+        sb.append(indicator.mode)
+
+    sb.append_line()
     binance_deposit = int(data.binance_deposit) if data.binance_deposit else 0
     binance_profit = data.binance_total_balance - binance_deposit
     contract_profit = (
@@ -731,9 +744,8 @@ def report_aggregate_data(
     sb.append_line(
         f"Fetching data at {datetime.utcnow().strftime('%A, %d. %B %Y %I:%M:%S %p')} UTC"
     )
-
     if end_dey_tag:
         sb.append_line("#EndOfDay")
 
-    send_message(str(sb))
+    send_message(escape_markdown_v1(str(sb)) + "\n" + ''.join(f'[.](tg://user?id={user})' for user in mentions))
     print("Reported....")

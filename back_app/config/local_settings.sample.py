@@ -32,3 +32,6 @@ db_port = 5432
 
 deposit_diff = 0
 from_unix_timestamp = 1677529800000
+
+mention_for_red_alert_accounts = []
+mention_cooldown = 10 * 60
