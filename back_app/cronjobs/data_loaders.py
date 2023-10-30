@@ -1,4 +1,4 @@
-from app.models import Quote, DailyHistory, TradeHistory, Account, User, Symbol
+from app.models import Quote, DailyHistory, TradeHistory, Account, User, Symbol, BalanceChange
 from context.context import gc
 from context.graphql_client import Where
 from utils.common_utils import convert_timestamps
@@ -19,6 +19,7 @@ def load_quotes(config):
             "price",
             "quoteStatus",
             "positionType",
+            "collateral",
             "partyBsWhiteList",
             "orderType",
             "openPrice",
@@ -75,7 +76,6 @@ def load_accounts(config):
         Account,
         method="accounts",
         fields=[
-            "withdraw",
             "user",
             "updateTimestamp",
             "transaction",
@@ -85,9 +85,6 @@ def load_accounts(config):
             "name",
             "lastActivityTimestamp",
             "id",
-            "deposit",
-            "deallocated",
-            "allocated",
             "accountSource",
         ],
         pagination_field_name="timestamp",
@@ -95,6 +92,28 @@ def load_accounts(config):
             Where("updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp())))
         ],
         load_from_database=False,
+        save_to_database=True,
+    )
+    for o in out:
+        pass
+
+
+def load_balance_changes(config):
+    out = gc.load_all(
+        lambda data: BalanceChange(**convert_timestamps(data)),
+        BalanceChange,
+        method="balanceChanges",
+        fields=[
+            "type",
+            "transaction",
+            "timestamp",
+            "id",
+            "collateral",
+            "amount",
+            "account",
+        ],
+        pagination_field_name="timestamp",
+        load_from_database=True,
         save_to_database=True,
     )
     for o in out:

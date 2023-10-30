@@ -1,4 +1,6 @@
+import enum
 from datetime import datetime
+from decimal import Decimal
 
 from peewee import *
 from playhouse.postgres_ext import JSONField
@@ -43,14 +45,31 @@ class Account(BaseModel):
     accountSource = CharField(null=True)
     quotesCount = IntegerField()
     positionsCount = IntegerField()
-    deposit = DecimalField(max_digits=40, decimal_places=0)
-    withdraw = DecimalField(max_digits=40, decimal_places=0)
-    allocated = DecimalField(max_digits=40, decimal_places=0)
-    deallocated = DecimalField(max_digits=40, decimal_places=0)
     transaction = CharField()
     lastActivityTimestamp = DateTimeField()
     timestamp = DateTimeField()
     updateTimestamp = DateTimeField()
+
+    @staticmethod
+    def is_timeseries():
+        return False
+
+
+class BalanceChangeType:
+    DEPOSIT = "DEPOSIT"
+    WITHDRAW = "WITHDRAW"
+    ALLOCATE_PARTY_A = "ALLOCATE_PARTY_A"
+    DEALLOCATE_PARTY_A = "DEALLOCATE_PARTY_A"
+
+
+class BalanceChange(BaseModel):
+    id = CharField(primary_key=True)
+    account = ForeignKeyField(Account, backref='balances')
+    amount = DecimalField(max_digits=40, decimal_places=0, default=0)
+    collateral = CharField()
+    type = CharField()
+    timestamp = DateTimeField()
+    transaction = CharField()
 
     @staticmethod
     def is_timeseries():
@@ -118,6 +137,7 @@ class Symbol(BaseModel):
     name = CharField()
     tradingFee = DecimalField(max_digits=40, decimal_places=0)
     timestamp = DateTimeField()
+    main_market = BooleanField(default=False)
     updateTimestamp = DateTimeField()
 
     @staticmethod
@@ -133,6 +153,7 @@ class Quote(BaseModel):
     partyB = CharField(null=True)
     positionType = CharField()
     orderType = CharField()
+    collateral = CharField()
     price = DecimalField(max_digits=40, decimal_places=0)
     marketPrice = DecimalField(max_digits=40, decimal_places=0)
     deadline = DecimalField(max_digits=40, decimal_places=0)
@@ -245,9 +266,10 @@ class AggregateData(BaseModel):
     binance_deposit = DecimalField(max_digits=40, decimal_places=0)
     trade_volume = DecimalField(max_digits=40, decimal_places=0)
     timestamp = DateTimeField(primary_key=True)
-    next_funding_rate = DecimalField(max_digits=40, decimal_places=0)
     paid_funding_rate = DecimalField(max_digits=40, decimal_places=0)
     binance_trade_volume = DecimalField(max_digits=40, decimal_places=0)
+    next_funding_rate_total: int
+    next_funding_rate_main_markets: int
 
     @staticmethod
     def is_timeseries():

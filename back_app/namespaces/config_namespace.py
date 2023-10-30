@@ -1,5 +1,3 @@
-import datetime
-
 from flask import jsonify, request, abort
 from flask_cors import cross_origin
 from flask_restx import Namespace, Resource, fields
@@ -15,7 +13,6 @@ update_configuration_model = ns.model(
     "Configuration",
     {
         "binanceDeposit": fields.String(description="PartyB binance deposits", required=False),
-        "deployTimestamp": fields.Integer(description="Deploy timestamp", required=False),
     },
 )
 
@@ -35,8 +32,6 @@ class UpdateConfiguration(Resource):
         config = load_config()
         if "binanceDeposit" in params:
             config.binanceDeposit = params["binanceDeposit"]
-        if "deployTimestamp" in params:
-            config.decimals = datetime.datetime.fromtimestamp(int(params["deployTimestamp"]))
         config.upsert()
         return jsonify(message="Updated successfully")
 
