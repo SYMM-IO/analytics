@@ -377,14 +377,15 @@ def prepare_aggregate_data(config):
     # ------------------------------------------
 
     for liquidator in symmio_liquidators:
-        account = Account.get_or_none(Account.id == liquidator)
-        if account is None:
-            account = Account()
-            account.withdraw = 0
+        account_withdraw = BalanceChange.select(fn.Sum(BalanceChange.amount)).where(
+            BalanceChange.collateral == symmio_collateral_address,
+            BalanceChange.type == BalanceChangeType.WITHDRAW,
+            BalanceChange.account == liquidator
+
+        ).scalar() or Decimal(0)
         liquidator_state = {
             "address": liquidator,
-            "withdraw": (int(account.withdraw) if account else 0)
-                        * 10 ** (18 - config.decimals),
+            "withdraw": account_withdraw * 10 ** (18 - config.decimals),
             "balance": contract_multicallable.balanceOf(
                 [w3.to_checksum_address(liquidator)]
             ).call()[0],
