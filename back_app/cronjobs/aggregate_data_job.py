@@ -381,11 +381,10 @@ def prepare_aggregate_data(config):
             BalanceChange.collateral == symmio_collateral_address,
             BalanceChange.type == BalanceChangeType.WITHDRAW,
             BalanceChange.account == liquidator
-
         ).scalar() or Decimal(0)
         liquidator_state = {
             "address": liquidator,
-            "withdraw": account_withdraw * 10 ** (18 - config.decimals),
+            "withdraw": int(account_withdraw) * 10 ** (18 - config.decimals),
             "balance": contract_multicallable.balanceOf(
                 [w3.to_checksum_address(liquidator)]
             ).call()[0],
