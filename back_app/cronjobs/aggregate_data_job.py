@@ -457,8 +457,7 @@ def prepare_aggregate_data(config):
 
         if symbol in main_market_symbols:
             next_funding_rate_main_markets += funding_rate_fee
-        else:
-            next_funding_rate_total += funding_rate_fee
+        next_funding_rate_total += funding_rate_fee
 
     data.next_funding_rate_total = next_funding_rate_total * 10 ** 18
     data.next_funding_rate_main_markets = next_funding_rate_main_markets * 10 ** 18
