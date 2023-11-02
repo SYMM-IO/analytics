@@ -6,7 +6,8 @@ fetch_data_interval = 10
 funding_fetch_data_interval = 10
 update_binance_deposit_interval = 20
 server_port = 7231
-funding_rate_alert_threshold = 200
+funding_rate_alert_threshold = 100
+closable_funding_rate_alert_threshold = 100
 
 with open('./config/abis/erc20abi.json', 'r') as f:
     erc20_abi = json.load(f)

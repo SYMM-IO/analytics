@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import peewee
 
 from app.models import AggregateData
-from config.settings import funding_rate_alert_threshold, fetch_data_interval
+from config.settings import funding_rate_alert_threshold, fetch_data_interval, closable_funding_rate_alert_threshold
 from cronjobs.state_indicator import StateIndicator, IndicatorMode
 from utils.string_builder import StringBuilder
 from utils.telegram_utils import send_message, escape_markdown_v1
@@ -142,6 +142,14 @@ def report_aggregate_data(
         funding_indicator.set_mode(IndicatorMode.GREEN)
 
     indicators.append(funding_indicator)
+
+    closable_funding_indicator = StateIndicator("ClosableFundingRate")
+    if data.next_funding_rate_total - data.next_funding_rate_main_markets < -(closable_funding_rate_alert_threshold * 10 ** 18):
+        closable_funding_indicator.set_mode(IndicatorMode.RED)
+    else:
+        closable_funding_indicator.set_mode(IndicatorMode.GREEN)
+
+    indicators.append(closable_funding_indicator)
 
     mentions = set()
     for indicator in indicators:
