@@ -1,5 +1,6 @@
 <div class="chart-container w-full h-full p-2" style="position: relative">
-    <div echarts *ngIf="chartOption" [options]="chartOption" theme="dark" [autoResize]="true" #chart (chartInit)="onChartInit($event)"
-         class="chart h-full w-full">
+    <div echarts *ngIf="chartOption" [options]="chartOption" theme="dark"
+         [autoResize]="true" #chart (chartInit)="onChartInit($event)"
+         class="chart" appResizeObserver (resize)="onResize($event)">
     </div>
 </div>

@@ -1,10 +1,10 @@
-import {NgModule} from "@angular/core";
-import {RouterModule, Routes} from "@angular/router";
-import {AggregateHomeComponent} from "./aggregate-home/aggregate-home.component";
-import {EnvironmentService} from "./services/enviroment.service";
-import {HomeComponent} from "./home/home.component";
+import {NgModule} from "@angular/core"
+import {RouterModule, Routes} from "@angular/router"
+import {AggregateHomeComponent} from "./aggregate-home/aggregate-home.component"
+import {EnvironmentService} from "./services/enviroment.service"
+import {HomeComponent} from "./home/home.component"
 
-const routes: Routes = [];
+const routes: Routes = []
 
 
 @NgModule({
@@ -17,12 +17,12 @@ export class AppRoutingModule {
 			routes.push({
 				path: "home",
 				component: AggregateHomeComponent,
-			});
+			})
 		} else {
 			routes.push({
 				path: "home",
 				component: HomeComponent,
-			});
+			})
 		}
 	}
 }

@@ -1,14 +1,14 @@
-import {Injectable, NgZone} from '@angular/core';
-import {InMemoryCache} from '@apollo/client/core';
-import {HttpLink} from 'apollo-angular/http';
-import {Apollo} from "apollo-angular";
+import {Injectable, NgZone} from '@angular/core'
+import {InMemoryCache} from '@apollo/client/core'
+import {HttpLink} from 'apollo-angular/http'
+import {Apollo} from "apollo-angular"
 
 @Injectable({
 	providedIn: 'root',
 })
 export class ApolloManagerService {
 
-	private clients: Map<string, Apollo> = new Map();
+	private clients: Map<string, Apollo> = new Map()
 
 	constructor(private httpLink: HttpLink, readonly ngZone: NgZone) {
 	}
@@ -17,14 +17,14 @@ export class ApolloManagerService {
 		const client = new Apollo(this.ngZone, {
 			cache: new InMemoryCache(),
 			link: this.httpLink.create({uri}),
-		});
-		this.clients.set(uri, client);
-		return client;
+		})
+		this.clients.set(uri, client)
+		return client
 	}
 
 	getClient(uri: string): Apollo | undefined {
 		if (!this.clients.has(uri))
-			this.createClient(uri);
-		return this.clients.get(uri);
+			this.createClient(uri)
+		return this.clients.get(uri)
 	}
 }

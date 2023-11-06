@@ -1,12 +1,12 @@
 <div class="flex flex-column p-2 gap-1">
-    <span class="text-base text-color-secondary">{{title}}</span>
+    <span class="tui-island__title">{{title}}</span>
     <ng-container *ngIf="totalValue != null && todayValue != null">
         <ng-container *ngIf="formatMoney">
             <span class="text-xl font-semibold">
                 ${{unDecimal(totalValue).toFormat(3)}}
             </span>
             <div class="flex flex-row gap-1">
-                <span class="text-sm text-color-secondary">
+                <span class="text-sm">
                     Today:
                 </span>
                 <span class="text-sm">
@@ -36,7 +36,7 @@
                 {{totalValue.toFormat()}}
             </span>
             <div class="flex flex-row gap-1">
-                <span class="text-sm text-color-secondary">
+                <span class="text-sm">
                     Today:
                 </span>
                 <span class="text-sm">
@@ -62,7 +62,7 @@
         </ng-container>
     </ng-container>
     <ng-container *ngIf="(loadingService.loading$() | async) && todayValue == null">
-        <p-skeleton width="8rem" styleClass="mb-2"></p-skeleton>
-        <p-skeleton width="12rem" styleClass="mb-2"></p-skeleton>
+        <div [class.tui-skeleton]="true" style="width: 12em; height: 1.5em"></div>
+        <div [class.tui-skeleton]="true" style="width: 16em; height: 1.5em"></div>
     </ng-container>
 </div>

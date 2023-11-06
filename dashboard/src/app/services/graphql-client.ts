@@ -1,9 +1,7 @@
-import {Apollo, gql} from "apollo-angular";
-import {defer, interval, Observable} from "rxjs";
-import {expand, map, startWith, switchMap} from "rxjs/operators";
-import {LoadingService} from "./Loading.service";
-import {Inject} from "@angular/core";
-import {ApolloClient} from "@apollo/client/core";
+import {Apollo, gql} from "apollo-angular"
+import {defer, interval, Observable} from "rxjs"
+import {expand, map, startWith, switchMap} from "rxjs/operators"
+import {LoadingService} from "./Loading.service"
 
 export interface Condition {
 	field: string;
@@ -40,14 +38,14 @@ export class GraphQlClient {
 		}
         ) {
           ${fields.map((field) => field).join(", \n")}
-        }`;
+        }`
 	}
 
     load(queries: Query[]): Observable<any> {
         const q = gql`query q {
             ${queries.map((q) => q.query).join(", ")}
-        }`;
-		this.loadingService.setLoading(true);
+        }`
+		this.loadingService.setLoading(true)
 		return this.apollo
 			.watchQuery({
 				query: q,
@@ -55,16 +53,16 @@ export class GraphQlClient {
 			})
 			.valueChanges.pipe(
 				map(({data, loading}) => {
-					this.loadingService.setLoading(false);
-					let processedData: any = {};
+					this.loadingService.setLoading(false)
+					let processedData: any = {}
 					for (const query of queries) {
 						processedData[query.method] = (data as any)[query.method].map(
 							(obj: any) => query.createFunction(obj)
-						);
+						)
 					}
-					return processedData;
+					return processedData
 				})
-			);
+			)
     }
 
 	loadAll<T>(
@@ -76,15 +74,15 @@ export class GraphQlClient {
 		startPaginationField: string | null = null,
 		pageLimit: number | undefined = undefined
 	): Observable<T[]> {
-		const limit = 1000;
+		const limit = 1000
 
-		let outer = this;
-		let loadedPages = 0;
+		let outer = this
+		let loadedPages = 0
 		const loadPage = (start: string | null): Observable<any[]> => {
-			loadedPages++;
-			const c = [...conditions];
+			loadedPages++
+			const c = [...conditions]
 			if (start) {
-				c.push({field: paginationField, operator: "gte", value: start});
+				c.push({field: paginationField, operator: "gte", value: start})
 			}
 			return this.load([
 				{
@@ -110,10 +108,10 @@ export class GraphQlClient {
 						? loadPage((items[items.length - 1] as any)[paginationField])
 						: []
 				)
-			);
-		};
+			)
+		}
 
-		return defer(() => loadPage(startPaginationField));
+		return defer(() => loadPage(startPaginationField))
 	}
 
 
@@ -139,6 +137,6 @@ export class GraphQlClient {
 					startPaginationField,
 					pageLimit
 				))
-			);
+			)
 	}
 }

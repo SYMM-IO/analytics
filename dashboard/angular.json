@@ -27,13 +27,18 @@
             "inlineStyleLanguage": "scss",
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "node_modules/@taiga-ui/icons/src",
+                "output": "assets/taiga-ui/icons"
+              }
             ],
             "styles": [
-              "src/styles.scss",
-              "node_modules/primeicons/primeicons.css",
-              "node_modules/primeng/resources/themes/arya-blue/theme.css",
-              "node_modules/primeng/resources/primeng.min.css"
+              "node_modules/@taiga-ui/core/styles/taiga-ui-theme.less",
+              "node_modules/@taiga-ui/core/styles/taiga-ui-fonts.less",
+              "node_modules/@taiga-ui/styles/taiga-ui-global.less",
+              "src/styles.scss"
             ],
             "scripts": [
             ]
@@ -106,7 +111,7 @@
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.alpha_thena.ts"
+                  "with": "src/environments/environment.alpha_thena_v2.ts"
                 }
               ]
             },
@@ -114,7 +119,7 @@
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.alpha_thena.ts"
+                  "with": "src/environments/environment.alpha_thena_v2.ts"
                 }
               ],
               "buildOptimizer": false,
@@ -287,10 +292,9 @@
               "src/assets"
             ],
             "styles": [
-              "src/styles.scss",
-              "node_modules/primeicons/primeicons.css",
-              "node_modules/primeng/resources/themes/arya-blue/theme.css",
-              "node_modules/primeng/resources/primeng.min.css"
+              "node_modules/@taiga-ui/core/styles/taiga-ui-theme.less",
+              "node_modules/@taiga-ui/core/styles/taiga-ui-fonts.less",
+              "src/styles.scss"
             ],
             "scripts": []
           }

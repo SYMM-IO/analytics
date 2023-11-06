@@ -2,17 +2,6 @@
   max-height: 100%;
 }
 
-.body {
-}
-
-.side-bar-menu {
-  ::ng-deep .p-menu {
-    width: 100%;
-    background: none;
-    border: none;
-  }
-}
-
 .clover-logo {
   height: 28px;
   left: 46px;
@@ -30,4 +19,8 @@
 .symmio-logo {
   width: 20px;
   height: 20px;
+}
+
+.toolbar {
+  background-color: var(--tui-base-02);
 }

@@ -1,25 +1,30 @@
-import {NgModule} from "@angular/core";
-import {BrowserModule} from "@angular/platform-browser";
+import {NgDompurifySanitizer} from "@tinkoff/ng-dompurify"
+import {
+	TUI_SANITIZER,
+	TuiAlertModule,
+	TuiDialogModule,
+	TuiModeModule,
+	TuiRootModule,
+	TuiThemeNightModule
+} from "@taiga-ui/core"
+import {NgModule} from "@angular/core"
+import {BrowserModule} from "@angular/platform-browser"
 
-import {HttpClientModule} from "@angular/common/http";
-import {BrowserAnimationsModule} from "@angular/platform-browser/animations";
-import {Apollo} from "apollo-angular";
-import {NgxEchartsModule} from "ngx-echarts";
-import {MessageService} from "primeng/api";
-import {ButtonModule} from "primeng/button";
-import {MenuModule} from "primeng/menu";
-import {SidebarModule} from "primeng/sidebar";
-import {SkeletonModule} from "primeng/skeleton";
-import {ToastModule} from "primeng/toast";
-import {ToolbarModule} from "primeng/toolbar";
-import {AppRoutingModule} from "./app-routing.module";
-import {AppComponent} from "./app.component";
-import {HomeComponent} from "./home/home.component";
-import {InfoComponent} from "./info/info.component";
-import {ENVIRONMENT} from "./services/enviroment.service";
-import {environment} from "../environments/environment";
-import {ChartComponent} from './chart/chart.component';
-import {AggregateHomeComponent} from './aggregate-home/aggregate-home.component';
+import {HttpClientModule} from "@angular/common/http"
+import {BrowserAnimationsModule} from "@angular/platform-browser/animations"
+import {Apollo} from "apollo-angular"
+import {NgxEchartsModule} from "ngx-echarts"
+import {AppRoutingModule} from "./app-routing.module"
+import {AppComponent} from "./app.component"
+import {HomeComponent} from "./home/home.component"
+import {InfoComponent} from "./info/info.component"
+import {ENVIRONMENT} from "./services/enviroment.service"
+import {environment} from "../environments/environment"
+import {ChartComponent} from './chart/chart.component'
+import {AggregateHomeComponent} from './aggregate-home/aggregate-home.component'
+import {TuiLetModule} from "@taiga-ui/cdk"
+import {ResizeObserverDirective} from './resize-observer.directive'
+import {TuiIslandModule} from "@taiga-ui/kit"
 
 @NgModule({
 	declarations: [
@@ -27,27 +32,29 @@ import {AggregateHomeComponent} from './aggregate-home/aggregate-home.component'
 		HomeComponent,
 		InfoComponent,
 		ChartComponent,
-		AggregateHomeComponent
+		AggregateHomeComponent,
+		ResizeObserverDirective
 	],
 	imports: [
 		BrowserModule,
 		BrowserAnimationsModule,
 		AppRoutingModule,
-		ToolbarModule,
-		ButtonModule,
-		SidebarModule,
-		MenuModule,
 		HttpClientModule,
 		NgxEchartsModule.forRoot({
 			echarts: () => import("echarts"),
 		}),
-		SkeletonModule,
-		ToastModule,
+		TuiRootModule,
+		TuiDialogModule,
+		TuiAlertModule,
+		TuiThemeNightModule,
+		TuiModeModule,
+		TuiLetModule,
+		TuiIslandModule,
 	],
 	providers: [
 		{provide: ENVIRONMENT, useValue: environment},
 		Apollo,
-		MessageService,
+		{provide: TUI_SANITIZER, useClass: NgDompurifySanitizer}
 	],
 	bootstrap: [AppComponent],
 })

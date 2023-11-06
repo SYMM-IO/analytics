@@ -1,35 +1,22 @@
-<div class="root flex flex-column h-full min-h-full min-w-full flex-grow">
-    <p-toolbar class="flex-none">
-        <div class="p-toolbar-group-start align-items-end flex flex-row gap-2">
-            <!-- <button pButton icon="pi pi-bars" class="p-button-outlined" (click)="display = true"></button> -->
-            <img [src]="'../assets/'+assetsFolder+'/logo.svg'" class="clover-logo">
-            <div class="align-items-center flex flex-row gap-1 h-full" *ngIf="!aggregated">
-                <span class="text-xs powered-by">Powered by SYMMIO</span>
-                <img src="../assets/poweredByLogo.svg" class="symmio-logo">
-            </div>
-            <div class="flex flex-row gap-1 h-full" *ngIf="aggregated">
-                <span class="text-xs powered-by">Analytics</span>
+<tui-root *tuiLet="night$ | async as night"
+          [tuiMode]="night ? 'onDark' : null">
+    <tui-theme-night *ngIf="night"></tui-theme-night>
+    <div class="root flex flex-column h-full flex-grow p-2">
+        <div class="flex-none toolbar p-3">
+            <div class="align-items-end flex flex-row gap-2">
+                <img [src]="'../assets/'+assetsFolder+'/logo.svg'" class="clover-logo">
+                <div class="align-items-center flex flex-row gap-1 h-full" *ngIf="!aggregated">
+                    <span class="text-xs powered-by">Powered by SYMMIO</span>
+                    <img src="../assets/poweredByLogo.svg" class="symmio-logo">
+                </div>
+                <div class="flex flex-row gap-1 h-full" *ngIf="aggregated">
+                    <span class="text-xs powered-by">Analytics</span>
+                </div>
             </div>
         </div>
-
-        <!-- <div class="p-toolbar-group-end">
-          <button pButton icon="pi pi-search" class="p-button-outlined"></button>
-        </div> -->
-    </p-toolbar>
-
-    <div class="body flex-grow-1 w-full h-full pt-2">
-        <router-outlet></router-outlet>
+        <div class="body flex-grow-1 w-full h-full pt-2">
+            <router-outlet></router-outlet>
+        </div>
     </div>
-    <p-toast></p-toast>
-</div>
 
-<p-sidebar [(visible)]="display">
-    <ng-template pTemplate="header">
-        <h2 style="font-weight:normal">Menu</h2>
-    </ng-template>
-    <ng-template pTemplate="content">
-        <div class="flex flex-column w-full">
-            <p-menu [model]="items" class="w-full side-bar-menu"></p-menu>
-        </div>
-    </ng-template>
-</p-sidebar>
+</tui-root>
