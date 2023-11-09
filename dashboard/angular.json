@@ -129,6 +129,41 @@
               "sourceMap": true,
               "namedChunks": true
             },
+            "intentx": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "5mb",
+                  "maximumError": "10mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.intentx.ts"
+                }
+              ]
+            },
+            "intentx_dev": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.intentx.ts"
+                }
+              ],
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            },
             "cloverfield_fantom": {
               "budgets": [
                 {
@@ -265,6 +300,9 @@
             },
             "based": {
               "browserTarget": "symmio-analytics-dashboard:build:based_dev"
+            },
+            "intentx": {
+              "browserTarget": "symmio-analytics-dashboard:build:intentx_dev"
             },
             "development": {
               "browserTarget": "symmio-analytics-dashboard:build:development"
