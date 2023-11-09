@@ -1,6 +1,4 @@
-import enum
 from datetime import datetime
-from decimal import Decimal
 
 from peewee import *
 from playhouse.postgres_ext import JSONField
@@ -271,6 +269,23 @@ class AggregateData(BaseModel):
     next_funding_rate_total: int
     next_funding_rate_main_markets: int
 
+    @property
+    def binance_profit(self):
+        binance_deposit = int(self.binance_deposit) if self.binance_deposit else 0
+        return self.binance_total_balance - binance_deposit
+
+    @property
+    def contract_profit(self):
+        return (self.hedger_contract_balance
+                + self.hedger_contract_allocated
+                + self.hedger_upnl
+                - self.hedger_contract_deposit
+                + self.hedger_contract_withdraw)
+
+    @property
+    def total_state(self):
+        return self.binance_profit + self.contract_profit
+
     @staticmethod
     def is_timeseries():
         return True
@@ -340,6 +355,16 @@ class FundingRate(BaseModel):
     symbol = CharField()
     rate = DecimalField(max_digits=20, decimal_places=10)
     timestamp = DateTimeField()
+
+    @staticmethod
+    def is_timeseries():
+        return False
+
+
+class StatsBotMessage(BaseModel):
+    message_id = IntegerField(unique=True)
+    timestamp = DateTimeField()
+    content = TextField()
 
     @staticmethod
     def is_timeseries():

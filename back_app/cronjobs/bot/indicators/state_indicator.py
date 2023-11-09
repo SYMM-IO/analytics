@@ -13,9 +13,9 @@ class IndicatorMode:
 class StateIndicator:
     last_mention_timestamps = defaultdict(lambda: 0)
 
-    def __init__(self, name):
+    def __init__(self, name, mode=None):
         self.name = name
-        self.mode = None
+        self.mode = mode
 
     def set_mode(self, mode: IndicatorMode):
         self.mode = mode

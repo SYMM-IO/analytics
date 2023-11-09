@@ -37,3 +37,7 @@ mention_for_red_alert_accounts = []
 mention_cooldown = 10 * 60
 
 main_market_symbols = []
+
+stat_chat_id = 'stat_chat_id'
+telegram_client_api_id = 1234
+telegram_client_api_hash = '1234'

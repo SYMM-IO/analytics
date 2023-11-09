@@ -29,7 +29,7 @@ from config.local_settings import (
 )
 from config.settings import erc20_abi
 from context.context import binance_client
-from cronjobs.analytics_bot import prepare_and_report_data
+from cronjobs.bot.analytics_bot import prepare_and_report_data
 from cronjobs.binance_trade_volume import calculate_binance_trade_volume
 from cronjobs.data_loaders import (
     load_accounts,
