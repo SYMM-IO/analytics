@@ -1,5 +1,5 @@
-<div class="chart-container w-full h-full p-2" style="position: relative">
-    <div echarts *ngIf="chartOption" [options]="chartOption" theme="dark"
+<div class="chart-container w-full h-full p-2" style="position: relative" *tuiLet="stateService.nightMode | async as night">
+    <div echarts *ngIf="chartOption" [options]="chartOption" [theme]="night ? 'dark' : 'light'"
          [autoResize]="true" #chart (chartInit)="onChartInit($event)"
          class="chart" appResizeObserver (resize)="onResize($event)">
     </div>

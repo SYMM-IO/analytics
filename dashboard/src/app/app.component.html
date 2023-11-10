@@ -1,4 +1,4 @@
-<tui-root *tuiLet="night$ | async as night"
+<tui-root *tuiLet="stateService.nightMode | async as night"
           [tuiMode]="night ? 'onDark' : null">
     <tui-theme-night *ngIf="night"></tui-theme-night>
     <div class="root flex flex-column h-full flex-grow p-2">

@@ -6,6 +6,7 @@ import {DailyHistory} from "../services/graph-models"
 import BigNumber from "bignumber.js"
 import {aggregateDailyHistories} from "../utils"
 import {SubEnvironmentInterface} from "../../environments/environment-interface"
+import {StateService} from "../state.service"
 
 @Component({
 	selector: 'app-chart',
@@ -35,7 +36,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 	groupedByMonth: boolean = false
 	mainColor: string
 
-	constructor(readonly environmentService: EnvironmentService) {
+	constructor(readonly environmentService: EnvironmentService, readonly stateService: StateService) {
 		this.mainColor = environmentService.getValue("mainColor")
 		this.environments = environmentService.getValue("environments")
 	}
