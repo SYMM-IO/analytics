@@ -33,6 +33,7 @@ class MismatchIndicator(StateIndicator):
             if diff > field_check.threshold:
                 self.set_mode(IndicatorMode.RED)
                 return
+        self.set_mode(IndicatorMode.GREEN)
 
     def get_applicable_mentions(self):
         return mention_for_red_alert_maintenance_accounts
