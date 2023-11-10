@@ -185,6 +185,18 @@ def report_aggregate_data(
     ]
     quote_stats_info = "\n".join(quote_stats_lines)
 
+    liquidators_state_info = "\n---- 💸 Liquidators state 💸 ----\n"
+    if data.liquidator_states:
+        for ind, state in enumerate(data.liquidator_states):
+            state2 = today_data.liquidator_states[ind]
+            liquidators_state_info += (
+                f"{state['address']}\n"
+                f"    Withdraw: {format(state['withdraw'])} | {format(state2['withdraw'])}\n"
+                f"    Current Balance: {format(state['balance'])} | {format(state2['balance'])}\n"
+                f"    Current Allocated: {format(state['allocated'])} | {format(state2.get('allocated', 0))}\n"
+            )
+
+
     report = f"""
 {"".join(indicator.mode for indicator in indicators)}
 
@@ -246,21 +258,11 @@ Available Balance: {format(data.binance_av_balance)} | {format(today_data.binanc
 Total Initial Margin: {format(data.binance_total_initial_margin)} | {format(today_data.binance_total_initial_margin)}
 Max Withdraw Amount: {format(data.binance_max_withdraw_amount)} | {format(today_data.binance_max_withdraw_amount)}
 Total Trade Volume: {format(data.binance_trade_volume)} | {format(today_data.binance_trade_volume)}
+
+{liquidators_state_info}
+
+Fetching data at {datetime.utcnow().strftime('%A, %d. %B %Y %I:%M:%S %p')} UTC
 """
-
-    liquidators_state_info = "\n---- 💸 Liquidators state 💸 ----\n"
-    if data.liquidator_states:
-        for ind, state in enumerate(data.liquidator_states):
-            state2 = today_data.liquidator_states[ind]
-            liquidators_state_info += (
-                f"{state['address']}\n"
-                f"    Withdraw: {format(state['withdraw'])} | {format(state2['withdraw'])}\n"
-                f"    Current Balance: {format(state['balance'])} | {format(state2['balance'])}\n"
-                f"    Current Allocated: {format(state['allocated'])} | {format(state2.get('allocated', 0))}\n"
-            )
-
-    report += f"Fetching data at {datetime.utcnow().strftime('%A, %d. %B %Y %I:%M:%S %p')} UTC"
-
     if end_dey_tag:
         report += "#EndOfDay\n"
 
