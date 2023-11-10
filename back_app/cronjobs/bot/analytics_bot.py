@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+from decimal import Decimal
 from typing import List
 
 import peewee
@@ -8,6 +9,7 @@ from app.models import AggregateData, StatsBotMessage
 from config.settings import funding_rate_alert_threshold, fetch_data_interval, closable_funding_rate_alert_threshold
 from cronjobs.bot.indicators.mismatch_indicator import MismatchIndicator, FieldCheck
 from cronjobs.bot.indicators.state_indicator import StateIndicator, IndicatorMode
+from utils.common_utils import load_config
 from utils.formatter_utils import format
 from utils.parser_utils import parse_message
 from utils.telegram_utils import send_message, escape_markdown_v1
@@ -116,6 +118,13 @@ def prepare_and_report_data(aggregate_data: AggregateData):
     last_msg = messages[0]
     parsed_message = parse_message(last_msg.content)
 
+    config = load_config()
+    config.binanceDeposit = Decimal(parsed_message["binance deposited"] * 10 ** 18)
+    config.save()
+
+    aggregate_data.binance_deposit = config.binanceDeposit
+    aggregate_data.save()
+
     end_day_tag = is_end_of_day()
     try:
         last_night_aggregate = get_yesterday_last_aggregate()
@@ -154,7 +163,6 @@ def initialize_indicators(data: AggregateData, parsed_stat_message: dict) -> Lis
 
     mismatch_indicator = MismatchIndicator("MisMatch")
     mismatch_indicator.update_state(data, parsed_stat_message, [
-        FieldCheck("binance_deposit", "binance deposited", 0),
         FieldCheck("total_state", "total state", 5)
     ])
 
