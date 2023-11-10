@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import List
 
 from app.models import AggregateData
+from config.local_settings import mention_for_red_alert_maintenance_accounts
 from cronjobs.bot.indicators.state_indicator import StateIndicator, IndicatorMode
 
 
@@ -32,3 +33,6 @@ class MismatchIndicator(StateIndicator):
             if diff > field_check.threshold:
                 self.set_mode(IndicatorMode.RED)
                 return
+
+    def get_applicable_mentions(self):
+        return mention_for_red_alert_maintenance_accounts

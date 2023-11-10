@@ -20,10 +20,13 @@ class StateIndicator:
     def set_mode(self, mode: IndicatorMode):
         self.mode = mode
 
+    def get_applicable_mentions(self):
+        return mention_for_red_alert_accounts
+
     def get_mentions(self):
         if self.mode == IndicatorMode.RED:
             now = time.time()
             if now > StateIndicator.last_mention_timestamps[self.name] + mention_cooldown:
                 StateIndicator.last_mention_timestamps[self.name] = now
-                return mention_for_red_alert_accounts
+                return self.get_applicable_mentions()
         return []
