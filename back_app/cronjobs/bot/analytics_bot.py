@@ -156,8 +156,8 @@ def initialize_indicators(data: AggregateData, parsed_stat_message: dict) -> Lis
             non_closable_funding += value
 
     non_closable_funding_indicator = StateIndicator(
-        "FundingRate", mode=IndicatorMode.RED
-        if non_closable_funding < FUNDING_RATE_THRESHOLD
+        "NonClosableFundingRate", mode=IndicatorMode.RED
+        if non_closable_funding > FUNDING_RATE_THRESHOLD
         else IndicatorMode.GREEN
     )
 
