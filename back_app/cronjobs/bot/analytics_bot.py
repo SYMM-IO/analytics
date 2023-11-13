@@ -157,13 +157,13 @@ def initialize_indicators(data: AggregateData, parsed_stat_message: dict) -> Lis
 
     non_closable_funding_indicator = StateIndicator(
         "NonClosableFundingRate", mode=IndicatorMode.RED
-        if non_closable_funding > FUNDING_RATE_THRESHOLD
+        if non_closable_funding < FUNDING_RATE_THRESHOLD
         else IndicatorMode.GREEN
     )
 
     closable_market_with_high_funding = None
     for market, value in data.next_funding_rate.items():
-        if market not in main_market_symbols and value > CLOSABLE_FUNDING_RATE_THRESHOLD:
+        if market not in main_market_symbols and value < CLOSABLE_FUNDING_RATE_THRESHOLD:
             closable_market_with_high_funding = market
             break
 
