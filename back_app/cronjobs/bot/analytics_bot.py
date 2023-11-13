@@ -6,6 +6,7 @@ from typing import List
 import peewee
 
 from app.models import AggregateData, StatsBotMessage
+from config.local_settings import main_market_symbols
 from config.settings import funding_rate_alert_threshold, fetch_data_interval, closable_funding_rate_alert_threshold
 from cronjobs.bot.indicators.mismatch_indicator import MismatchIndicator, FieldCheck
 from cronjobs.bot.indicators.state_indicator import StateIndicator, IndicatorMode
@@ -149,15 +150,26 @@ CLOSABLE_FUNDING_RATE_THRESHOLD = -(closable_funding_rate_alert_threshold * 10 *
 
 
 def initialize_indicators(data: AggregateData, parsed_stat_message: dict) -> List[StateIndicator]:
-    funding_indicator = StateIndicator(
+    non_closable_funding = 0
+    for market, value in data.next_funding_rate.items():
+        if market in main_market_symbols:
+            non_closable_funding += value
+
+    non_closable_funding_indicator = StateIndicator(
         "FundingRate", mode=IndicatorMode.RED
-        if data.next_funding_rate_total < FUNDING_RATE_THRESHOLD
+        if non_closable_funding < FUNDING_RATE_THRESHOLD
         else IndicatorMode.GREEN
     )
 
+    closable_market_with_high_funding = None
+    for market, value in data.next_funding_rate.items():
+        if market not in main_market_symbols and value > CLOSABLE_FUNDING_RATE_THRESHOLD:
+            closable_market_with_high_funding = market
+            break
+
     closable_funding_indicator = StateIndicator(
         "ClosableFundingRate", mode=IndicatorMode.RED
-        if data.next_funding_rate_total - data.next_funding_rate_main_markets < CLOSABLE_FUNDING_RATE_THRESHOLD
+        if closable_market_with_high_funding is not None
         else IndicatorMode.GREEN
     )
 
@@ -166,7 +178,7 @@ def initialize_indicators(data: AggregateData, parsed_stat_message: dict) -> Lis
         FieldCheck("total_state", "total state", 5)
     ])
 
-    return [funding_indicator, closable_funding_indicator, mismatch_indicator]
+    return [non_closable_funding_indicator, closable_funding_indicator, mismatch_indicator]
 
 
 def report_aggregate_data(
@@ -196,6 +208,13 @@ def report_aggregate_data(
                 f"    Current Allocated: {format(state['allocated'])} | {format(state2.get('allocated', 0))}\n"
             )
 
+    non_closable_funding = 0
+    closable_funding = 0
+    for market, value in data.next_funding_rate.items():
+        if market in main_market_symbols:
+            non_closable_funding += value
+        else:
+            closable_funding += value
 
     report = f"""
 {"".join(indicator.mode for indicator in indicators)}
@@ -209,8 +228,9 @@ Platform Fee: {format(data.platform_fee)} | {format(today_data.platform_fee)}
 Trade Volume: {format(data.trade_volume)} | {format(today_data.trade_volume)}
 
 ---- 💸 Funding Rate 💸 ----
-Next funding rate total: {format(data.next_funding_rate_total)}
-Next funding rate main markets: {format(data.next_funding_rate_main_markets)}
+Next funding rate non-closable: {format(non_closable_funding)}
+Next funding rate closable: {format(closable_funding)}
+Next funding rate total: {format(closable_funding + non_closable_funding)}
 Paid funding rate: {format(data.paid_funding_rate)} | {format(today_data.paid_funding_rate)}
 
 ---- 💰 Deposits Of Hedger 💰 ----
@@ -258,9 +278,7 @@ Available Balance: {format(data.binance_av_balance)} | {format(today_data.binanc
 Total Initial Margin: {format(data.binance_total_initial_margin)} | {format(today_data.binance_total_initial_margin)}
 Max Withdraw Amount: {format(data.binance_max_withdraw_amount)} | {format(today_data.binance_max_withdraw_amount)}
 Total Trade Volume: {format(data.binance_trade_volume)} | {format(today_data.binance_trade_volume)}
-
 {liquidators_state_info}
-
 Fetching data at {datetime.utcnow().strftime('%A, %d. %B %Y %I:%M:%S %p')} UTC
 """
     if end_dey_tag:

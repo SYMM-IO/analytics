@@ -266,8 +266,7 @@ class AggregateData(BaseModel):
     timestamp = DateTimeField(primary_key=True)
     paid_funding_rate = DecimalField(max_digits=40, decimal_places=0)
     binance_trade_volume = DecimalField(max_digits=40, decimal_places=0)
-    next_funding_rate_total: int
-    next_funding_rate_main_markets: int
+    next_funding_rate: dict
 
     @property
     def binance_profit(self):

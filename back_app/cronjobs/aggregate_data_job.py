@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -25,12 +26,11 @@ from config.local_settings import (
     symmio_address,
     symmio_collateral_address,
     symmio_liquidators,
-    symmio_multi_account, main_market_symbols,
-)
+    symmio_multi_account, )
 from config.settings import erc20_abi
 from context.context import binance_client
-from cronjobs.bot.analytics_bot import prepare_and_report_data
 from cronjobs.binance_trade_volume import calculate_binance_trade_volume
+from cronjobs.bot.analytics_bot import prepare_and_report_data
 from cronjobs.data_loaders import (
     load_accounts,
     load_daily_histories,
@@ -448,19 +448,14 @@ def prepare_aggregate_data(config):
     positions = binance_client.futures_position_information()
     open_positions = [p for p in positions if Decimal(p['notional']) != 0]
 
-    next_funding_rate_total = 0
-    next_funding_rate_main_markets = 0
+    next_funding_rate = defaultdict(lambda: Decimal(0))
     for pos in open_positions:
         notional, symbol, side = Decimal(pos['notional']), pos["symbol"], pos["positionSide"]
         funding_rate = pos['fundingRate'] = real_time_funding_rate(symbol=symbol)
         funding_rate_fee = -1 * notional * funding_rate
+        next_funding_rate[symbol] += funding_rate_fee * 10 ** 18
 
-        if symbol in main_market_symbols:
-            next_funding_rate_main_markets += funding_rate_fee
-        next_funding_rate_total += funding_rate_fee
-
-    data.next_funding_rate_total = next_funding_rate_total * 10 ** 18
-    data.next_funding_rate_main_markets = next_funding_rate_main_markets * 10 ** 18
+    data.next_funding_rate = next_funding_rate
 
     data.timestamp = datetime.utcnow()
     aggregate_data = AggregateData.create(**data)
