@@ -28,7 +28,6 @@ class BaseModel(Model):
 class User(BaseModel):
     id = CharField(primary_key=True)
     timestamp = DateTimeField()
-    lastActivityTimestamp = DateTimeField()
     transaction = CharField()
 
     @staticmethod

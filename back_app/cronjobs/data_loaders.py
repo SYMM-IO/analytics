@@ -128,7 +128,6 @@ def load_users(config):
         fields=[
             "transaction",
             "timestamp",
-            "lastActivityTimestamp",
             "id",
         ],
         pagination_field_name="timestamp",
