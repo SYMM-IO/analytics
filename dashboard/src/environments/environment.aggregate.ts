@@ -11,11 +11,11 @@ export const environment: EnvironmentInterface = {
 	assetsFolder: "aggregate",
 	aggregate: true,
 	environments: [
-		intentXEnv,
+		cloverfieldFantomEnv,
+		cloverfieldBnbEnv,
 		thenaEnvV1,
 		thenaEnvV2,
 		basedEnv,
-		cloverfieldBnbEnv,
-		cloverfieldFantomEnv
+		intentXEnv,
 	]
 }
