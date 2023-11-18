@@ -6,7 +6,7 @@ export const subEnvironment: SubEnvironmentInterface = {
 	collateralDecimal: 6,
 	mainColor: "#F5B3F7",
 	accountSource: "0x5dE6949717F3AA8E0Fbed5Ce8B611Ebcf1e44AE9",
-	fromTimestamp: "0",
+	fromTimestamp: "1692265765",
 }
 
 export const environment: EnvironmentInterface = {
