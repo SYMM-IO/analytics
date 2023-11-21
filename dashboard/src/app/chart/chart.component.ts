@@ -88,7 +88,8 @@ export class ChartComponent implements OnInit, OnDestroy {
 						res += item.seriesName + ': ' + that.yAxisFormatter(item.value[1]) + '<br/>'
 					})
 					if (params.length > 1) {
-						let sum = params.reduce((a: any, b: any) => a + b.value[1], 0)
+						let p = params[params.length - 1].seriesName == "Cumulative" ? params.slice(0, params.length - 1) : params;
+						let sum = p.reduce((a: any, b: any) => a + b.value[1], 0)
 						res += '<br/>' + `<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:black"></span>`
 						res +=  "Aggregated" + ': ' + that.yAxisFormatter(sum) + '<br/>'
 					}
