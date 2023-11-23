@@ -324,6 +324,17 @@ class BinanceTransfer(BaseModel):
         return False
 
 
+class BinanceIncome(BaseModel):
+    asset = CharField()
+    type = CharField()
+    amount = FloatField()
+    timestamp = DateTimeField()
+
+    @staticmethod
+    def is_timeseries():
+        return False
+
+
 class BinanceTrade(BaseModel):
     symbol = CharField()
     id = CharField(primary_key=True)

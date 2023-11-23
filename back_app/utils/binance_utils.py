@@ -6,7 +6,7 @@ from decimal import Decimal
 import requests
 from peewee import fn
 
-from app.models import BinanceDeposit, BinanceWithdraw, BinanceTransfer, FundingRate, SymbolPrice
+from app.models import BinanceDeposit, BinanceWithdraw, BinanceTransfer, FundingRate, SymbolPrice, BinanceIncome
 from config.local_settings import binance_email, binance_is_master, from_unix_timestamp
 from config.settings import proxies
 from context.context import binance_client
@@ -164,6 +164,43 @@ def fetch_binance_transfer_histories(model, fetch_function, timestamp_field, lim
         end_time = start_time + timedelta(days=limit_days)
 
 
+def fetch_binance_income_histories(model, fetch_function, timestamp_field, limit_days=7, asset_field="asset"):
+    # Get the latest timestamp from the database for the respective model
+    latest_record = model.select().order_by(model.timestamp.desc()).first()
+
+    # If there's a record in the database, use its timestamp as the starting point
+    if latest_record:
+        start_time = latest_record.timestamp + timedelta(minutes=1)
+    else:
+        start_time = load_config().deployTimestamp
+
+    end_time = start_time + timedelta(days=limit_days)
+    current_time = datetime.utcnow()
+
+    while start_time < current_time:
+        print(f"{start_time=}, {end_time=}")
+        data = fetch_function(startTime=int(start_time.timestamp() * 1000), endTime=int(end_time.timestamp() * 1000),
+                              limit=1000)
+        if not data:
+            start_time = end_time
+            end_time = start_time + timedelta(days=limit_days)
+            continue
+
+        for item in data:
+            model.create(
+                asset=item[asset_field],
+                amount=item['income'],
+                type=item['incomeType'],
+                timestamp=datetime.fromtimestamp(item[timestamp_field] / 1000)  # Convert from milliseconds
+            )
+
+        if len(data) == 1000:
+            start_time = datetime.fromtimestamp(data[-1][timestamp_field] / 1000)
+        else:
+            start_time = end_time
+        end_time = start_time + timedelta(days=limit_days)
+
+
 def update_binance_deposit():
     print("Updating Binance Deposits")
     print("Deposit .")
@@ -182,4 +219,13 @@ def update_binance_deposit():
     balance = total_deposit - total_withdraw - total_transfers
     config = load_config()
     config.binanceDeposit = balance * 10 ** 18
+    config.save()
+
+
+def update_binance_deposit_v2():
+    fetch_binance_income_histories(BinanceIncome, binance_client.futures_income_history, 'time')
+    total_transfers = (BinanceIncome.select(fn.SUM(BinanceIncome.amount))
+                       .where(BinanceIncome.type == "TRANSFER").scalar() or 0.0)
+    config = load_config()
+    config.binanceDeposit = total_transfers * 10 ** 18
     config.save()
