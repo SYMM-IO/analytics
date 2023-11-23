@@ -14,7 +14,7 @@ from app.models import (
     PaidFundingRate,
     Quote,
     Symbol,
-    TradeHistory, BalanceChange, BalanceChangeType,
+    TradeHistory, BalanceChange, BalanceChangeType, BinanceIncome,
 )
 from config.local_settings import (
     deposit_diff,
@@ -441,9 +441,17 @@ def prepare_aggregate_data(config):
     data.binance_trade_volume = Decimal(calculate_binance_trade_volume() * 10 ** 18)
 
     # ------------------------------------------
-    data.paid_funding_rate = PaidFundingRate.select(
-        fn.Sum(PaidFundingRate.amount)
-    ).where(PaidFundingRate.timestamp > from_time, PaidFundingRate.amount < 0).scalar() or Decimal(0)
+    # data.paid_funding_rate = PaidFundingRate.select(
+    #     fn.Sum(PaidFundingRate.amount)
+    # ).where(PaidFundingRate.timestamp > from_time, PaidFundingRate.amount < 0).scalar() or Decimal(0)
+
+    data.paid_funding_rate = (BinanceIncome.select(
+        fn.Sum(BinanceIncome.amount)
+    ).where(
+        BinanceIncome.timestamp > from_time,
+        BinanceIncome.amount < 0,
+        BinanceIncome.type == "FUNDING_FEE"
+    ).scalar() or Decimal(0))
 
     positions = binance_client.futures_position_information()
     open_positions = [p for p in positions if Decimal(p['notional']) != 0]
