@@ -14,12 +14,12 @@
                 </span>
 
                 <ng-container *ngIf="lastDayValue!= null && lastDayValue.gt(0) && todayValue.gt(0)">
-                    <div class="flex flex-row gap-1 red-text" *ngIf="todayValue.lt(lastDayValue)">
-                        <span class="text-sm">
-                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%
-                        </span>
-                        <span class="pi pi-arrow-down"></span>
-                    </div>
+<!--                    <div class="flex flex-row gap-1 red-text" *ngIf="todayValue.lt(lastDayValue)">-->
+<!--                        <span class="text-sm">-->
+<!--                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%-->
+<!--                        </span>-->
+<!--                        <span class="pi pi-arrow-down"></span>-->
+<!--                    </div>-->
 
                     <div class="flex flex-row gap-1 green-text" *ngIf="todayValue.gt(lastDayValue)">
                         <span class="text-sm">
@@ -44,12 +44,12 @@
                 </span>
 
                 <ng-container *ngIf="lastDayValue!= null && lastDayValue.gt(0) && todayValue.gt(0)">
-                    <div class="flex flex-row gap-1 red-text" *ngIf="todayValue.lt(lastDayValue)">
-                        <span class="text-sm">
-                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%
-                        </span>
-                        <span class="pi pi-arrow-down"></span>
-                    </div>
+<!--                    <div class="flex flex-row gap-1 red-text" *ngIf="todayValue.lt(lastDayValue)">-->
+<!--                        <span class="text-sm">-->
+<!--                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%-->
+<!--                        </span>-->
+<!--                        <span class="pi pi-arrow-down"></span>-->
+<!--                    </div>-->
 
                     <div class="flex flex-row gap-1 green-text" *ngIf="todayValue.gt(lastDayValue)">
                         <span class="text-sm">
