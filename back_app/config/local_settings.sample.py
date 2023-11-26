@@ -1,44 +1,39 @@
-import json
+from typing import List
 
-subgraph_endpoint = ''
-rpc = ''
-hedger_address = ''
-hedger_max_open_interest_ratio = 20
-symmio_address = ''
-symmio_collateral_address = ''
-symmio_liquidators = []
-symmio_multi_account = ''
+from config.settings import Context
+from context.context import ContextUtils
 
-with open('./config/abis/abi.json', 'r') as f:
-    symmio_abi = json.load(f)
+x_configuration = Context(
+    tenant="",
+    subgraph_endpoint="",
+    rpc="",
+    hedger_address="",
+    hedger_max_open_interest_ratio=0,
+    symmio_address="",
+    symmio_collateral_address="",
+    symmio_liquidators=["", ""],
+    symmio_multi_account="",
+    binance_api_key="",
+    binance_api_secret="",
+    binance_email="",
+    binance_is_master=False,
+    telegram_group_id="",
+    deposit_diff=0,
+    from_unix_timestamp=0,
+    mention_for_red_alert_accounts=[],
+    mention_for_red_alert_maintenance_accounts=[],
+    mention_cooldown=0,
+    telegram_stat_group_id=0,
+    utils=None,
+)
+x_configuration.utils = ContextUtils.from_configuration(x_configuration)
 
-binance_api_key = ""
-binance_api_secret = ""
-binance_email = ""
-binance_is_master = True
+contexts: List[Context] = [x_configuration]
 
-telegram_group_id = ''
-telegram_alert_group_id = ''
-telegram_bot_token = ''
-telegram_api_auth_token = ''
+# Telegram
+telegram_alert_group_id = ""
+telegram_bot_token = ""
+telegram_client_api_id = 0
+telegram_client_api_hash = ""
 
 admin_api_key = ""
-
-db_name = "postgres"
-db_user = "postgres"
-db_password = "password"
-db_host = "localhost"
-db_port = 5432
-
-deposit_diff = 0
-from_unix_timestamp = 1677529800000
-
-mention_for_red_alert_accounts = []
-mention_for_red_alert_maintenance_accounts = []
-mention_cooldown = 10 * 60
-
-main_market_symbols = []
-
-stat_chat_id = 'stat_chat_id'
-telegram_client_api_id = 1234
-telegram_client_api_hash = '1234'

@@ -2,21 +2,28 @@ import datetime
 
 import web3
 
-from config.local_settings import rpc, symmio_collateral_address
-from config.settings import erc20_abi
+from config.settings import erc20_abi, Context
 
 
-def load_config(name: str = "DefaultConfiguration"):
+def load_config(context: Context, name: str = "DefaultConfiguration"):
     from app.models import RuntimeConfiguration
 
     try:
-        config = RuntimeConfiguration.get(name=name)
+        config = RuntimeConfiguration.get(name=name, tenant=context.tenant)
     except:
-        w3 = web3.Web3(web3.Web3.HTTPProvider(rpc))
-        collateral_contract = w3.eth.contract(address=w3.to_checksum_address(symmio_collateral_address), abi=erc20_abi)
+        w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
+        collateral_contract = w3.eth.contract(
+            address=w3.to_checksum_address(context.symmio_collateral_address),
+            abi=erc20_abi,
+        )
         decimals = collateral_contract.functions.decimals().call()
-        config = RuntimeConfiguration.create(binanceDeposit=0, decimals=decimals, name=name,
-                                             deployTimestamp=datetime.datetime.utcnow() - datetime.timedelta(days=300))
+        config = RuntimeConfiguration.create(
+            binanceDeposit=0,
+            decimals=decimals,
+            name=name,
+            tenant=context.tenant,
+            deployTimestamp=datetime.datetime.utcnow() - datetime.timedelta(days=300),
+        )
         config.save()
     return config
 

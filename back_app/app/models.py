@@ -3,7 +3,7 @@ from datetime import datetime
 from peewee import *
 from playhouse.postgres_ext import JSONField
 
-from context.context import pg_db
+from app import pg_db
 
 
 class BaseModel(Model):
@@ -16,8 +16,10 @@ class BaseModel(Model):
         for name, field in fields.items():
             data[field] = getattr(self, name)
         self.insert(**self.__data__).on_conflict(
-            conflict_target=[fields['timestamp'] if self.is_timeseries() else fields['id']],
-            update=data
+            conflict_target=[
+                fields["timestamp"] if self.is_timeseries() else fields["id"]
+            ],
+            update=data,
         ).execute()
 
     @staticmethod
@@ -29,6 +31,7 @@ class User(BaseModel):
     id = CharField(primary_key=True)
     timestamp = DateTimeField()
     transaction = CharField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -37,7 +40,7 @@ class User(BaseModel):
 
 class Account(BaseModel):
     id = CharField(primary_key=True)
-    user = ForeignKeyField(User, backref='accounts')
+    user = ForeignKeyField(User, backref="accounts")
     name = CharField(null=True)
     accountSource = CharField(null=True)
     quotesCount = IntegerField()
@@ -46,6 +49,7 @@ class Account(BaseModel):
     lastActivityTimestamp = DateTimeField()
     timestamp = DateTimeField()
     updateTimestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -57,16 +61,18 @@ class BalanceChangeType:
     WITHDRAW = "WITHDRAW"
     ALLOCATE_PARTY_A = "ALLOCATE_PARTY_A"
     DEALLOCATE_PARTY_A = "DEALLOCATE_PARTY_A"
+    tenant = CharField(null=False)
 
 
 class BalanceChange(BaseModel):
     id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref='balances')
+    account = ForeignKeyField(Account, backref="balances")
     amount = DecimalField(max_digits=40, decimal_places=0, default=0)
     collateral = CharField()
     type = CharField()
     timestamp = DateTimeField()
     transaction = CharField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -75,12 +81,13 @@ class BalanceChange(BaseModel):
 
 class DepositPartyA(BaseModel):
     id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref='deposits')
+    account = ForeignKeyField(Account, backref="deposits")
     amount = DecimalField(max_digits=40, decimal_places=0)
     blockNumber = IntegerField()
     transaction = CharField()
     timestamp = DateTimeField()
     updateTimestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -89,12 +96,13 @@ class DepositPartyA(BaseModel):
 
 class WithdrawPartyA(BaseModel):
     id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref='withdraws')
+    account = ForeignKeyField(Account, backref="withdraws")
     amount = DecimalField(max_digits=40, decimal_places=0)
     blockNumber = IntegerField()
     transaction = CharField()
     timestamp = DateTimeField()
     updateTimestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -103,12 +111,13 @@ class WithdrawPartyA(BaseModel):
 
 class AllocatedPartyA(BaseModel):
     id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref='allocations')
+    account = ForeignKeyField(Account, backref="allocations")
     amount = DecimalField(max_digits=40, decimal_places=0)
     blockNumber = IntegerField()
     transaction = CharField()
     timestamp = DateTimeField()
     updateTimestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -117,12 +126,13 @@ class AllocatedPartyA(BaseModel):
 
 class DeallocatePartyA(BaseModel):
     id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref='deallocations')
+    account = ForeignKeyField(Account, backref="deallocations")
     amount = DecimalField(max_digits=40, decimal_places=0)
     blockNumber = IntegerField()
     transaction = CharField()
     timestamp = DateTimeField()
     updateTimestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -136,6 +146,7 @@ class Symbol(BaseModel):
     timestamp = DateTimeField()
     main_market = BooleanField(default=False)
     updateTimestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -144,8 +155,8 @@ class Symbol(BaseModel):
 
 class Quote(BaseModel):
     id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref='quotes')
-    symbolId = ForeignKeyField(Symbol, backref='quotes')
+    account = ForeignKeyField(Account, backref="quotes")
+    symbolId = ForeignKeyField(Symbol, backref="quotes")
     partyBsWhiteList = TextField()
     partyB = CharField(null=True)
     positionType = CharField()
@@ -167,6 +178,7 @@ class Quote(BaseModel):
     transaction = CharField()
     timestamp = DateTimeField()
     updateTimestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -175,14 +187,15 @@ class Quote(BaseModel):
 
 class TradeHistory(BaseModel):
     id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref='trade_histories')
-    quote = ForeignKeyField(Quote, backref='quote_trade_histories')
+    account = ForeignKeyField(Account, backref="trade_histories")
+    quote = ForeignKeyField(Quote, backref="quote_trade_histories")
     volume = DecimalField(max_digits=40, decimal_places=0)
     blockNumber = IntegerField()
     transaction = CharField()
     quoteStatus = CharField()
     timestamp = DateTimeField()
     updateTimestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -204,6 +217,7 @@ class DailyHistory(BaseModel):
     openInterest = DecimalField(max_digits=40, decimal_places=0)
     updateTimestamp = DateTimeField()
     timestamp = DateTimeField(primary_key=True)
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -211,12 +225,13 @@ class DailyHistory(BaseModel):
 
 
 class RuntimeConfiguration(BaseModel):
-    name = CharField(unique=True)
+    name = CharField()
     binanceDeposit = DecimalField(max_digits=40, decimal_places=0)
     decimals = IntegerField()
     migrationVersion = IntegerField(default=0)
     updateTimestamp = DateTimeField(default=datetime.fromtimestamp(0))
     deployTimestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -227,6 +242,7 @@ class PaidFundingRate(BaseModel):
     symbol = CharField()
     timestamp = DateTimeField()
     amount = DecimalField(max_digits=40, decimal_places=0)
+    tenant = CharField(null=False)
 
 
 class AggregateData(BaseModel):
@@ -266,6 +282,7 @@ class AggregateData(BaseModel):
     paid_funding_rate = DecimalField(max_digits=40, decimal_places=0)
     binance_trade_volume = DecimalField(max_digits=40, decimal_places=0)
     next_funding_rate: dict
+    tenant = CharField(null=False)
 
     @property
     def binance_profit(self):
@@ -274,11 +291,13 @@ class AggregateData(BaseModel):
 
     @property
     def contract_profit(self):
-        return (self.hedger_contract_balance
-                + self.hedger_contract_allocated
-                + self.hedger_upnl
-                - self.hedger_contract_deposit
-                + self.hedger_contract_withdraw)
+        return (
+            self.hedger_contract_balance
+            + self.hedger_contract_allocated
+            + self.hedger_upnl
+            - self.hedger_contract_deposit
+            + self.hedger_contract_withdraw
+        )
 
     @property
     def total_state(self):
@@ -294,6 +313,7 @@ class BinanceDeposit(BaseModel):
     amount = FloatField()
     status = IntegerField()
     timestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -305,6 +325,7 @@ class BinanceWithdraw(BaseModel):
     amount = FloatField()
     status = IntegerField()
     timestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -318,6 +339,7 @@ class BinanceTransfer(BaseModel):
     frm = CharField()
     to = CharField()
     timestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -329,6 +351,7 @@ class BinanceIncome(BaseModel):
     type = CharField()
     amount = FloatField()
     timestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -344,6 +367,7 @@ class BinanceTrade(BaseModel):
     qty = DecimalField(max_digits=20, decimal_places=6)
     price = DecimalField(max_digits=20, decimal_places=6)
     timestamp = DateTimeField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -374,6 +398,7 @@ class StatsBotMessage(BaseModel):
     message_id = IntegerField(unique=True)
     timestamp = DateTimeField()
     content = TextField()
+    tenant = CharField(null=False)
 
     @staticmethod
     def is_timeseries():

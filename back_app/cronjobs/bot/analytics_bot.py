@@ -1,16 +1,16 @@
 import json
 from datetime import datetime, timedelta
-from decimal import Decimal
 from typing import List
 
 import peewee
 
 from app.models import AggregateData, StatsBotMessage
-from config.local_settings import main_market_symbols
-from config.settings import funding_rate_alert_threshold, fetch_data_interval, closable_funding_rate_alert_threshold
+from config.settings import (
+    main_market_symbols, funding_rate_alert_threshold, fetch_data_interval,
+    closable_funding_rate_alert_threshold, Context
+)
 from cronjobs.bot.indicators.mismatch_indicator import MismatchIndicator, FieldCheck
 from cronjobs.bot.indicators.state_indicator import StateIndicator, IndicatorMode
-from utils.common_utils import load_config
 from utils.formatter_utils import format
 from utils.parser_utils import parse_message
 from utils.telegram_utils import send_message, escape_markdown_v1
@@ -83,7 +83,7 @@ def calculate_diff(old_data: AggregateData, new_data: AggregateData):
         field.name
         for field in AggregateData._meta.fields.values()
         if isinstance(field, peewee.DecimalField)
-           or isinstance(field, peewee.IntegerField)
+        or isinstance(field, peewee.IntegerField)
     ]
 
     for field_name in field_names:
@@ -112,19 +112,21 @@ def is_end_of_day():
     return now >= end_of_day
 
 
-def prepare_and_report_data(aggregate_data: AggregateData):
-    messages = StatsBotMessage.select().order_by(StatsBotMessage.id.desc()).limit(1).execute()
+def prepare_and_report_data(context: Context, aggregate_data: AggregateData):
+    messages = (
+        StatsBotMessage.select().where(StatsBotMessage.tenant==context.tenant).order_by(StatsBotMessage.id.desc()).limit(1).execute()
+    )
     if len(messages) == 0:
         return
     last_msg = messages[0]
     parsed_message = parse_message(last_msg.content)
 
-    config = load_config()
-    config.binanceDeposit = Decimal(parsed_message["binance deposited"] * 10 ** 18)
-    config.save()
-
-    aggregate_data.binance_deposit = config.binanceDeposit
-    aggregate_data.save()
+    # config = load_config(context)
+    # config.binanceDeposit = Decimal(parsed_message["binance deposited"] * 10**18)
+    # config.save()
+    #
+    # aggregate_data.binance_deposit = config.binanceDeposit
+    # aggregate_data.save()
 
     end_day_tag = is_end_of_day()
     try:
@@ -132,7 +134,9 @@ def prepare_and_report_data(aggregate_data: AggregateData):
         diff_data = calculate_diff(
             old_data=last_night_aggregate, new_data=aggregate_data
         )
-        report_aggregate_data(aggregate_data, diff_data, parsed_message, end_day_tag)
+        report_aggregate_data(
+            context, aggregate_data, diff_data, parsed_message, end_day_tag
+        )
     except:
         # for testing !
         last_night_aggregate = (
@@ -141,50 +145,67 @@ def prepare_and_report_data(aggregate_data: AggregateData):
         diff_data = calculate_diff(
             old_data=last_night_aggregate, new_data=aggregate_data
         )
-        report_aggregate_data(aggregate_data, diff_data, parsed_message, end_day_tag)
+        report_aggregate_data(
+            context, aggregate_data, diff_data, parsed_message, end_day_tag
+        )
         pass
 
 
-FUNDING_RATE_THRESHOLD = -(funding_rate_alert_threshold * 10 ** 18)
-CLOSABLE_FUNDING_RATE_THRESHOLD = -(closable_funding_rate_alert_threshold * 10 ** 18)
+FUNDING_RATE_THRESHOLD = -(funding_rate_alert_threshold * 10**18)
+CLOSABLE_FUNDING_RATE_THRESHOLD = -(closable_funding_rate_alert_threshold * 10**18)
 
 
-def initialize_indicators(data: AggregateData, parsed_stat_message: dict) -> List[StateIndicator]:
+def initialize_indicators(
+    data: AggregateData, parsed_stat_message: dict
+) -> List[StateIndicator]:
     non_closable_funding = 0
     for market, value in data.next_funding_rate.items():
         if market in main_market_symbols:
             non_closable_funding += value
 
     non_closable_funding_indicator = StateIndicator(
-        "NonClosableFundingRate", mode=IndicatorMode.RED
+        "NonClosableFundingRate",
+        mode=IndicatorMode.RED
         if non_closable_funding < FUNDING_RATE_THRESHOLD
-        else IndicatorMode.GREEN
+        else IndicatorMode.GREEN,
     )
 
     closable_market_with_high_funding = None
     for market, value in data.next_funding_rate.items():
-        if market not in main_market_symbols and value < CLOSABLE_FUNDING_RATE_THRESHOLD:
+        if (
+            market not in main_market_symbols
+            and value < CLOSABLE_FUNDING_RATE_THRESHOLD
+        ):
             closable_market_with_high_funding = market
             break
 
     closable_funding_indicator = StateIndicator(
-        "ClosableFundingRate", mode=IndicatorMode.RED
+        "ClosableFundingRate",
+        mode=IndicatorMode.RED
         if closable_market_with_high_funding is not None
-        else IndicatorMode.GREEN
+        else IndicatorMode.GREEN,
     )
 
     mismatch_indicator = MismatchIndicator("MisMatch")
-    mismatch_indicator.update_state(data, parsed_stat_message, [
-        FieldCheck("total_state", "total state", 5)
-    ])
+    mismatch_indicator.update_state(
+        data, parsed_stat_message, [FieldCheck("total_state", "total state", 5)]
+    )
 
-    return [non_closable_funding_indicator, closable_funding_indicator, mismatch_indicator]
+    return [
+        non_closable_funding_indicator,
+        closable_funding_indicator,
+        mismatch_indicator,
+    ]
 
 
 def report_aggregate_data(
-        data: AggregateData, today_data: AggregateData, parsed_stat_message: dict, end_dey_tag=False
+    context: Context,
+    data: AggregateData,
+    today_data: AggregateData,
+    parsed_stat_message: dict,
+    end_dey_tag=False,
 ):
-    print("Reporting aggregate data...")
+    print(f"{context.tenant}: Reporting aggregate data...")
 
     indicators = initialize_indicators(data, parsed_stat_message)
     mentions = set()
@@ -284,5 +305,10 @@ Fetching data at {datetime.utcnow().strftime('%A, %d. %B %Y %I:%M:%S %p')} UTC
     if end_dey_tag:
         report += "#EndOfDay\n"
 
-    send_message(escape_markdown_v1(report) + "\n" + ''.join(f'[.](tg://user?id={user})' for user in mentions))
-    print("Reported....")
+    send_message(
+        context,
+        escape_markdown_v1(report)
+        + "\n"
+        + "".join(f"[.](tg://user?id={user})" for user in mentions),
+    )
+    print(f"{context.tenant}: Reported....")

@@ -14,7 +14,7 @@ class StringBuilder:
         self._strings = []
 
     def length(self):
-        return len(''.join(self._strings))
+        return len("".join(self._strings))
 
     def __str__(self):
-        return ''.join(self._strings)
+        return "".join(self._strings)

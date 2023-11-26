@@ -29,19 +29,18 @@ class Where:
 
 
 class GraphQlClient:
-
     def __init__(self, endpoint: str, proxies: dict = None):
         self.endpoint = endpoint
         self.proxies = proxies
 
     def load(
-            self,
-            create_function,
-            method: str,
-            fields: List[str],
-            first: int,
-            wheres: List[Where] = None,
-            order_by: 'str' = None
+        self,
+        create_function,
+        method: str,
+        fields: List[str],
+        first: int,
+        wheres: List[Where] = None,
+        order_by: "str" = None,
     ):
         if wheres is None:
             wheres = []
@@ -77,25 +76,28 @@ class GraphQlClient:
                 for data in response.json()["data"][method]:
                     items.append(create_function(data))
             elif "errors" in response.json():
-                raise Exception("Failed to load data from subgraph " + str(response.json()))
+                raise Exception(
+                    "Failed to load data from subgraph " + str(response.json())
+                )
 
         return items
 
     def load_all(
-            self,
-            create_function,
-            model: 'BaseModel',
-            method: str,
-            fields: List[str],
-            pagination_field_name: str,
-            pagination_field_name_std: str = None,
-            pagination_value=None,
-            additional_conditions: List[Where] = None,
-            page_limit: int = None,
-            load_from_database=True,
-            save_to_database=True
+        self,
+        create_function,
+        model: "BaseModel",
+        method: str,
+        fields: List[str],
+        pagination_field_name: str,
+        pagination_field_name_std: str = None,
+        pagination_value=None,
+        additional_conditions: List[Where] = None,
+        page_limit: int = None,
+        load_from_database=True,
+        save_to_database=True,
     ):
         from app.models import BaseModel
+
         model: BaseModel
 
         if not pagination_field_name_std:
@@ -110,25 +112,41 @@ class GraphQlClient:
         pagination_field = model._meta.fields[pagination_field_name_std]
 
         if load_from_database:
-            found_items = list(model.select(pagination_field).order_by(pagination_field.desc()).limit(1))
+            found_items = list(
+                model.select(pagination_field)
+                .order_by(pagination_field.desc())
+                .limit(1)
+            )
 
             if found_items:
-                found_pagination_value = getattr(found_items[0], pagination_field_name_std)
-                if isinstance(found_pagination_value, int) or is_int(found_pagination_value):
-                    pagination_value = max(int(found_pagination_value),
-                                           int(pagination_value) if pagination_value else 0)
+                found_pagination_value = getattr(
+                    found_items[0], pagination_field_name_std
+                )
+                if isinstance(found_pagination_value, int) or is_int(
+                    found_pagination_value
+                ):
+                    pagination_value = max(
+                        int(found_pagination_value),
+                        int(pagination_value) if pagination_value else 0,
+                    )
                 elif isinstance(found_pagination_value, datetime.datetime):
                     if pagination_value:
                         if not isinstance(pagination_value, datetime.datetime):
                             raise Exception("Invalid last where value")
-                        pagination_value = found_pagination_value if found_pagination_value > pagination_value else pagination_value
+                        pagination_value = (
+                            found_pagination_value
+                            if found_pagination_value > pagination_value
+                            else pagination_value
+                        )
                 else:
                     raise Exception("Unsupported pagination field")
 
                 model.delete().where(pagination_field == pagination_value)
 
             if org_pagination_value:
-                yield model.select().where(pagination_field > org_pagination_value).order_by(pagination_field.asc())
+                yield model.select().where(
+                    pagination_field > org_pagination_value
+                ).order_by(pagination_field.asc())
             else:
                 yield model.select().order_by(pagination_field.asc())
 
@@ -146,8 +164,13 @@ class GraphQlClient:
                 method,
                 fields,
                 limit,
-                ([Where(pagination_field_name, "gte", formatted_pv)] if formatted_pv else []) + additional_conditions,
-                pagination_field_name
+                (
+                    [Where(pagination_field_name, "gte", formatted_pv)]
+                    if formatted_pv
+                    else []
+                )
+                + additional_conditions,
+                pagination_field_name,
             )
             if len(temp) > 0:
                 yield [d for d in temp if d not in result]

@@ -1,12 +1,21 @@
-from app.models import Quote, DailyHistory, TradeHistory, Account, User, Symbol, BalanceChange
-from context.context import gc
+from app.models import (
+    Quote,
+    DailyHistory,
+    TradeHistory,
+    Account,
+    User,
+    Symbol,
+    BalanceChange,
+    RuntimeConfiguration,
+)
+from config.settings import Context
 from context.graphql_client import Where
 from utils.common_utils import convert_timestamps
 
 
-def load_quotes(config):
-    out = gc.load_all(
-        lambda data: Quote(**convert_timestamps(data)),
+def load_quotes(config: RuntimeConfiguration, context: Context):
+    out = context.utils.gc.load_all(
+        lambda data: Quote(**convert_timestamps(data), tenant=context.tenant),
         Quote,
         method="quotes",
         fields=[
@@ -37,7 +46,11 @@ def load_quotes(config):
             "liquidatedSide",
         ],
         pagination_field_name="timestamp",
-        additional_conditions=[Where("updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp())))],
+        additional_conditions=[
+            Where(
+                "updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp()))
+            )
+        ],
         load_from_database=True,
         save_to_database=True,
     )
@@ -45,9 +58,9 @@ def load_quotes(config):
         pass
 
 
-def load_trade_histories(config):
-    out = gc.load_all(
-        lambda data: TradeHistory(**convert_timestamps(data)),
+def load_trade_histories(config: RuntimeConfiguration, context: Context):
+    out = context.utils.gc.load_all(
+        lambda data: TradeHistory(**convert_timestamps(data), tenant=context.tenant),
         TradeHistory,
         method="tradeHistories",
         fields=[
@@ -62,7 +75,11 @@ def load_trade_histories(config):
             "quote",
         ],
         pagination_field_name="timestamp",
-        additional_conditions=[Where("updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp())))],
+        additional_conditions=[
+            Where(
+                "updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp()))
+            )
+        ],
         load_from_database=False,
         save_to_database=True,
     )
@@ -70,9 +87,9 @@ def load_trade_histories(config):
         pass
 
 
-def load_accounts(config):
-    out = gc.load_all(
-        lambda data: Account(**convert_timestamps(data)),
+def load_accounts(config: RuntimeConfiguration, context: Context):
+    out = context.utils.gc.load_all(
+        lambda data: Account(**convert_timestamps(data), tenant=context.tenant),
         Account,
         method="accounts",
         fields=[
@@ -89,7 +106,9 @@ def load_accounts(config):
         ],
         pagination_field_name="timestamp",
         additional_conditions=[
-            Where("updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp())))
+            Where(
+                "updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp()))
+            )
         ],
         load_from_database=False,
         save_to_database=True,
@@ -98,9 +117,9 @@ def load_accounts(config):
         pass
 
 
-def load_balance_changes(config):
-    out = gc.load_all(
-        lambda data: BalanceChange(**convert_timestamps(data)),
+def load_balance_changes(config: RuntimeConfiguration, context: Context):
+    out = context.utils.gc.load_all(
+        lambda data: BalanceChange(**convert_timestamps(data), tenant=context.tenant),
         BalanceChange,
         method="balanceChanges",
         fields=[
@@ -120,9 +139,9 @@ def load_balance_changes(config):
         pass
 
 
-def load_users(config):
-    out = gc.load_all(
-        lambda data: User(**convert_timestamps(data)),
+def load_users(config: RuntimeConfiguration, context: Context):
+    out = context.utils.gc.load_all(
+        lambda data: User(**convert_timestamps(data), tenant=context.tenant),
         User,
         method="users",
         fields=[
@@ -138,9 +157,9 @@ def load_users(config):
         pass
 
 
-def load_symbols(config):
-    out = gc.load_all(
-        lambda data: Symbol(**convert_timestamps(data)),
+def load_symbols(config: RuntimeConfiguration, context: Context):
+    out = context.utils.gc.load_all(
+        lambda data: Symbol(**convert_timestamps(data), tenant=context.tenant),
         Symbol,
         method="symbols",
         fields=[
@@ -151,7 +170,11 @@ def load_symbols(config):
             "id",
         ],
         pagination_field_name="timestamp",
-        additional_conditions=[Where("updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp())))],
+        additional_conditions=[
+            Where(
+                "updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp()))
+            )
+        ],
         load_from_database=False,
         save_to_database=True,
     )
@@ -159,9 +182,9 @@ def load_symbols(config):
         pass
 
 
-def load_daily_histories(config):
-    out = gc.load_all(
-        lambda data: DailyHistory(**convert_timestamps(data)),
+def load_daily_histories(config: RuntimeConfiguration, context: Context):
+    out = context.utils.gc.load_all(
+        lambda data: DailyHistory(**convert_timestamps(data), tenant=context.tenant),
         DailyHistory,
         method="dailyHistories",
         fields=[
@@ -183,7 +206,9 @@ def load_daily_histories(config):
         ],
         pagination_field_name="timestamp",
         additional_conditions=[
-            Where("updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp()))),
+            Where(
+                "updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp()))
+            ),
         ],
         load_from_database=False,
         save_to_database=True,
