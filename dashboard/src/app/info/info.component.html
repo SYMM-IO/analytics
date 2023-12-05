@@ -2,14 +2,14 @@
     <span class="tui-island__title">{{ title }}</span>
     @if (totalValue != null && todayValue != null) {
     <span class="text-xl font-semibold">
-        ${{ formatValue(totalValue) }}
+        {{ formatValue(totalValue) }}
     </span>
     <div class="flex flex-row gap-1">
         <span class="text-sm">
             Today:
         </span>
         <span class="text-sm">
-            ${{ formatValue(todayValue)}}
+            {{ formatValue(todayValue)}}
         </span>
 
         @if(lastDayValue!= null && lastDayValue.gt(0) && todayValue.gt(0)){
