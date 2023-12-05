@@ -2,69 +2,70 @@
     <div class="infos flex flex-row gap-2 w-full flex-grow-1 flex-wrap">
         <tui-island class="info-card h-full flex-grow-1">
             <app-info title="Deposits" [totalValue]="totalDeposits" [todayValue]="todayHistory?.deposit"
-                      [lastDayValue]="lastDayHistory?.deposit" [formatMoney]="true"
-                      [decimals]="environment.collateralDecimal!">
+                [lastDayValue]="lastDayHistory?.deposit" [formatMoney]="true"
+                [decimals]="environment.collateralDecimal!">
             </app-info>
         </tui-island>
         <tui-island class="info-card h-full flex-grow-1">
             <app-info title="Traded Volume" [totalValue]="totalVolume" [todayValue]="todayHistory?.tradeVolume"
-                      [lastDayValue]="lastDayHistory?.tradeVolume" [formatMoney]="true">
+                [lastDayValue]="lastDayHistory?.tradeVolume" [formatMoney]="true">
             </app-info>
         </tui-island>
         <tui-island class="info-card h-full flex-grow-1">
             <app-info title="Quotes" [totalValue]="totalQuotes" [todayValue]="todayHistory?.quotesCount"
-                      [lastDayValue]="lastDayHistory?.quotesCount">
+                [lastDayValue]="lastDayHistory?.quotesCount">
             </app-info>
         </tui-island>
         <tui-island class="info-card h-full flex-grow-1">
             <app-info title="Users" [totalValue]="totalUsers" [todayValue]="todayHistory?.newUsers"
-                      [lastDayValue]="lastDayHistory?.newUsers">
+                [lastDayValue]="lastDayHistory?.newUsers">
             </app-info>
         </tui-island>
         <tui-island class="info-card h-full flex-grow-1">
             <app-info title="Accounts" [totalValue]="totalAccounts" [todayValue]="todayHistory?.newAccounts"
-                      [lastDayValue]="lastDayHistory?.newAccounts">
+                [lastDayValue]="lastDayHistory?.newAccounts">
             </app-info>
         </tui-island>
     </div>
+    @if(dailyHistories){
     <div class="top-charts flex flex-row gap-2 w-full flex-wrap flex-grow-1">
         <tui-island class="chart-card flex-grow-1">
-            <app-chart class="h-full" *ngIf="dailyHistories"
-                       [dailyHistories]="dailyHistories" [fieldName]="'quotesCount'" [chartTitle]="'Quotes'"
-                       [fixedValueName]="'Quotes'">
+            <app-chart class="h-full"
+                [dailyHistories]="dailyHistories" [fieldName]="'quotesCount'" [chartTitle]="'Quotes'"
+                [fixedValueName]="'Quotes'">
             </app-chart>
         </tui-island>
         <tui-island class="chart-card flex-grow-1">
-            <app-chart class="h-full" *ngIf="dailyHistories"
-                       [dailyHistories]="dailyHistories" [fieldName]="'tradeVolume'" [chartTitle]="'Trade Volume'"
-                       [yAxisFormatter]="moneyValueFormatter" [decimals]="18" [fixedValueName]="'Trade Volume'">
+            <app-chart class="h-full"
+                [dailyHistories]="dailyHistories" [fieldName]="'tradeVolume'" [chartTitle]="'Trade Volume'"
+                [yAxisFormatter]="moneyValueFormatter" [decimals]="18" [fixedValueName]="'Trade Volume'">
             </app-chart>
         </tui-island>
         <tui-island class="chart-card flex-grow-1">
-            <app-chart class="h-full w-full" *ngIf="dailyHistories"
-                       [dailyHistories]="dailyHistories" [fieldName]="'platformFee'" [chartTitle]="'Platform Revenue'"
-                       [yAxisFormatter]="moneyValueFormatter" [decimals]="18" [fixedValueName]="'Platform Revenue'">
+            <app-chart class="h-full w-full"
+                [dailyHistories]="dailyHistories" [fieldName]="'platformFee'" [chartTitle]="'Platform Revenue'"
+                [yAxisFormatter]="moneyValueFormatter" [decimals]="18" [fixedValueName]="'Platform Revenue'">
             </app-chart>
         </tui-island>
         <tui-island class="chart-card flex-grow-1">
-            <app-chart class="h-full w-full" *ngIf="dailyHistories"
-                       [dailyHistories]="dailyHistories" [fieldName]="'openInterest'" [chartTitle]="'Open Interest'"
-                       [yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasCumulative]="false"
-                       [fixedValueName]="'Open Interest'">
+            <app-chart class="h-full w-full"
+                [dailyHistories]="dailyHistories" [fieldName]="'openInterest'" [chartTitle]="'Open Interest'"
+                [yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasCumulative]="false"
+                [fixedValueName]="'Open Interest'">
             </app-chart>
         </tui-island>
         <tui-island class="chart-card flex-grow-1">
-            <app-chart class="h-full w-full" *ngIf="dailyHistories"
-                       [dailyHistories]="dailyHistories" [fieldName]="'activeUsers'" [chartTitle]="'Active Users'"
-                       [hasCumulative]="false" [fixedValueName]="'Active Users'">
+            <app-chart class="h-full w-full"
+                [dailyHistories]="dailyHistories" [fieldName]="'activeUsers'" [chartTitle]="'Active Users'"
+                [hasCumulative]="false" [fixedValueName]="'Active Users'">
             </app-chart>
         </tui-island>
         <tui-island class="chart-card flex-grow-1">
-            <app-chart class="h-full w-full" *ngIf="dailyHistories"
-                       [dailyHistories]="dailyHistories" [fieldName]="'newUsers'" [chartTitle]="'New Users'"
-                       [fixedValueName]="'New Users'">
+            <app-chart class="h-full w-full"
+                [dailyHistories]="dailyHistories" [fieldName]="'newUsers'" [chartTitle]="'New Users'"
+                [fixedValueName]="'New Users'">
             </app-chart>
         </tui-island>
     </div>
+    }
 </div>
-

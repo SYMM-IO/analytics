@@ -1,68 +1,35 @@
 <div class="flex flex-column p-2 gap-1">
-    <span class="tui-island__title">{{title}}</span>
-    <ng-container *ngIf="totalValue != null && todayValue != null">
-        <ng-container *ngIf="formatMoney">
-            <span class="text-xl font-semibold">
-                ${{unDecimal(totalValue).toFormat(3)}}
+    <span class="tui-island__title">{{ title }}</span>
+    @if (totalValue != null && todayValue != null) {
+    <span class="text-xl font-semibold">
+        ${{ formatValue(totalValue) }}
+    </span>
+    <div class="flex flex-row gap-1">
+        <span class="text-sm">
+            Today:
+        </span>
+        <span class="text-sm">
+            ${{ formatValue(todayValue)}}
+        </span>
+
+        @if(lastDayValue!= null && lastDayValue.gt(0) && todayValue.gt(0)){
+        <!--                    <div class="flex flex-row gap-1 red-text" *ngIf="todayValue.lt(lastDayValue)">-->
+        <!--                        <span class="text-sm">-->
+        <!--                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%-->
+        <!--                        </span>-->
+        <!--                        <span class="pi pi-arrow-down"></span>-->
+        <!--                    </div>-->
+        <div class="flex flex-row gap-1 green-text" *ngIf="todayValue.gt(lastDayValue)">
+            <span class="text-sm">
+                {{ todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1) }}%
             </span>
-            <div class="flex flex-row gap-1">
-                <span class="text-sm">
-                    Today:
-                </span>
-                <span class="text-sm">
-                    ${{unDecimal(todayValue).toFormat(3)}}
-                </span>
+            <span class="pi pi-arrow-up"></span>
+        </div>
+        }
 
-                <ng-container *ngIf="lastDayValue!= null && lastDayValue.gt(0) && todayValue.gt(0)">
-<!--                    <div class="flex flex-row gap-1 red-text" *ngIf="todayValue.lt(lastDayValue)">-->
-<!--                        <span class="text-sm">-->
-<!--                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%-->
-<!--                        </span>-->
-<!--                        <span class="pi pi-arrow-down"></span>-->
-<!--                    </div>-->
-
-                    <div class="flex flex-row gap-1 green-text" *ngIf="todayValue.gt(lastDayValue)">
-                        <span class="text-sm">
-                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%
-                        </span>
-                        <span class="pi pi-arrow-up"></span>
-                    </div>
-                </ng-container>
-
-            </div>
-        </ng-container>
-        <ng-container *ngIf="!formatMoney">
-            <span class="text-xl font-semibold">
-                {{totalValue.toFormat()}}
-            </span>
-            <div class="flex flex-row gap-1">
-                <span class="text-sm">
-                    Today:
-                </span>
-                <span class="text-sm">
-                    {{todayValue.toFormat()}}
-                </span>
-
-                <ng-container *ngIf="lastDayValue!= null && lastDayValue.gt(0) && todayValue.gt(0)">
-<!--                    <div class="flex flex-row gap-1 red-text" *ngIf="todayValue.lt(lastDayValue)">-->
-<!--                        <span class="text-sm">-->
-<!--                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%-->
-<!--                        </span>-->
-<!--                        <span class="pi pi-arrow-down"></span>-->
-<!--                    </div>-->
-
-                    <div class="flex flex-row gap-1 green-text" *ngIf="todayValue.gt(lastDayValue)">
-                        <span class="text-sm">
-                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%
-                        </span>
-                        <span class="pi pi-arrow-up"></span>
-                    </div>
-                </ng-container>
-            </div>
-        </ng-container>
-    </ng-container>
-    <ng-container *ngIf="(loadingService.loading$() | async) && todayValue == null">
-        <div [class.tui-skeleton]="true" style="width: 12em; height: 1.5em"></div>
-        <div [class.tui-skeleton]="true" style="width: 16em; height: 1.5em"></div>
-    </ng-container>
+    </div>
+    }@else if(loadingService.loading$() | async){
+    <div [class.tui-skeleton]="true" style="width: 12em; height: 1.5em"></div>
+    <div [class.tui-skeleton]="true" style="width: 16em; height: 1.5em"></div>
+    }
 </div>

@@ -284,28 +284,28 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "symmio-analytics-dashboard:build:production"
+              "buildTarget": "symmio-analytics-dashboard:build:production"
             },
             "aggregate": {
-              "browserTarget": "symmio-analytics-dashboard:build:aggregate_dev"
+              "buildTarget": "symmio-analytics-dashboard:build:aggregate_dev"
             },
             "alpha_thena": {
-              "browserTarget": "symmio-analytics-dashboard:build:alpha_thena_dev"
+              "buildTarget": "symmio-analytics-dashboard:build:alpha_thena_dev"
             },
             "cloverfield_fantom": {
-              "browserTarget": "symmio-analytics-dashboard:build:cloverfield_fantom_dev"
+              "buildTarget": "symmio-analytics-dashboard:build:cloverfield_fantom_dev"
             },
             "cloverfield_bsc": {
-              "browserTarget": "symmio-analytics-dashboard:build:cloverfield_bsc_dev"
+              "buildTarget": "symmio-analytics-dashboard:build:cloverfield_bsc_dev"
             },
             "based": {
-              "browserTarget": "symmio-analytics-dashboard:build:based_dev"
+              "buildTarget": "symmio-analytics-dashboard:build:based_dev"
             },
             "intentx": {
-              "browserTarget": "symmio-analytics-dashboard:build:intentx_dev"
+              "buildTarget": "symmio-analytics-dashboard:build:intentx_dev"
             },
             "development": {
-              "browserTarget": "symmio-analytics-dashboard:build:development"
+              "buildTarget": "symmio-analytics-dashboard:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -313,7 +313,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "symmio-analytics-dashboard:build"
+            "buildTarget": "symmio-analytics-dashboard:build"
           }
         },
         "test": {
