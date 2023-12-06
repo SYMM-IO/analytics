@@ -1,11 +1,11 @@
 import {NgDompurifySanitizer} from "@tinkoff/ng-dompurify"
 import {
 	TUI_SANITIZER,
-	TuiAlertModule,
-	TuiDialogModule,
+	TuiAlertModule, TuiButtonModule,
+	TuiDialogModule, TuiGroupModule,
 	TuiModeModule,
-	TuiRootModule,
-	TuiThemeNightModule
+	TuiRootModule, TuiTextfieldControllerModule,
+	TuiThemeNightModule,
 } from "@taiga-ui/core"
 import {NgModule} from "@angular/core"
 import {BrowserModule} from "@angular/platform-browser"
@@ -24,7 +24,10 @@ import {ChartComponent} from './chart/chart.component'
 import {AggregateHomeComponent} from './aggregate-home/aggregate-home.component'
 import {TuiLetModule} from "@taiga-ui/cdk"
 import {ResizeObserverDirective} from './resize-observer.directive'
-import {TuiIslandModule} from "@taiga-ui/kit"
+import {TuiInputNumberModule, TuiIslandModule, TuiRadioBlockModule} from "@taiga-ui/kit"
+import {PanelHomeComponent} from "./panel-home/panel-home.component"
+import {ReactiveFormsModule} from "@angular/forms"
+import {NgxJsonViewerModule} from "ngx-json-viewer"
 
 @NgModule({
 	declarations: [
@@ -33,7 +36,8 @@ import {TuiIslandModule} from "@taiga-ui/kit"
 		InfoComponent,
 		ChartComponent,
 		AggregateHomeComponent,
-		ResizeObserverDirective
+		ResizeObserverDirective,
+		PanelHomeComponent
 	],
 	imports: [
 		BrowserModule,
@@ -50,6 +54,13 @@ import {TuiIslandModule} from "@taiga-ui/kit"
 		TuiModeModule,
 		TuiLetModule,
 		TuiIslandModule,
+		TuiInputNumberModule,
+		ReactiveFormsModule,
+		TuiTextfieldControllerModule,
+		TuiButtonModule,
+		TuiGroupModule,
+		TuiRadioBlockModule,
+		NgxJsonViewerModule
 	],
 	providers: [
 		{provide: ENVIRONMENT, useValue: environment},

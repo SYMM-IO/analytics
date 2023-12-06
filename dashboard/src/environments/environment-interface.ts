@@ -1,6 +1,7 @@
 export interface EnvironmentInterface {
 	assetsFolder: string;
 	aggregate?: boolean;
+	panel?: boolean;
 	environments?: SubEnvironmentInterface[];
 }
 

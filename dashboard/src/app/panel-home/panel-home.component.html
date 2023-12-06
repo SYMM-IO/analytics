@@ -1,0 +1,28 @@
+<div class="root flex flex-column gap-2">
+    <form tuiGroup class="group" [collapsed]="true">
+        @for (env of environments;track env.name) {
+            <tui-radio-block contentAlign="right" [formControl]="environmentForm" [item]="env" size="l">
+                <div class="flex flex-row gap-2">
+                    <div [ngStyle]="{'background-color': env.mainColor}" class="color-dot">
+                    </div>
+                    <span>
+                        {{ env.name }}
+                    </span>
+                </div>
+            </tui-radio-block>
+        }
+    </form>
+    <tui-island size="l" textAlign="center" class="flex flex-column align-items-center gap-2 quote_loader">
+        <h3 class="title"> Load a quote data </h3>
+        <form class="w-full">
+            <tui-input-number tuiTextfieldPrefix="Quote " tuiTextfieldSize="s" [formControl]="quoteForm">
+                Quote Id
+                <input name="quoteId" tuiTextfield/>
+            </tui-input-number>
+        </form>
+        <button tuiButton type="button" class="quote_loader_action_button" (click)="onLoadQuote()" [disabled]="!quoteForm.valid"
+                [showLoader]="(loadingService.loading$() | async) || false">
+            Load
+        </button>
+    </tui-island>
+</div>
