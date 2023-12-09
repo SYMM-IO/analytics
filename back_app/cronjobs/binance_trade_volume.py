@@ -18,7 +18,7 @@ def fetch_and_save_all_trades(context: Context, trades_start_time, period=7 * 24
 			break
 		end_time = start_time + period
 		end_time = min(end_time, now)
-		print(f"Loading binance trades between: start_time={start_time}, end_time={end_time}")
+		print(f"{context.tenant}: Loading binance trades between: start_time={start_time}, end_time={end_time}")
 		current_trades = context.utils.binance_client.futures_account_trades(limit=1000, startTime=int(start_time),
 																			 endTime=int(end_time))
 		if not current_trades:

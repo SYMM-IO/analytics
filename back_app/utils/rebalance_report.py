@@ -7,7 +7,9 @@ from config.settings import Context
 from utils.common_utils import load_config
 
 
-def write_balance_changes(context:Context,writer,_balance_changes: List[BalanceChange], account_type: str):
+def write_balance_changes(
+    context: Context, writer, _balance_changes: List[BalanceChange], account_type: str
+):
     conf = load_config(context)
     for item in _balance_changes:
         item: BalanceChange
@@ -24,7 +26,7 @@ def write_balance_changes(context:Context,writer,_balance_changes: List[BalanceC
         )
 
 
-def write_incomes(context:Context,writer,_incomes: List[BinanceIncome]):
+def write_incomes(context: Context, writer, _incomes: List[BinanceIncome]):
     for item in _incomes:
         item: BinanceIncome
         human_readable_timestamp = item.timestamp.strftime("%m-%d-%Y %H:%M")
@@ -65,7 +67,7 @@ def get_rebalance_report():
                 .order_by(BalanceChange.timestamp)
             )
             print(f"Found {len(balance_changes)} hedger balance changes")
-            write_balance_changes(context,writer, balance_changes, "Hedger")
+            write_balance_changes(context, writer, balance_changes, "Hedger")
             for liq in context.symmio_liquidators:
                 balance_changes = (
                     BalanceChange.select()
@@ -76,7 +78,7 @@ def get_rebalance_report():
                     )
                     .order_by(BalanceChange.timestamp)
                 )
-                write_balance_changes(context,writer,balance_changes, "Liquidator")
+                write_balance_changes(context, writer, balance_changes, "Liquidator")
             incomes = (
                 BinanceIncome.select()
                 .where(
@@ -85,4 +87,4 @@ def get_rebalance_report():
                 )
                 .order_by(BinanceIncome.timestamp)
             )
-            write_incomes(context,writer,incomes)
+            write_incomes(context, writer, incomes)

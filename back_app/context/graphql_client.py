@@ -40,7 +40,8 @@ class GraphQlClient:
         fields: List[str],
         first: int,
         wheres: List[Where] = None,
-        order_by: "str" = None,
+        order_by: str = None,
+        context=None,
     ):
         if wheres is None:
             wheres = []
@@ -50,7 +51,8 @@ class GraphQlClient:
             where_str += f"where: "
             where_str += f"{{ {', '.join([str(w) for w in wheres])}  }}"
 
-        print(f"Loading a page of {method} with condition: {where_str}")
+        log_prefix = f"{context.tenant}: " if context else ""
+        print(f"{log_prefix}Loading a page of {method} with condition: {where_str}")
 
         query = f"""
             query q {{
@@ -77,7 +79,8 @@ class GraphQlClient:
                     items.append(create_function(data))
             elif "errors" in response.json():
                 raise Exception(
-                    "Failed to load data from subgraph " + str(response.json())
+                    f"{log_prefix}Failed to load data from subgraph "
+                    + str(response.json())
                 )
 
         return items
@@ -95,6 +98,7 @@ class GraphQlClient:
         page_limit: int = None,
         load_from_database=True,
         save_to_database=True,
+        context=None,
     ):
         from app.models import BaseModel
 
@@ -171,6 +175,7 @@ class GraphQlClient:
                 )
                 + additional_conditions,
                 pagination_field_name,
+                context=context,
             )
             if len(temp) > 0:
                 yield [d for d in temp if d not in result]

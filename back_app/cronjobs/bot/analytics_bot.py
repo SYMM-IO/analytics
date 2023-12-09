@@ -4,10 +4,13 @@ from typing import List
 
 import peewee
 
-from app.models import AggregateData, StatsBotMessage
+from app.models import StateSnapshot, StatsBotMessage
 from config.settings import (
-    main_market_symbols, funding_rate_alert_threshold, fetch_data_interval,
-    closable_funding_rate_alert_threshold, Context
+    main_market_symbols,
+    funding_rate_alert_threshold,
+    fetch_data_interval,
+    closable_funding_rate_alert_threshold,
+    Context,
 )
 from cronjobs.bot.indicators.mismatch_indicator import MismatchIndicator, FieldCheck
 from cronjobs.bot.indicators.state_indicator import StateIndicator, IndicatorMode
@@ -29,14 +32,14 @@ quote_status_names = {
 }
 
 
-def get_yesterday_last_aggregate():
+def get_yesterday_last_snapshot():
     yesterday = datetime.utcnow() - timedelta(days=1)
     yesterday_end = datetime(yesterday.year, yesterday.month, yesterday.day, 23, 59, 59)
 
     return (
-        AggregateData.select()
-        .where(AggregateData.timestamp <= yesterday_end)
-        .order_by(AggregateData.timestamp.desc())
+        StateSnapshot.select()
+        .where(StateSnapshot.timestamp <= yesterday_end)
+        .order_by(StateSnapshot.timestamp.desc())
         .get()
     )
 
@@ -76,12 +79,12 @@ def calculate_status_quotes_diff(old_quotes, new_quotes):
     return diff_quotes
 
 
-def calculate_diff(old_data: AggregateData, new_data: AggregateData):
-    diff_data = AggregateData()
+def calculate_diff(old_data: StateSnapshot, new_data: StateSnapshot):
+    diff_data = StateSnapshot()
 
     field_names = [
         field.name
-        for field in AggregateData._meta.fields.values()
+        for field in StateSnapshot._meta.fields.values()
         if isinstance(field, peewee.DecimalField)
         or isinstance(field, peewee.IntegerField)
     ]
@@ -112,9 +115,24 @@ def is_end_of_day():
     return now >= end_of_day
 
 
-def prepare_and_report_data(context: Context, aggregate_data: AggregateData):
+def report_snapshot_to_telegram(context: Context):
+    snapshot = (
+        StateSnapshot.select()
+        .where(StateSnapshot.tenant == context.tenant)
+        .order_by(StateSnapshot.timestamp.desc())
+        .limit(1)
+        .execute()
+    )
+    if len(snapshot) == 0:
+        return
+    snapshot = snapshot[0]
+
     messages = (
-        StatsBotMessage.select().where(StatsBotMessage.tenant==context.tenant).order_by(StatsBotMessage.id.desc()).limit(1).execute()
+        StatsBotMessage.select()
+        .where(StatsBotMessage.tenant == context.tenant)
+        .order_by(StatsBotMessage.message_id.desc())
+        .limit(1)
+        .execute()
     )
     if len(messages) == 0:
         return
@@ -125,29 +143,21 @@ def prepare_and_report_data(context: Context, aggregate_data: AggregateData):
     # config.binanceDeposit = Decimal(parsed_message["binance deposited"] * 10**18)
     # config.save()
     #
-    # aggregate_data.binance_deposit = config.binanceDeposit
-    # aggregate_data.save()
+    # state_snapshot.binance_deposit = config.binanceDeposit
+    # state_snapshot.save()
 
     end_day_tag = is_end_of_day()
     try:
-        last_night_aggregate = get_yesterday_last_aggregate()
-        diff_data = calculate_diff(
-            old_data=last_night_aggregate, new_data=aggregate_data
-        )
-        report_aggregate_data(
-            context, aggregate_data, diff_data, parsed_message, end_day_tag
-        )
+        last_night_snapshot = get_yesterday_last_snapshot()
+        diff_data = calculate_diff(old_data=last_night_snapshot, new_data=snapshot)
+        report_state_snapshot(context, snapshot, diff_data, parsed_message, end_day_tag)
     except:
         # for testing !
-        last_night_aggregate = (
-            AggregateData.select().order_by(AggregateData.timestamp.asc()).get()
+        last_night_snapshot = (
+            StateSnapshot.select().order_by(StateSnapshot.timestamp.asc()).get()
         )
-        diff_data = calculate_diff(
-            old_data=last_night_aggregate, new_data=aggregate_data
-        )
-        report_aggregate_data(
-            context, aggregate_data, diff_data, parsed_message, end_day_tag
-        )
+        diff_data = calculate_diff(old_data=last_night_snapshot, new_data=snapshot)
+        report_state_snapshot(context, snapshot, diff_data, parsed_message, end_day_tag)
         pass
 
 
@@ -156,7 +166,7 @@ CLOSABLE_FUNDING_RATE_THRESHOLD = -(closable_funding_rate_alert_threshold * 10**
 
 
 def initialize_indicators(
-    data: AggregateData, parsed_stat_message: dict
+    data: StateSnapshot, parsed_stat_message: dict
 ) -> List[StateIndicator]:
     non_closable_funding = 0
     for market, value in data.next_funding_rate.items():
@@ -198,14 +208,14 @@ def initialize_indicators(
     ]
 
 
-def report_aggregate_data(
+def report_state_snapshot(
     context: Context,
-    data: AggregateData,
-    today_data: AggregateData,
+    data: StateSnapshot,
+    today_data: StateSnapshot,
     parsed_stat_message: dict,
     end_dey_tag=False,
 ):
-    print(f"{context.tenant}: Reporting aggregate data...")
+    print(f"{context.tenant}: Reporting snapshot data...")
 
     indicators = initialize_indicators(data, parsed_stat_message)
     mentions = set()

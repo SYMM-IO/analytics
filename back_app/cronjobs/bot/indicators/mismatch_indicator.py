@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import List
 
-from app.models import AggregateData
+from app.models import StateSnapshot
 from config.settings import Context
 from cronjobs.bot.indicators.state_indicator import StateIndicator, IndicatorMode
 
@@ -25,7 +25,7 @@ class MismatchIndicator(StateIndicator):
 		except ZeroDivisionError:
 			return "Error: Division by zero is not allowed."
 
-	def update_state(self, data: AggregateData, parsed_stat_bot_data: dict, field_checks: List[FieldCheck]):
+	def update_state(self, data: StateSnapshot, parsed_stat_bot_data: dict, field_checks: List[FieldCheck]):
 		for field_check in field_checks:
 			value1 = getattr(data, field_check.field_name_data)
 			value2 = Decimal(parsed_stat_bot_data[field_check.field_name_stat_data]) * 10 ** 18

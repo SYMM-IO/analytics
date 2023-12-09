@@ -12,18 +12,19 @@ ns = Namespace(
 update_configuration_model = ns.model(
     "Configuration",
     {
-        "binanceDeposit": fields.String(description="PartyB binance deposits", required=False),
+        "binanceDeposit": fields.String(
+            description="PartyB binance deposits", required=False
+        ),
     },
 )
 
 
 @ns.route("/update_configuration")
 class UpdateConfiguration(Resource):
-
     @ns.expect(update_configuration_model)
     def post(self):
         params = request.get_json()
-        auth_header = request.headers.get('Authorization')
+        auth_header = request.headers.get("Authorization")
         if not auth_header:
             abort(401, "Unauthorized")
         if auth_header != admin_api_key:
@@ -38,11 +39,12 @@ class UpdateConfiguration(Resource):
 
 @ns.route("/get_configuration")
 class GetConfiguration(Resource):
-
     def get(self):
         config = load_config()
-        return jsonify({
-            "binanceDeposit": config.binanceDeposit,
-            "decimals": config.decimals,
-            "updateTimestamp": config.updateTimestamp,
-        })
+        return jsonify(
+            {
+                "binanceDeposit": config.binanceDeposit,
+                "decimals": config.decimals,
+                "lastSnapshotTimestamp": config.lastSnapshotTimestamp,
+            }
+        )

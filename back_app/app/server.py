@@ -12,8 +12,9 @@ from config.settings import (
     update_binance_deposit_interval,
 )
 from context.migrations import create_tables
-from cronjobs import load_stats_messages
-from cronjobs.aggregate_data_job import fetch_aggregate_data
+from cronjobs import load_stats_messages, setup_telegram_client
+from cronjobs.bot.analytics_bot import report_snapshot_to_telegram
+from cronjobs.snapshot_job import fetch_state_snapshot
 from namespaces import config_namespace
 from utils.binance_utils import update_binance_deposit_v2
 from utils.telegram_utils import send_alert, escape_markdown_v1
@@ -27,29 +28,40 @@ def create_schedular():
     scheduler.add_listener(listener, EVENT_JOB_ERROR)
     for context in contexts:
         scheduler.add_job(
-            func=lambda: load_stats_messages(context),
+            func=lambda ctx=context: load_stats_messages(ctx),
             trigger="interval",
             seconds=fetch_stat_data_interval,
+            id=context.tenant + "_load_stats_messages"
         )
         scheduler.add_job(
-            func=lambda: fetch_aggregate_data(context),
+            func=lambda ctx=context: fetch_state_snapshot(ctx),
             trigger="interval",
             seconds=fetch_data_interval,
+            id=context.tenant + "_fetch_state_snapshot"
         )
         scheduler.add_job(
-            func=lambda: update_binance_deposit_v2(context),
+            func=lambda ctx=context: report_snapshot_to_telegram(ctx),
+            trigger="interval",
+            seconds=fetch_data_interval,
+            id=context.tenant + "_report_snapshot_to_telegram"
+        )
+        scheduler.add_job(
+            func=lambda ctx=context: update_binance_deposit_v2(ctx),
             trigger="interval",
             seconds=update_binance_deposit_interval,
+            id=context.tenant + "_update_binance_deposit_v2"
         )
         # scheduler.add_job(
-        # 	func=lambda: calculate_paid_funding(context),
+        # 	func=lambda ctx=context: calculate_paid_funding(ctx),
         # 	trigger="interval",
         # 	seconds=funding_fetch_data_interval
+        #   id=context.tenant + "_calculate_paid_funding"
         # )
         # scheduler.add_job(
-        # 	func=lambda: update_binance_deposit(context),
+        # 	func=lambda ctx=context: update_binance_deposit(ctx),
         # 	trigger="interval",
         # 	seconds=update_binance_deposit_interval
+        #   id=context.tenant + "_update_binance_deposit"
         # )
     scheduler.start()
 
@@ -73,6 +85,7 @@ CORS(app, resources={r"*": {"origins": "*"}})
 
 create_tables()
 
+setup_telegram_client()
 create_schedular()
 
 if __name__ == "__main__":

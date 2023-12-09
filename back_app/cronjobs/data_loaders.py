@@ -48,11 +48,14 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
         pagination_field_name="timestamp",
         additional_conditions=[
             Where(
-                "updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp()))
+                "updateTimestamp",
+                "gte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
             )
         ],
         load_from_database=True,
         save_to_database=True,
+        context=context,
     )
     for o in out:
         pass
@@ -77,11 +80,14 @@ def load_trade_histories(config: RuntimeConfiguration, context: Context):
         pagination_field_name="timestamp",
         additional_conditions=[
             Where(
-                "updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp()))
+                "updateTimestamp",
+                "gte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
             )
         ],
         load_from_database=False,
         save_to_database=True,
+        context=context,
     )
     for o in out:
         pass
@@ -107,11 +113,14 @@ def load_accounts(config: RuntimeConfiguration, context: Context):
         pagination_field_name="timestamp",
         additional_conditions=[
             Where(
-                "updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp()))
+                "updateTimestamp",
+                "gte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
             )
         ],
         load_from_database=False,
         save_to_database=True,
+        context=context,
     )
     for o in out:
         pass
@@ -134,6 +143,7 @@ def load_balance_changes(config: RuntimeConfiguration, context: Context):
         pagination_field_name="timestamp",
         load_from_database=True,
         save_to_database=True,
+        context=context,
     )
     for o in out:
         pass
@@ -152,6 +162,7 @@ def load_users(config: RuntimeConfiguration, context: Context):
         pagination_field_name="timestamp",
         load_from_database=True,
         save_to_database=True,
+        context=context,
     )
     for o in out:
         pass
@@ -172,11 +183,14 @@ def load_symbols(config: RuntimeConfiguration, context: Context):
         pagination_field_name="timestamp",
         additional_conditions=[
             Where(
-                "updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp()))
+                "updateTimestamp",
+                "gte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
             )
         ],
         load_from_database=False,
         save_to_database=True,
+        context=context,
     )
     for o in out:
         pass
@@ -207,11 +221,14 @@ def load_daily_histories(config: RuntimeConfiguration, context: Context):
         pagination_field_name="timestamp",
         additional_conditions=[
             Where(
-                "updateTimestamp", "gte", str(int(config.updateTimestamp.timestamp()))
+                "updateTimestamp",
+                "gte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
             ),
         ],
         load_from_database=False,
         save_to_database=True,
+        context=context,
     )
     for o in out:
         pass

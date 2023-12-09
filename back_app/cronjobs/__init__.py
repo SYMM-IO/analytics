@@ -4,7 +4,11 @@ import datetime
 from pyrogram import Client
 
 from app.models import StatsBotMessage
-from config.local_settings import telegram_client_api_id, telegram_client_api_hash
+from config.local_settings import (
+    telegram_client_api_id,
+    telegram_client_api_hash,
+    telegram_phone_number,
+)
 from config.settings import Context
 
 
@@ -23,7 +27,10 @@ def store_message(context: Context, msg):
             return
     try:
         StatsBotMessage.create(
-            timestamp=datetime.datetime.utcnow(), content=msg.text, message_id=msg.id, tenant=context.tenant
+            timestamp=datetime.datetime.utcnow(),
+            content=msg.text,
+            message_id=msg.id,
+            tenant=context.tenant,
         )
         if last_msg:
             StatsBotMessage.delete_by_id(last_msg.id)
@@ -46,8 +53,22 @@ def load_stats_messages(context: Context):
         telegram_client_api_id,
         telegram_client_api_hash,
         hide_password=True,
+        phone_number=telegram_phone_number,
     )
     try:
         loop.run_until_complete(do_load_stats_messages(context, user_client))
     finally:
         loop.close()
+
+
+def setup_telegram_client():
+    user_client = Client(
+        f"user_client",
+        telegram_client_api_id,
+        telegram_client_api_hash,
+        hide_password=True,
+        phone_number=telegram_phone_number,
+    )
+    user_client.start()
+    user_client.stop()
+

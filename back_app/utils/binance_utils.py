@@ -135,7 +135,7 @@ def fetch_binance_histories(
     current_time = datetime.utcnow()
 
     while start_time < current_time:
-        print(f"{start_time=}, {end_time=}")
+        print(f"{context.tenant}: Fetching binance histories between {start_time} and {end_time}")
         data = fetch_function(
             startTime=int(start_time.timestamp() * 1000),
             endTime=int(end_time.timestamp() * 1000),
@@ -187,7 +187,8 @@ def fetch_binance_transfer_histories(
     current_time = datetime.utcnow()
 
     while start_time < current_time:
-        print(f"{start_time=}, {end_time=}")
+        print(f"{context.tenant}: Fetching binance transfer histories between {start_time} and {end_time}")
+
         data = fetch_function(
             startTime=int(start_time.timestamp() * 1000),
             endTime=int(end_time.timestamp() * 1000),
@@ -240,7 +241,7 @@ def fetch_binance_income_histories(
     current_time = datetime.utcnow()
 
     while start_time < current_time:
-        print(f"{start_time=}, {end_time=}")
+        print(f"{context.tenant}: Fetching binance income histories between {start_time} and {end_time}")
         data = fetch_function(
             startTime=int(start_time.timestamp() * 1000),
             endTime=int(end_time.timestamp() * 1000),

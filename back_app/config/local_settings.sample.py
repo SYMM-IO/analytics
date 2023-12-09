@@ -35,5 +35,6 @@ telegram_alert_group_id = ""
 telegram_bot_token = ""
 telegram_client_api_id = 0
 telegram_client_api_hash = ""
+telegram_phone_number = ""
 
 admin_api_key = ""

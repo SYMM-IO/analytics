@@ -229,7 +229,7 @@ class RuntimeConfiguration(BaseModel):
     binanceDeposit = DecimalField(max_digits=40, decimal_places=0)
     decimals = IntegerField()
     migrationVersion = IntegerField(default=0)
-    updateTimestamp = DateTimeField(default=datetime.fromtimestamp(0))
+    lastSnapshotTimestamp = DateTimeField(default=datetime.fromtimestamp(0))
     deployTimestamp = DateTimeField()
     tenant = CharField(null=False)
 
@@ -245,7 +245,7 @@ class PaidFundingRate(BaseModel):
     tenant = CharField(null=False)
 
 
-class AggregateData(BaseModel):
+class StateSnapshot(BaseModel):
     status_quotes = TextField()
     pnl_of_closed = DecimalField(max_digits=40, decimal_places=0)
     pnl_of_liquidated = DecimalField(max_digits=40, decimal_places=0)
