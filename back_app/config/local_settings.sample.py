@@ -26,7 +26,7 @@ x_configuration = Context(
     telegram_stat_group_id=0,
     utils=None,
 )
-x_configuration.utils = ContextUtils.from_configuration(x_configuration)
+x_configuration.utils = ContextUtils.from_context(x_configuration)
 
 contexts: List[Context] = [x_configuration]
 

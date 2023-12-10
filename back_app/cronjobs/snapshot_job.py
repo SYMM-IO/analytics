@@ -9,7 +9,7 @@ from peewee import fn
 
 from app.models import (
     Account,
-    StateSnapshot,
+    AffiliateSnapshot,
     DailyHistory,
     Quote,
     Symbol,
@@ -17,8 +17,9 @@ from app.models import (
     BalanceChange,
     BalanceChangeType,
     BinanceIncome,
+    HedgerSnapshot,
 )
-from config.settings import erc20_abi, Context, symmio_abi
+from config.settings import Context, symmio_abi, AffiliateContext, HedgerContext
 from cronjobs.binance_trade_volume import calculate_binance_trade_volume
 from cronjobs.data_loaders import (
     load_accounts,
@@ -33,26 +34,6 @@ from utils.attr_dict import AttrDict
 from utils.common_utils import load_config
 
 
-def fetch_state_snapshot(context: Context):
-    config = load_config(context)
-    current_time = datetime.utcnow() - timedelta(minutes=5)  # for subgraph sync time
-
-    load_users(config, context)
-    load_symbols(config, context)
-    load_accounts(config, context)
-    load_balance_changes(config, context)
-    load_quotes(config, context)
-    load_trade_histories(config, context)
-    load_daily_histories(config, context)
-
-    print(f"{context.tenant}: Data loaded...\nPreparing snapshot data...")
-    prepare_state_snapshot(config, context)
-
-    config = load_config(context)  # Configuration may have changed during this method
-    config.lastSnapshotTimestamp = current_time
-    config.upsert()
-
-
 def real_time_funding_rate(symbol: str) -> Decimal:
     url = f"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}"
     response = requests.get(url)
@@ -65,16 +46,42 @@ def real_time_funding_rate(symbol: str) -> Decimal:
     return funding_rate
 
 
-def prepare_state_snapshot(config, context: Context):
-    from_time = datetime.fromtimestamp(context.from_unix_timestamp / 1000)
+def fetch_snapshot(context: Context):
+    config = load_config(context)
+    current_time = datetime.utcnow() - timedelta(minutes=5)  # for subgraph sync time
 
+    load_users(config, context)
+    load_symbols(config, context)
+    load_accounts(config, context)
+    load_balance_changes(config, context)
+    load_quotes(config, context)
+    load_trade_histories(config, context)
+    load_daily_histories(config, context)
+
+    print(f"{context.tenant}: Data loaded...\nPreparing snapshot data...")
+
+    for affiliate_context in context.affiliates:
+        prepare_affiliate_snapshot(config, context, affiliate_context)
+    for hedger_context in context.hedgers:
+        prepare_hedger_snapshot(config, context, hedger_context)
+
+    config = load_config(context)  # Configuration may have changed during this method
+    config.lastSnapshotTimestamp = current_time
+    config.upsert()
+
+
+def prepare_affiliate_snapshot(
+    config, context: Context, affiliate_context: AffiliateContext
+):
+    from_time = datetime.fromtimestamp(context.from_unix_timestamp / 1000)
+    hedger_context = context.hedger_for_affiliate(affiliate_context.name)
     snapshot = AttrDict()
     q_counts = (
         Quote.select(Quote.quoteStatus, fn.Count(Quote.id).alias("count"))
         .join(Account)
         .where(
             Quote.timestamp > from_time,
-            Account.accountSource == context.symmio_multi_account,
+            Account.accountSource == affiliate_context.symmio_multi_account,
             Quote.tenant == context.tenant,
         )
         .group_by(Quote.quoteStatus)
@@ -89,8 +96,8 @@ def prepare_state_snapshot(config, context: Context):
         Quote.select()
         .join(Account)
         .where(
-            Account.accountSource == context.symmio_multi_account,
-            Quote.partyB == context.hedger_address,
+            Account.accountSource == affiliate_context.symmio_multi_account,
+            Quote.partyB == hedger_context.hedger_address,
             Quote.quoteStatus == 7,
             Quote.timestamp > from_time,
             Quote.tenant == context.tenant,
@@ -115,8 +122,8 @@ def prepare_state_snapshot(config, context: Context):
         Quote.select()
         .join(Account)
         .where(
-            Account.accountSource == context.symmio_multi_account,
-            Quote.partyB == context.hedger_address,
+            Account.accountSource == affiliate_context.symmio_multi_account,
+            Quote.partyB == hedger_context.hedger_address,
             Quote.quoteStatus == 8,
             Quote.timestamp > from_time,
             Quote.tenant == context.tenant,
@@ -139,7 +146,7 @@ def prepare_state_snapshot(config, context: Context):
 
     # ------------------------------------------
 
-    prices = context.utils.binance_client.futures_mark_price()
+    prices = hedger_context.utils.binance_client.futures_mark_price()
     prices_map = {}
     for p in prices:
         prices_map[p["symbol"]] = p["markPrice"]
@@ -157,9 +164,9 @@ def prepare_state_snapshot(config, context: Context):
         .switch(Quote)
         .join(Account)
         .where(
-            Account.accountSource == context.symmio_multi_account,
+            Account.accountSource == affiliate_context.symmio_multi_account,
             Quote.timestamp > from_time,
-            Quote.partyB == context.hedger_address,
+            Quote.partyB == hedger_context.hedger_address,
             (
                 (Quote.quoteStatus == 4)
                 | (Quote.quoteStatus == 5)
@@ -184,12 +191,11 @@ def prepare_state_snapshot(config, context: Context):
         )
 
     # ------------------------------------------
-
     closed_trade_histories = (
         TradeHistory.select()
         .join(Account)
         .where(
-            Account.accountSource == context.symmio_multi_account,
+            Account.accountSource == affiliate_context.symmio_multi_account,
             TradeHistory.quoteStatus == 7,
             TradeHistory.timestamp > from_time,
             TradeHistory.tenant == context.tenant,
@@ -203,7 +209,7 @@ def prepare_state_snapshot(config, context: Context):
         TradeHistory.select()
         .join(Account)
         .where(
-            Account.accountSource == context.symmio_multi_account,
+            Account.accountSource == affiliate_context.symmio_multi_account,
             TradeHistory.quoteStatus == 8,
             TradeHistory.timestamp > from_time,
             TradeHistory.tenant == context.tenant,
@@ -217,7 +223,7 @@ def prepare_state_snapshot(config, context: Context):
         TradeHistory.select()
         .join(Account)
         .where(
-            Account.accountSource == context.symmio_multi_account,
+            Account.accountSource == affiliate_context.symmio_multi_account,
             TradeHistory.quoteStatus == 4,
             TradeHistory.timestamp > from_time,
             TradeHistory.tenant == context.tenant,
@@ -233,8 +239,8 @@ def prepare_state_snapshot(config, context: Context):
         Quote.select()
         .join(Account)
         .where(
-            Account.accountSource == context.symmio_multi_account,
-            Quote.partyB == context.hedger_address,
+            Account.accountSource == affiliate_context.symmio_multi_account,
+            Quote.partyB == hedger_context.hedger_address,
             Quote.quoteStatus == 8,
             Quote.liquidatedSide == 0,
             Quote.timestamp > from_time,
@@ -247,8 +253,8 @@ def prepare_state_snapshot(config, context: Context):
         Quote.select()
         .join(Account)
         .where(
-            Account.accountSource == context.symmio_multi_account,
-            Quote.partyB == context.hedger_address,
+            Account.accountSource == affiliate_context.symmio_multi_account,
+            Quote.partyB == hedger_context.hedger_address,
             Quote.quoteStatus == 8,
             Quote.liquidatedSide == 1,
             Quote.timestamp > from_time,
@@ -258,40 +264,18 @@ def prepare_state_snapshot(config, context: Context):
     snapshot.loss_cva = sum(int(q.cva) for q in party_b_liquidated_party_b_quotes)
 
     # ------------------------------------------
-
     w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
     contract_multicallable = Multicallable(
         w3.to_checksum_address(context.symmio_address), symmio_abi, w3
     )
-    snapshot.hedger_contract_balance = contract_multicallable.balanceOf(
-        [w3.to_checksum_address(context.hedger_address)]
-    ).call()[0]
-    hedger_deposit = BalanceChange.select(fn.Sum(BalanceChange.amount)).where(
-        BalanceChange.collateral == context.symmio_collateral_address,
-        BalanceChange.type == BalanceChangeType.DEPOSIT,
-        BalanceChange.account == context.hedger_address,
-        BalanceChange.tenant == context.tenant,
-    ).scalar() or Decimal(0)
-    snapshot.hedger_contract_deposit = (
-        hedger_deposit * 10 ** (18 - config.decimals) - context.deposit_diff
-    )
-
-    hedger_withdraw = BalanceChange.select(fn.Sum(BalanceChange.amount)).where(
-        BalanceChange.collateral == context.symmio_collateral_address,
-        BalanceChange.type == BalanceChangeType.WITHDRAW,
-        BalanceChange.account == context.hedger_address,
-        BalanceChange.tenant == context.tenant,
-    ).scalar() or Decimal(0)
-    snapshot.hedger_contract_withdraw = hedger_withdraw * 10 ** (18 - config.decimals)
-
     all_accounts = list(
         Account.select(Account.id).where(
-            Account.accountSource == context.symmio_multi_account,
+            Account.accountSource == affiliate_context.symmio_multi_account,
             Account.tenant == context.tenant,
         )
     )
     pages_count = len(all_accounts) // 100 if len(all_accounts) > 0 else 100
-    hedger_addr = w3.to_checksum_address(context.hedger_address)
+    hedger_addr = w3.to_checksum_address(hedger_context.hedger_address)
     snapshot.hedger_contract_allocated = Decimal(
         sum(
             contract_multicallable.allocatedBalanceOfPartyB(
@@ -303,7 +287,7 @@ def prepare_state_snapshot(config, context: Context):
     all_accounts_deposit = BalanceChange.select(fn.Sum(BalanceChange.amount)).join(
         Account
     ).where(
-        Account.accountSource == context.symmio_multi_account,
+        Account.accountSource == affiliate_context.symmio_multi_account,
         BalanceChange.type == BalanceChangeType.DEPOSIT,
         BalanceChange.collateral == context.symmio_collateral_address,
         BalanceChange.tenant == context.tenant,
@@ -315,7 +299,7 @@ def prepare_state_snapshot(config, context: Context):
     all_accounts_withdraw = BalanceChange.select(fn.Sum(BalanceChange.amount)).join(
         Account
     ).where(
-        Account.accountSource == context.symmio_multi_account,
+        Account.accountSource == affiliate_context.symmio_multi_account,
         BalanceChange.type == BalanceChangeType.WITHDRAW,
         BalanceChange.collateral == context.symmio_collateral_address,
         BalanceChange.tenant == context.tenant,
@@ -325,16 +309,6 @@ def prepare_state_snapshot(config, context: Context):
     snapshot.all_contract_withdraw = all_accounts_withdraw * 10 ** (
         18 - config.decimals
     )
-
-    # Read contract balance of contract
-    w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
-    collateral_contract = w3.eth.contract(
-        address=w3.to_checksum_address(context.symmio_collateral_address), abi=erc20_abi
-    )
-
-    snapshot.contract_balance = collateral_contract.functions.balanceOf(
-        w3.to_checksum_address(context.symmio_address)
-    ).call() * 10 ** (18 - config.decimals)
 
     ppp = contract_multicallable.getPartyAOpenPositions(
         [(w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]
@@ -364,7 +338,7 @@ def prepare_state_snapshot(config, context: Context):
         Account.select(fn.count(Account.id))
         .where(
             Account.timestamp > from_time,
-            Account.accountSource == context.symmio_multi_account,
+            Account.accountSource == affiliate_context.symmio_multi_account,
             Account.tenant == context.tenant,
         )
         .scalar()
@@ -373,7 +347,7 @@ def prepare_state_snapshot(config, context: Context):
     snapshot.active_accounts = (
         Account.select(fn.count(Account.id))
         .where(
-            Account.accountSource == context.symmio_multi_account,
+            Account.accountSource == affiliate_context.symmio_multi_account,
             Account.lastActivityTimestamp > active_timestamp,
             Account.timestamp > from_time,
             Account.tenant == context.tenant,
@@ -383,7 +357,7 @@ def prepare_state_snapshot(config, context: Context):
     snapshot.users_count = (
         Account.select(fn.COUNT(fn.DISTINCT(Account.user)))
         .where(
-            Account.accountSource == context.symmio_multi_account,
+            Account.accountSource == affiliate_context.symmio_multi_account,
             Account.timestamp > from_time,
             Account.tenant == context.tenant,
         )
@@ -392,7 +366,7 @@ def prepare_state_snapshot(config, context: Context):
     snapshot.active_users = (
         Account.select(fn.COUNT(fn.DISTINCT(Account.user)))
         .where(
-            Account.accountSource == context.symmio_multi_account,
+            Account.accountSource == affiliate_context.symmio_multi_account,
             Account.lastActivityTimestamp > active_timestamp,
             Account.timestamp > from_time,
             Account.tenant == context.tenant,
@@ -402,7 +376,7 @@ def prepare_state_snapshot(config, context: Context):
 
     # ------------------------------------------
 
-    for liquidator in context.symmio_liquidators:
+    for liquidator in affiliate_context.symmio_liquidators:
         account_withdraw = BalanceChange.select(fn.Sum(BalanceChange.amount)).where(
             BalanceChange.collateral == context.symmio_collateral_address,
             BalanceChange.type == BalanceChangeType.WITHDRAW,
@@ -428,7 +402,7 @@ def prepare_state_snapshot(config, context: Context):
         DailyHistory.select(fn.Sum(DailyHistory.platformFee))
         .where(
             DailyHistory.timestamp > from_time,
-            DailyHistory.accountSource == context.symmio_multi_account,
+            DailyHistory.accountSource == affiliate_context.symmio_multi_account,
             DailyHistory.tenant == context.tenant,
         )
         .scalar()
@@ -438,14 +412,25 @@ def prepare_state_snapshot(config, context: Context):
         DailyHistory.select(fn.Sum(DailyHistory.tradeVolume))
         .where(
             DailyHistory.timestamp > from_time,
-            DailyHistory.accountSource == context.symmio_multi_account,
+            DailyHistory.accountSource == affiliate_context.symmio_multi_account,
             DailyHistory.tenant == context.tenant,
         )
         .scalar()
     ) or 0
-    # ------------------------------------------
 
-    binance_account = context.utils.binance_client.futures_account(version=2)
+    snapshot.timestamp = datetime.utcnow()
+    snapshot.name = affiliate_context.name
+    snapshot.hedger_name = hedger_context.name
+    snapshot.account_source = affiliate_context.symmio_multi_account
+    affiliate_snapshot = AffiliateSnapshot.create(**snapshot)
+    return affiliate_snapshot
+
+
+def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerContext):
+    from_time = datetime.fromtimestamp(context.from_unix_timestamp / 1000)
+
+    snapshot = AttrDict()
+    binance_account = hedger_context.utils.binance_client.futures_account(version=2)
     snapshot.binance_maintenance_margin = Decimal(
         float(binance_account["totalMaintMargin"]) * 10**18
     )
@@ -467,10 +452,13 @@ def prepare_state_snapshot(config, context: Context):
         Decimal(binance_account["maxWithdrawAmount"]) * 10**18
     )
     snapshot.max_open_interest = Decimal(
-        context.hedger_max_open_interest_ratio * snapshot.binance_max_withdraw_amount
+        hedger_context.hedger_max_open_interest_ratio
+        * snapshot.binance_max_withdraw_amount
     )
     snapshot.binance_deposit = config.binanceDeposit
-    snapshot.binance_trade_volume = Decimal(calculate_binance_trade_volume(context) * 10**18)
+    snapshot.binance_trade_volume = Decimal(
+        calculate_binance_trade_volume(context) * 10**18
+    )
 
     # ------------------------------------------
     # data.paid_funding_rate = PaidFundingRate.select(
@@ -488,7 +476,7 @@ def prepare_state_snapshot(config, context: Context):
         0
     )
 
-    positions = context.utils.binance_client.futures_position_information()
+    positions = hedger_context.utils.binance_client.futures_position_information()
     open_positions = [p for p in positions if Decimal(p["notional"]) != 0]
 
     next_funding_rate = defaultdict(lambda: Decimal(0))
@@ -504,6 +492,31 @@ def prepare_state_snapshot(config, context: Context):
 
     snapshot.next_funding_rate = next_funding_rate
 
+    w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
+    contract_multicallable = Multicallable(
+        w3.to_checksum_address(context.symmio_address), symmio_abi, w3
+    )
+    snapshot.hedger_contract_balance = contract_multicallable.balanceOf(
+        [w3.to_checksum_address(hedger_context.hedger_address)]
+    ).call()[0]
+    hedger_deposit = BalanceChange.select(fn.Sum(BalanceChange.amount)).where(
+        BalanceChange.collateral == context.symmio_collateral_address,
+        BalanceChange.type == BalanceChangeType.DEPOSIT,
+        BalanceChange.account == hedger_context.hedger_address,
+        BalanceChange.tenant == context.tenant,
+    ).scalar() or Decimal(0)
+    snapshot.hedger_contract_deposit = (
+        hedger_deposit * 10 ** (18 - config.decimals) - hedger_context.deposit_diff
+    )
+
+    hedger_withdraw = BalanceChange.select(fn.Sum(BalanceChange.amount)).where(
+        BalanceChange.collateral == context.symmio_collateral_address,
+        BalanceChange.type == BalanceChangeType.WITHDRAW,
+        BalanceChange.account == hedger_context.hedger_address,
+        BalanceChange.tenant == context.tenant,
+    ).scalar() or Decimal(0)
+    snapshot.hedger_contract_withdraw = hedger_withdraw * 10 ** (18 - config.decimals)
+
     snapshot.timestamp = datetime.utcnow()
-    state_snapshot = StateSnapshot.create(**snapshot)
-    return state_snapshot
+    hedger_snapshot = HedgerSnapshot.create(**snapshot)
+    return hedger_snapshot

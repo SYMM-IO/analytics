@@ -13,9 +13,22 @@ from context.graphql_client import Where
 from utils.common_utils import convert_timestamps
 
 
+def tag_tenant_to_id(data, context: Context):
+    data["id"] = f"{context.tenant}_{data['id']}"
+    return data
+
+
+def tag_tenant_quote_id(data, context: Context):
+    data["quote"] = f"{context.tenant}_{data['quote']}"
+    return data
+
+
 def load_quotes(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: Quote(**convert_timestamps(data), tenant=context.tenant),
+        lambda data: Quote(
+            **convert_timestamps(tag_tenant_to_id(data, context)),
+            tenant=context.tenant,
+        ),
         Quote,
         method="quotes",
         fields=[
@@ -63,7 +76,10 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
 
 def load_trade_histories(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: TradeHistory(**convert_timestamps(data), tenant=context.tenant),
+        lambda data: TradeHistory(
+            **convert_timestamps(tag_tenant_quote_id(data, context)),
+            tenant=context.tenant,
+        ),
         TradeHistory,
         method="tradeHistories",
         fields=[

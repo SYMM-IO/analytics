@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import List
 
 from peewee import *
 from playhouse.postgres_ext import JSONField
@@ -245,7 +246,7 @@ class PaidFundingRate(BaseModel):
     tenant = CharField(null=False)
 
 
-class StateSnapshot(BaseModel):
+class AffiliateSnapshot(BaseModel):
     status_quotes = TextField()
     pnl_of_closed = DecimalField(max_digits=40, decimal_places=0)
     pnl_of_liquidated = DecimalField(max_digits=40, decimal_places=0)
@@ -254,21 +255,29 @@ class StateSnapshot(BaseModel):
     opened_notional_value = DecimalField(max_digits=40, decimal_places=0)
     earned_cva = DecimalField(max_digits=40, decimal_places=0)
     loss_cva = DecimalField(max_digits=40, decimal_places=0)
-    hedger_contract_balance = DecimalField(max_digits=40, decimal_places=0)
-    hedger_contract_deposit = DecimalField(max_digits=40, decimal_places=0)
-    hedger_contract_withdraw = DecimalField(max_digits=40, decimal_places=0)
     hedger_contract_allocated = DecimalField(max_digits=40, decimal_places=0)
     hedger_upnl = DecimalField(max_digits=40, decimal_places=0)
     all_contract_deposit = DecimalField(max_digits=40, decimal_places=0)
     all_contract_withdraw = DecimalField(max_digits=40, decimal_places=0)
-    contract_balance = DecimalField(max_digits=40, decimal_places=0)
     platform_fee = DecimalField(max_digits=40, decimal_places=0, null=True)
-    max_open_interest = DecimalField(max_digits=40, decimal_places=0)
     accounts_count = IntegerField()
     active_accounts = IntegerField()
     users_count = IntegerField()
     active_users = IntegerField()
     liquidator_states = JSONField()
+    trade_volume = DecimalField(max_digits=40, decimal_places=0)
+    timestamp = DateTimeField(primary_key=True)
+    account_source = CharField(null=False)
+    name = CharField(null=False)
+    hedger_name = CharField(null=False)
+    tenant = CharField(null=False)
+
+
+class HedgerSnapshot(BaseModel):
+    hedger_contract_balance = DecimalField(max_digits=40, decimal_places=0)
+    hedger_contract_deposit = DecimalField(max_digits=40, decimal_places=0)
+    hedger_contract_withdraw = DecimalField(max_digits=40, decimal_places=0)
+    max_open_interest = DecimalField(max_digits=40, decimal_places=0)
     binance_maintenance_margin = DecimalField(max_digits=40, decimal_places=0)
     binance_total_balance = DecimalField(max_digits=40, decimal_places=0)
     binance_account_health_ratio = DecimalField(max_digits=40, decimal_places=0)
@@ -277,31 +286,39 @@ class StateSnapshot(BaseModel):
     binance_total_initial_margin = DecimalField(max_digits=40, decimal_places=0)
     binance_max_withdraw_amount = DecimalField(max_digits=40, decimal_places=0)
     binance_deposit = DecimalField(max_digits=40, decimal_places=0)
-    trade_volume = DecimalField(max_digits=40, decimal_places=0)
-    timestamp = DateTimeField(primary_key=True)
-    paid_funding_rate = DecimalField(max_digits=40, decimal_places=0)
     binance_trade_volume = DecimalField(max_digits=40, decimal_places=0)
+    paid_funding_rate = DecimalField(max_digits=40, decimal_places=0)
     next_funding_rate: dict
+    name = CharField(null=False)
     tenant = CharField(null=False)
+    timestamp = DateTimeField(primary_key=True)
 
     @property
     def binance_profit(self):
-        binance_deposit = int(self.binance_deposit) if self.binance_deposit else 0
+        binance_deposit = self.binance_deposit if self.binance_deposit else 0
         return self.binance_total_balance - binance_deposit
 
-    @property
-    def contract_profit(self):
+    def total_state(self, affiliate_snapshots: List[AffiliateSnapshot]):
+        return self.binance_profit + self.contract_profit(affiliate_snapshots)
+
+    def contract_profit(self, affiliate_snapshots: List[AffiliateSnapshot]):
         return (
             self.hedger_contract_balance
-            + self.hedger_contract_allocated
-            + self.hedger_upnl
+            + sum(
+                [snapshot.hedger_contract_allocated for snapshot in affiliate_snapshots]
+            )
+            + sum([snapshot.hedger_upnl for snapshot in affiliate_snapshots])
             - self.hedger_contract_deposit
             + self.hedger_contract_withdraw
         )
 
-    @property
-    def total_state(self):
-        return self.binance_profit + self.contract_profit
+    @staticmethod
+    def earned_cva(affiliate_snapshots: List[AffiliateSnapshot]):
+        return sum([snapshot.earned_cva for snapshot in affiliate_snapshots])
+
+    @staticmethod
+    def loss_cva(affiliate_snapshots: List[AffiliateSnapshot]):
+        return sum([snapshot.loss_cva for snapshot in affiliate_snapshots])
 
     @staticmethod
     def is_timeseries():
@@ -352,6 +369,7 @@ class BinanceIncome(BaseModel):
     amount = FloatField()
     timestamp = DateTimeField()
     tenant = CharField(null=False)
+    hedger = CharField(null=False)
 
     @staticmethod
     def is_timeseries():
@@ -368,6 +386,7 @@ class BinanceTrade(BaseModel):
     price = DecimalField(max_digits=20, decimal_places=6)
     timestamp = DateTimeField()
     tenant = CharField(null=False)
+    hedger = CharField(null=False)
 
     @staticmethod
     def is_timeseries():

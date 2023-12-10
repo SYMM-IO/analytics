@@ -14,7 +14,7 @@ from app.models import (
     SymbolPrice,
     BinanceIncome,
 )
-from config.settings import proxies, Context
+from config.settings import proxies, Context, HedgerContext
 from utils.common_utils import load_config
 
 
@@ -135,7 +135,9 @@ def fetch_binance_histories(
     current_time = datetime.utcnow()
 
     while start_time < current_time:
-        print(f"{context.tenant}: Fetching binance histories between {start_time} and {end_time}")
+        print(
+            f"{context.tenant}: Fetching binance histories between {start_time} and {end_time}"
+        )
         data = fetch_function(
             startTime=int(start_time.timestamp() * 1000),
             endTime=int(end_time.timestamp() * 1000),
@@ -163,6 +165,7 @@ def fetch_binance_histories(
 
 def fetch_binance_transfer_histories(
     context: Context,
+    hedger_context: HedgerContext,
     model,
     fetch_function,
     timestamp_field,
@@ -172,7 +175,7 @@ def fetch_binance_transfer_histories(
     # Get the latest timestamp from the database for the respective model
     latest_record = (
         model.select()
-        .where(model.tenant == context.tenant)
+        .where(model.tenant == context.tenant, model.hedger_name == hedger_context.name)
         .order_by(model.timestamp.desc())
         .first()
     )
@@ -187,7 +190,9 @@ def fetch_binance_transfer_histories(
     current_time = datetime.utcnow()
 
     while start_time < current_time:
-        print(f"{context.tenant}: Fetching binance transfer histories between {start_time} and {end_time}")
+        print(
+            f"{context.tenant}: Fetching binance transfer histories between {start_time} and {end_time}"
+        )
 
         data = fetch_function(
             startTime=int(start_time.timestamp() * 1000),
@@ -206,6 +211,7 @@ def fetch_binance_transfer_histories(
                 to=item["toEmail"],
                 amount=item["amount"],
                 status=item["status"],
+                hedger_name=hedger_context.name,
                 timestamp=datetime.fromtimestamp(
                     item[timestamp_field] / 1000
                 ),  # Convert from milliseconds
@@ -215,8 +221,55 @@ def fetch_binance_transfer_histories(
         end_time = start_time + timedelta(days=limit_days)
 
 
+def update_binance_deposit(context: Context, hedger_context: HedgerContext):
+    print("Updating Binance Deposits")
+    print("Deposit .")
+    fetch_binance_histories(
+        context,
+        BinanceDeposit,
+        hedger_context.utils.binance_client.get_deposit_history,
+        "insertTime",
+    )
+    print("Withdraw .")
+    fetch_binance_histories(
+        context,
+        BinanceWithdraw,
+        hedger_context.utils.binance_client.get_withdraw_history,
+        "applyTime",
+    )
+    print("Transfers .")
+    fetch_binance_transfer_histories(
+        context,
+        BinanceTransfer,
+        hedger_context.utils.binance_client.get_universal_transfer_history
+        if hedger_context.binance_is_master
+        else hedger_context.utils.binance_client.get_subaccount_transfer_history,
+        "createTimeStamp",
+        asset_field="asset",
+        limit_days=29,
+    )
+    total_deposit = BinanceDeposit.select(fn.SUM(BinanceDeposit.amount)).scalar() or 0.0
+    total_withdraw = (
+        BinanceWithdraw.select(fn.SUM(BinanceWithdraw.amount)).scalar() or 0.0
+    )
+    total_transfers = (
+        BinanceTransfer.select(fn.SUM(BinanceTransfer.amount))
+        .where(
+            BinanceTransfer.frm == hedger_context.binance_email,
+            BinanceTransfer.tenant == context.tenant,
+        )
+        .scalar()
+        or 0.0
+    )
+    balance = total_deposit - total_withdraw - total_transfers
+    config = load_config(context)
+    config.binanceDeposit = balance * 10**18
+    config.save()
+
+
 def fetch_binance_income_histories(
     context: Context,
+    hedger_context: HedgerContext,
     model,
     fetch_function,
     timestamp_field,
@@ -241,7 +294,9 @@ def fetch_binance_income_histories(
     current_time = datetime.utcnow()
 
     while start_time < current_time:
-        print(f"{context.tenant}: Fetching binance income histories between {start_time} and {end_time}")
+        print(
+            f"{context.tenant}: Fetching binance income histories between {start_time} and {end_time}"
+        )
         data = fetch_function(
             startTime=int(start_time.timestamp() * 1000),
             endTime=int(end_time.timestamp() * 1000),
@@ -258,6 +313,7 @@ def fetch_binance_income_histories(
                 asset=item[asset_field],
                 amount=item["income"],
                 type=item["incomeType"],
+                hedger=hedger_context.name,
                 timestamp=datetime.fromtimestamp(
                     item[timestamp_field] / 1000
                 ),  # Convert from milliseconds
@@ -270,62 +326,21 @@ def fetch_binance_income_histories(
         end_time = start_time + timedelta(days=limit_days)
 
 
-def update_binance_deposit(context: Context):
-    print("Updating Binance Deposits")
-    print("Deposit .")
-    fetch_binance_histories(
-        context,
-        BinanceDeposit,
-        context.utils.binance_client.get_deposit_history,
-        "insertTime",
-    )
-    print("Withdraw .")
-    fetch_binance_histories(
-        context,
-        BinanceWithdraw,
-        context.utils.binance_client.get_withdraw_history,
-        "applyTime",
-    )
-    print("Transfers .")
-    fetch_binance_transfer_histories(
-        context,
-        BinanceTransfer,
-        context.utils.binance_client.get_universal_transfer_history
-        if context.binance_is_master
-        else context.utils.binance_client.get_subaccount_transfer_history,
-        "createTimeStamp",
-        asset_field="asset",
-        limit_days=29,
-    )
-    total_deposit = BinanceDeposit.select(fn.SUM(BinanceDeposit.amount)).scalar() or 0.0
-    total_withdraw = (
-        BinanceWithdraw.select(fn.SUM(BinanceWithdraw.amount)).scalar() or 0.0
-    )
-    total_transfers = (
-        BinanceTransfer.select(fn.SUM(BinanceTransfer.amount))
-        .where(
-            BinanceTransfer.frm == context.binance_email,
-            BinanceTransfer.tenant == context.tenant,
-        )
-        .scalar()
-        or 0.0
-    )
-    balance = total_deposit - total_withdraw - total_transfers
-    config = load_config(context)
-    config.binanceDeposit = balance * 10**18
-    config.save()
-
-
-def update_binance_deposit_v2(context: Context):
+def update_binance_deposit_v2(context: Context, hedger_context: HedgerContext):
     fetch_binance_income_histories(
         context,
+        hedger_context,
         BinanceIncome,
-        context.utils.binance_client.futures_income_history,
+        hedger_context.utils.binance_client.futures_income_history,
         "time",
     )
     total_transfers = (
         BinanceIncome.select(fn.SUM(BinanceIncome.amount))
-        .where(BinanceIncome.type == "TRANSFER", BinanceIncome.tenant == context.tenant)
+        .where(
+            BinanceIncome.type == "TRANSFER",
+            BinanceIncome.tenant == context.tenant,
+            BinanceIncome.hedger == hedger_context.name,
+        )
         .scalar()
         or 0.0
     )

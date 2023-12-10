@@ -13,8 +13,8 @@ from config.settings import (
 )
 from context.migrations import create_tables
 from cronjobs import load_stats_messages, setup_telegram_client
-from cronjobs.bot.analytics_bot import report_snapshot_to_telegram
-from cronjobs.snapshot_job import fetch_state_snapshot
+from cronjobs.bot.analytics_bot import report_snapshots_to_telegram
+from cronjobs.snapshot_job import fetch_snapshot
 from namespaces import config_namespace
 from utils.binance_utils import update_binance_deposit_v2
 from utils.telegram_utils import send_alert, escape_markdown_v1
@@ -31,26 +31,29 @@ def create_schedular():
             func=lambda ctx=context: load_stats_messages(ctx),
             trigger="interval",
             seconds=fetch_stat_data_interval,
-            id=context.tenant + "_load_stats_messages"
+            id=context.tenant + "_load_stats_messages",
         )
         scheduler.add_job(
-            func=lambda ctx=context: fetch_state_snapshot(ctx),
+            func=lambda ctx=context: fetch_snapshot(ctx),
             trigger="interval",
             seconds=fetch_data_interval,
-            id=context.tenant + "_fetch_state_snapshot"
+            id=context.tenant + "_fetch_snapshot",
         )
         scheduler.add_job(
-            func=lambda ctx=context: report_snapshot_to_telegram(ctx),
+            func=lambda ctx=context: report_snapshots_to_telegram(ctx),
             trigger="interval",
             seconds=fetch_data_interval,
-            id=context.tenant + "_report_snapshot_to_telegram"
+            id=context.tenant + "_report_snapshot_to_telegram",
         )
-        scheduler.add_job(
-            func=lambda ctx=context: update_binance_deposit_v2(ctx),
-            trigger="interval",
-            seconds=update_binance_deposit_interval,
-            id=context.tenant + "_update_binance_deposit_v2"
-        )
+        for hedger_context in context.hedgers:
+            scheduler.add_job(
+                func=lambda ctx=context, hedger_ctx=hedger_context: update_binance_deposit_v2(
+                    ctx, hedger_ctx
+                ),
+                trigger="interval",
+                seconds=update_binance_deposit_interval,
+                id=context.tenant + "_update_binance_deposit_v2",
+            )
         # scheduler.add_job(
         # 	func=lambda ctx=context: calculate_paid_funding(ctx),
         # 	trigger="interval",

@@ -2,18 +2,14 @@ import json
 from dataclasses import dataclass
 from typing import List
 
-from context.context import ContextUtils
+from context.context import ContextUtils, HedgerContextUtils
 
 
 @dataclass
-class Context:
-    tenant: str
-    subgraph_endpoint: str
-    rpc: str
-    symmio_address: str
-    symmio_collateral_address: str
-    symmio_multi_account: str
-    symmio_liquidators: List[str]
+class HedgerContext:
+    name: str  # Should be unique
+    deposit_diff: int
+
     hedger_address: str
     hedger_max_open_interest_ratio: int
 
@@ -23,8 +19,28 @@ class Context:
     binance_email: str
     binance_is_master: bool
 
-    deposit_diff: int
+    utils: HedgerContextUtils | None
+
+
+@dataclass
+class AffiliateContext:
+    name: str  # Should be unique
+    symmio_multi_account: str
+    symmio_liquidators: List[str]
+    hedger_name: str  # The name of hedger in hedgerContext
+
+
+@dataclass
+class Context:
+    tenant: str
+    subgraph_endpoint: str
+    rpc: str
+    symmio_address: str
+    symmio_collateral_address: str
     from_unix_timestamp: int
+
+    hedgers: List[HedgerContext]
+    affiliates: List[AffiliateContext]
 
     # Telegram
     telegram_group_id: str
@@ -34,6 +50,14 @@ class Context:
     mention_cooldown: int
 
     utils: ContextUtils | None
+
+    def hedger_for_affiliate(self, affiliate_name: str):
+        for affiliate in self.affiliates:
+            if affiliate.name == affiliate_name:
+                for hedger in self.hedgers:
+                    if hedger.name == affiliate.hedger_name:
+                        return hedger
+        raise RuntimeError("Invalid Configuration")
 
 
 proxies = {}
