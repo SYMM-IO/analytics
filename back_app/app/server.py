@@ -1,55 +1,62 @@
+from contextlib import asynccontextmanager
+
+import uvicorn
 from apscheduler.events import EVENT_JOB_ERROR
-from apscheduler.schedulers.background import BackgroundScheduler
-from flask import Flask
-from flask_cors import CORS
-from flask_restx import Api
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pyrogram import Client
 
 from config.local_settings import contexts
 from config.settings import (
-    server_port,
     fetch_data_interval,
     fetch_stat_data_interval,
     update_binance_deposit_interval,
+    server_port,
 )
 from context.migrations import create_tables
-from cronjobs import load_stats_messages, setup_telegram_client
+from cronjobs import load_stats_messages
+from cronjobs import setup_telegram_client
 from cronjobs.bot.analytics_bot import report_snapshots_to_telegram
 from cronjobs.snapshot_job import fetch_snapshot
-from namespaces import config_namespace
+from endpoints.snapshot_router import router as snapshot_router
 from utils.binance_utils import update_binance_deposit_v2
 from utils.telegram_utils import send_alert, escape_markdown_v1
 
-scheduler: BackgroundScheduler
+scheduler: AsyncIOScheduler = AsyncIOScheduler()
+telegram_user_client: Client
 
 
-def create_schedular():
+async def create_scheduler():
     global scheduler
-    scheduler = BackgroundScheduler()
+    scheduler = AsyncIOScheduler()
     scheduler.add_listener(listener, EVENT_JOB_ERROR)
     for context in contexts:
         scheduler.add_job(
-            func=lambda ctx=context: load_stats_messages(ctx),
+            func=load_stats_messages,
+            args=[context, telegram_user_client],
             trigger="interval",
             seconds=fetch_stat_data_interval,
             id=context.tenant + "_load_stats_messages",
         )
         scheduler.add_job(
-            func=lambda ctx=context: fetch_snapshot(ctx),
+            func=fetch_snapshot,
+            args=[context],
             trigger="interval",
             seconds=fetch_data_interval,
             id=context.tenant + "_fetch_snapshot",
         )
         scheduler.add_job(
-            func=lambda ctx=context: report_snapshots_to_telegram(ctx),
+            func=report_snapshots_to_telegram,
+            args=[context],
             trigger="interval",
             seconds=fetch_data_interval,
             id=context.tenant + "_report_snapshot_to_telegram",
         )
         for hedger_context in context.hedgers:
             scheduler.add_job(
-                func=lambda ctx=context, hedger_ctx=hedger_context: update_binance_deposit_v2(
-                    ctx, hedger_ctx
-                ),
+                func=update_binance_deposit_v2,
+                args=[context, hedger_context],
                 trigger="interval",
                 seconds=update_binance_deposit_interval,
                 id=context.tenant + "_update_binance_deposit_v2",
@@ -77,19 +84,42 @@ def listener(event):
         )
     )
     scheduler.shutdown(wait=False)
-    create_schedular()
+    create_scheduler()
 
 
-app = Flask(__name__)
-api = Api(app, validate=True)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_tables()
 
-api.add_namespace(config_namespace.ns, path="/configs")
-CORS(app, resources={r"*": {"origins": "*"}})
+    global telegram_user_client
+    telegram_user_client = await setup_telegram_client()
+    await telegram_user_client.start()
 
-create_tables()
+    await create_scheduler()
+    yield
+    scheduler.shutdown(wait=False)
+    await telegram_user_client.stop()
 
-setup_telegram_client()
-create_schedular()
+
+app = FastAPI(lifespan=lifespan)
+
+# CORS configuration
+origins = ["*"]  # List your origins here
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(snapshot_router)
+
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
+
 
 if __name__ == "__main__":
-    app.run(port=server_port, debug=True, use_reloader=False)
+    uvicorn.run(app, port=server_port)

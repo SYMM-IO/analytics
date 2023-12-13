@@ -317,7 +317,7 @@ def prepare_affiliate_snapshot(
     print(f"{context.tenant}: Diff of open quotes with subgraph")
     for pp in ppp:
         for quote in pp:
-            key = f"{quote[0]}-{quote[5]}-{quote[9]}-{quote[8]}"
+            key = f"{context.tenant}_{quote[0]}-{quote[5]}-{quote[9]}-{quote[8]}"
             if key not in subgraph_open_quotes:
                 db_quote = Quote.get_or_none(
                     Quote.id == quote[0], Quote.tenant == context.tenant
@@ -422,6 +422,7 @@ def prepare_affiliate_snapshot(
     snapshot.name = affiliate_context.name
     snapshot.hedger_name = hedger_context.name
     snapshot.account_source = affiliate_context.symmio_multi_account
+    snapshot.tenant = context.tenant
     affiliate_snapshot = AffiliateSnapshot.create(**snapshot)
     return affiliate_snapshot
 
@@ -457,7 +458,7 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
     )
     snapshot.binance_deposit = config.binanceDeposit
     snapshot.binance_trade_volume = Decimal(
-        calculate_binance_trade_volume(context) * 10**18
+        calculate_binance_trade_volume(context, hedger_context) * 10**18
     )
 
     # ------------------------------------------
