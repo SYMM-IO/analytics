@@ -519,5 +519,6 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
     snapshot.hedger_contract_withdraw = hedger_withdraw * 10 ** (18 - config.decimals)
 
     snapshot.timestamp = datetime.utcnow()
+    snapshot.name = hedger_context.name
     hedger_snapshot = HedgerSnapshot.create(**snapshot)
     return hedger_snapshot
