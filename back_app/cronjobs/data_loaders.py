@@ -74,12 +74,21 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
         pass
 
 
-def load_trade_histories(config: RuntimeConfiguration, context: Context):
-    out = context.utils.gc.load_all(
-        lambda data: TradeHistory(
+def create_trade_history(data, context: Context):
+    try:
+        th = TradeHistory(
             **convert_timestamps(tag_tenant_quote_id(data, context)),
             tenant=context.tenant,
-        ),
+        )
+    except Quote.QuoteDoesNotExist:
+        print("TradeHistory loaded but quote is not")
+        th = None
+    return th
+
+
+def load_trade_histories(config: RuntimeConfiguration, context: Context):
+    out = context.utils.gc.load_all(
+        lambda data: create_trade_history(data, context),
         TradeHistory,
         method="tradeHistories",
         fields=[
