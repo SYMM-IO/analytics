@@ -140,12 +140,12 @@ def report_snapshots_to_telegram(context: Context):
             context, hedger_snapshot, related_affiliate_snapshots, parsed_message
         )
         hedger_messages.append(msg)
-        indicators.append(indis)
+        indicators += indis
 
     for affiliates_snapshot in affiliates_snapshots:
         msg, indis = prepare_affiliate_snapshot_message(affiliates_snapshot)
         affiliates_messages.append(msg)
-        indicators.append(indis)
+        indicators += indis
 
     report = "".join(indicator.mode for indicator in indicators)
     report += "\n".join(hedger_messages)
