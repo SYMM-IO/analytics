@@ -42,7 +42,8 @@ CLOSABLE_FUNDING_RATE_THRESHOLD = -(closable_funding_rate_alert_threshold * 10**
 
 
 def get_hedger_indicators(
-    hedger_snapshot: HedgerSnapshot, parsed_stat_message: dict
+    hedger_snapshot: HedgerSnapshot,
+    parsed_stat_message: dict,
 ) -> List[StateIndicator]:
     non_closable_funding = 0
     for market, value in hedger_snapshot.next_funding_rate.items():
@@ -76,7 +77,7 @@ def get_hedger_indicators(
     mismatch_indicator.update_state(
         hedger_snapshot,
         parsed_stat_message,
-        [FieldCheck("total_state", "total state", 5)],
+        [FieldCheck("calculated_total_state", "total state", 5)],
     )
 
     return [
@@ -208,6 +209,10 @@ def prepare_hedger_snapshot_message(
             non_closable_funding += value
         else:
             closable_funding += value
+
+    hedger_snapshot.calculated_total_state = hedger_snapshot.total_state(
+        affiliate_snapshots
+    )
 
     msg = f"""
 \n--- ⚖️ {hedger_snapshot.name} ⚖️ ---\n

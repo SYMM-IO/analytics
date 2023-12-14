@@ -33,6 +33,14 @@ class MismatchIndicator(StateIndicator):
     ):
         for field_check in field_checks:
             value1 = getattr(data, field_check.field_name_data)
+
+            is_method = callable(value1) and not isinstance(
+                value1, (staticmethod, classmethod)
+            )
+
+            if is_method:
+                value1 = value1()
+
             value2 = (
                 Decimal(parsed_stat_bot_data[field_check.field_name_stat_data])
                 * 10**18

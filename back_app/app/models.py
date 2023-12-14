@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import List
 
 from peewee import *
@@ -292,6 +293,7 @@ class HedgerSnapshot(BaseModel):
     name = CharField(null=False)
     tenant = CharField(null=False)
     timestamp = DateTimeField(primary_key=True)
+    calculated_total_state: int = 0
 
     @property
     def binance_profit(self):
