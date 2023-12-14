@@ -156,7 +156,7 @@ def report_snapshots_to_telegram(context: Context):
 
     mentions = set()
     for indicator in indicators:
-        mentions.update(indicator.get_mentions())
+        mentions.update(indicator.get_mentions(context))
 
     print(report)
     send_message(
