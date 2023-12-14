@@ -520,5 +520,6 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
 
     snapshot.timestamp = datetime.utcnow()
     snapshot.name = hedger_context.name
+    snapshot.tenant = context.tenant
     hedger_snapshot = HedgerSnapshot.create(**snapshot)
     return hedger_snapshot
