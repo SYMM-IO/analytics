@@ -1,4 +1,3 @@
-from collections import defaultdict
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -476,22 +475,6 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
     ).scalar() or Decimal(
         0
     )
-
-    positions = hedger_context.utils.binance_client.futures_position_information()
-    open_positions = [p for p in positions if Decimal(p["notional"]) != 0]
-
-    next_funding_rate = defaultdict(lambda: Decimal(0))
-    for pos in open_positions:
-        notional, symbol, side = (
-            Decimal(pos["notional"]),
-            pos["symbol"],
-            pos["positionSide"],
-        )
-        funding_rate = pos["fundingRate"] = real_time_funding_rate(symbol=symbol)
-        funding_rate_fee = -1 * notional * funding_rate
-        next_funding_rate[symbol] += funding_rate_fee * 10**18
-
-    snapshot.next_funding_rate = next_funding_rate
 
     w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
     contract_multicallable = Multicallable(

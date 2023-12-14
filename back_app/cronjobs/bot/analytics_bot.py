@@ -1,4 +1,6 @@
+from collections import defaultdict
 from datetime import datetime
+from decimal import Decimal
 from typing import List
 
 from app.models import AffiliateSnapshot, StatsBotMessage, HedgerSnapshot
@@ -17,6 +19,7 @@ from cronjobs.bot.utils import (
     get_yesterday_last_affiliate_snapshot,
     calculate_affiliates_snapshot_diff,
 )
+from cronjobs.snapshot_job import real_time_funding_rate
 from utils.formatter_utils import format
 from utils.parser_utils import parse_message
 from utils.telegram_utils import send_message, escape_markdown_v1
@@ -133,7 +136,7 @@ def report_snapshots_to_telegram(context: Context):
             af for af in affiliates_snapshots if af.hedger_name == hedger_snapshot.name
         ]
         msg, indis = prepare_hedger_snapshot_message(
-            hedger_snapshot, related_affiliate_snapshots, parsed_message
+            context, hedger_snapshot, related_affiliate_snapshots, parsed_message
         )
         hedger_messages.append(msg)
         indicators.append(indis)
@@ -165,6 +168,7 @@ def report_snapshots_to_telegram(context: Context):
 
 
 def prepare_hedger_snapshot_message(
+    context: Context,
     hedger_snapshot: HedgerSnapshot,
     affiliate_snapshots: List[AffiliateSnapshot],
     parsed_stat_message,
@@ -179,6 +183,23 @@ def prepare_hedger_snapshot_message(
         calculate_affiliates_snapshot_diff(af_old, af_new)
         for af_new, af_old in zip(affiliate_snapshots, last_day_affiliates)
     ]
+
+    positions = context.hedger_with_name(
+        hedger_snapshot.name
+    ).utils.binance_client.futures_position_information()
+    open_positions = [p for p in positions if Decimal(p["notional"]) != 0]
+    next_funding_rate = defaultdict(lambda: Decimal(0))
+    for pos in open_positions:
+        notional, symbol, side = (
+            Decimal(pos["notional"]),
+            pos["symbol"],
+            pos["positionSide"],
+        )
+        funding_rate = pos["fundingRate"] = real_time_funding_rate(symbol=symbol)
+        funding_rate_fee = -1 * notional * funding_rate
+        next_funding_rate[symbol] += funding_rate_fee * 10**18
+
+    hedger_snapshot.next_funding_rate = next_funding_rate
 
     non_closable_funding = 0
     closable_funding = 0

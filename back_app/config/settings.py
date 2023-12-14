@@ -59,15 +59,21 @@ class Context:
                         return hedger
         raise RuntimeError("Invalid Configuration")
 
+    def hedger_with_name(self, hedger_name: str):
+        for hedger in self.hedgers:
+            if hedger.name == hedger_name:
+                return hedger
+        raise RuntimeError("Invalid Configuration")
+
 
 proxies = {}
 server_port = 7231
 
 # Intervals
-fetch_stat_data_interval = 10
-fetch_data_interval = 10
-funding_fetch_data_interval = 10
-update_binance_deposit_interval = 20
+fetch_stat_data_interval = 2 * 60
+fetch_data_interval = 2 * 61
+funding_fetch_data_interval = 30 * 60
+update_binance_deposit_interval = 60 * 60
 
 # Alerting system
 funding_rate_alert_threshold = 100
