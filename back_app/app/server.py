@@ -3,10 +3,11 @@ from contextlib import asynccontextmanager
 import uvicorn
 from apscheduler.events import EVENT_JOB_ERROR
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pyrogram import Client
 
+from app.exception_handlers import ExceptionHandlers, ErrorCodeResponse
 from config.local_settings import contexts
 from config.settings import (
     fetch_data_interval,
@@ -76,7 +77,7 @@ async def create_scheduler():
     scheduler.start()
 
 
-def listener(event):
+async def listener(event):
     global scheduler
     send_alert(
         escape_markdown_v1(
@@ -84,11 +85,12 @@ def listener(event):
         )
     )
     scheduler.shutdown(wait=False)
-    create_scheduler()
+    await create_scheduler()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global scheduler
     create_tables()
 
     global telegram_user_client
@@ -101,16 +103,21 @@ async def lifespan(app: FastAPI):
     await telegram_user_client.stop()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title="Symmio analytics",
+)
+app.add_exception_handler(Exception, ExceptionHandlers.unhandled_exception)
+app.add_exception_handler(HTTPException, ExceptionHandlers.http_exception)
+app.add_exception_handler(ErrorCodeResponse, ExceptionHandlers.error_code_response)
 
-# CORS configuration
-origins = ["*"]  # List your origins here
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 app.include_router(snapshot_router)

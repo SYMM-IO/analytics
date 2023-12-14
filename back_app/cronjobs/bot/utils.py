@@ -13,30 +13,50 @@ def get_yesterday_last_affiliate_snapshot(affiliate_snapshot: AffiliateSnapshot)
     yesterday = datetime.utcnow() - timedelta(days=1)
     yesterday_end = datetime(yesterday.year, yesterday.month, yesterday.day, 23, 59, 59)
 
-    return (
-        AffiliateSnapshot.select()
-        .where(
-            AffiliateSnapshot.timestamp <= yesterday_end,
-            AffiliateSnapshot.name == affiliate_snapshot.name,
+    try:
+        return (
+            AffiliateSnapshot.select()
+            .where(
+                AffiliateSnapshot.timestamp <= yesterday_end,
+                AffiliateSnapshot.name == affiliate_snapshot.name,
+            )
+            .order_by(AffiliateSnapshot.timestamp.desc())
+            .get()
         )
-        .order_by(AffiliateSnapshot.timestamp.desc())
-        .get()
-    )
+    except:  # FIXME is for the first time
+        return (
+            AffiliateSnapshot.select()
+            .where(
+                AffiliateSnapshot.name == affiliate_snapshot.name,
+            )
+            .order_by(AffiliateSnapshot.timestamp.desc())
+            .get()
+        )
 
 
 def get_yesterday_last_hedger_snapshot(hedger_snapshot: HedgerSnapshot):
     yesterday = datetime.utcnow() - timedelta(days=1)
     yesterday_end = datetime(yesterday.year, yesterday.month, yesterday.day, 23, 59, 59)
 
-    return (
-        HedgerSnapshot.select()
-        .where(
-            HedgerSnapshot.timestamp <= yesterday_end,
-            HedgerSnapshot.name == hedger_snapshot.name,
+    try:
+        return (
+            HedgerSnapshot.select()
+            .where(
+                HedgerSnapshot.timestamp <= yesterday_end,
+                HedgerSnapshot.name == hedger_snapshot.name,
+            )
+            .order_by(HedgerSnapshot.timestamp.desc())
+            .get()
         )
-        .order_by(HedgerSnapshot.timestamp.desc())
-        .get()
-    )
+    except:  # FIXME is for the first time
+        return (
+            HedgerSnapshot.select()
+            .where(
+                HedgerSnapshot.name == hedger_snapshot.name,
+            )
+            .order_by(HedgerSnapshot.timestamp.desc())
+            .get()
+        )
 
 
 def calculate_liquidator_states_diff(old_states, new_states):

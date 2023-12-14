@@ -80,7 +80,8 @@ def create_trade_history(data, context: Context):
             **convert_timestamps(tag_tenant_quote_id(data, context)),
             tenant=context.tenant,
         )
-    except Quote.QuoteDoesNotExist:
+    # except Quote.QuoteDoesNotExist: #FIXME
+    except:
         print("TradeHistory loaded but quote is not")
         th = None
     return th
