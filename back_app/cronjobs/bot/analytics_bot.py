@@ -255,7 +255,7 @@ def prepare_affiliate_snapshot_message(
 
     quote_stats_lines = [
         f"{quote_status_names[int(id)]} : {count} | {snapshot_diff.status_quotes[id]}"
-        for id, count in affiliate_snapshot.status_quotes.items()
+        for id, count in affiliate_snapshot.get_status_quotes().items()
     ]
     quote_stats_info = "\n".join(quote_stats_lines)
 

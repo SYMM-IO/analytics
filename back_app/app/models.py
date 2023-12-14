@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from decimal import Decimal
 from typing import List
@@ -272,6 +273,9 @@ class AffiliateSnapshot(BaseModel):
     name = CharField(null=False)
     hedger_name = CharField(null=False)
     tenant = CharField(null=False)
+
+    def get_status_quotes(self):
+        return json.loads(self.status_quotes.replace("'", '"'))
 
 
 class HedgerSnapshot(BaseModel):
