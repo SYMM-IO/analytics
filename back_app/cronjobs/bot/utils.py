@@ -115,7 +115,8 @@ def calculate_affiliates_snapshot_diff(
     diff_data.timestamp = new_data.timestamp
 
     diff_data.status_quotes = calculate_status_quotes_diff(
-        json.loads(old_data.status_quotes.replace("'", '"')), new_data.status_quotes
+        json.loads(old_data.status_quotes.replace("'", '"')),
+        json.loads(new_data.status_quotes.replace("'", '"')),
     )
     diff_data.liquidator_states = calculate_liquidator_states_diff(
         old_data.liquidator_states, new_data.liquidator_states
