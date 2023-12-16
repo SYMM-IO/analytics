@@ -101,7 +101,6 @@ def report_snapshots_to_telegram(context: Context):
     assert len(set([snapshot.name for snapshot in affiliates_snapshots])) == len(
         context.affiliates
     )
-
     hedger_snapshots = (
         HedgerSnapshot.select()
         .where(HedgerSnapshot.tenant == context.tenant)
@@ -216,7 +215,7 @@ def prepare_hedger_snapshot_message(
 
     msg = f"""
 \n--- ⚖️ {hedger_snapshot.name} ⚖️ ---\n
-Total State: {format(hedger_snapshot.total_state(affiliate_snapshots))} | {format(snapshot_diff.total_state(affiliate_snapshots_diff))}
+Total State: {format(hedger_snapshot.calculated_total_state)} | {format(snapshot_diff.total_state(affiliate_snapshots_diff))}
 Total State - CVA: {format(hedger_snapshot.total_state(affiliate_snapshots) - HedgerSnapshot.earned_cva(affiliate_snapshots))} | {format(snapshot_diff.total_state(affiliate_snapshots_diff) - HedgerSnapshot.earned_cva(affiliate_snapshots_diff))}
 Binance Profit: {format(hedger_snapshot.binance_profit)} | {format(snapshot_diff.binance_profit)}
 Contract Profit: {format(hedger_snapshot.contract_profit(affiliate_snapshots))} | {format(snapshot_diff.contract_profit(affiliate_snapshots_diff))}

@@ -23,11 +23,18 @@ def tag_tenant_quote_id(data, context: Context):
     return data
 
 
+def tag_tenant_symbol_id(data, context: Context):
+    data["symbolId"] = f"{context.tenant}_{data['symbolId']}"
+    return data
+
+
 def load_quotes(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: Quote(
-            **convert_timestamps(tag_tenant_to_id(data, context)),
-            tenant=context.tenant,
+        lambda data, ctx=context: Quote(
+            **convert_timestamps(
+                tag_tenant_to_id(tag_tenant_symbol_id(data, ctx), ctx)
+            ),
+            tenant=ctx.tenant,
         ),
         Quote,
         method="quotes",
@@ -80,6 +87,7 @@ def create_trade_history(data, context: Context):
             **convert_timestamps(tag_tenant_quote_id(data, context)),
             tenant=context.tenant,
         )
+        th.upsert()
     # except Quote.QuoteDoesNotExist: #FIXME
     except:
         print("TradeHistory loaded but quote is not")
@@ -89,7 +97,7 @@ def create_trade_history(data, context: Context):
 
 def load_trade_histories(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: create_trade_history(data, context),
+        lambda data, ctx=context: create_trade_history(data, ctx),
         TradeHistory,
         method="tradeHistories",
         fields=[
@@ -121,7 +129,9 @@ def load_trade_histories(config: RuntimeConfiguration, context: Context):
 
 def load_accounts(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: Account(**convert_timestamps(data), tenant=context.tenant),
+        lambda data, ctx=context: Account(
+            **convert_timestamps(data), tenant=ctx.tenant
+        ),
         Account,
         method="accounts",
         fields=[
@@ -154,7 +164,9 @@ def load_accounts(config: RuntimeConfiguration, context: Context):
 
 def load_balance_changes(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: BalanceChange(**convert_timestamps(data), tenant=context.tenant),
+        lambda data, ctx=context: BalanceChange(
+            **convert_timestamps(data), tenant=ctx.tenant
+        ),
         BalanceChange,
         method="balanceChanges",
         fields=[
@@ -177,7 +189,7 @@ def load_balance_changes(config: RuntimeConfiguration, context: Context):
 
 def load_users(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: User(**convert_timestamps(data), tenant=context.tenant),
+        lambda data, ctx=context: User(**convert_timestamps(data), tenant=ctx.tenant),
         User,
         method="users",
         fields=[
@@ -196,7 +208,9 @@ def load_users(config: RuntimeConfiguration, context: Context):
 
 def load_symbols(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: Symbol(**convert_timestamps(data), tenant=context.tenant),
+        lambda data, ctx=context: Symbol(
+            **convert_timestamps(tag_tenant_to_id(data, ctx)), tenant=ctx.tenant
+        ),
         Symbol,
         method="symbols",
         fields=[
@@ -224,7 +238,9 @@ def load_symbols(config: RuntimeConfiguration, context: Context):
 
 def load_daily_histories(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: DailyHistory(**convert_timestamps(data), tenant=context.tenant),
+        lambda data, ctx=context: DailyHistory(
+            **convert_timestamps(data), tenant=ctx.tenant
+        ),
         DailyHistory,
         method="dailyHistories",
         fields=[
