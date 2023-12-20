@@ -77,11 +77,6 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
                 "lte",
                 str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
-            Where(
-                "updateTimestamp",
-                "lte",
-                str(int(config.nextSnapshotTimestamp.timestamp())),
-            ),
         ],
         load_from_database=True,
         save_to_database=True,
@@ -122,11 +117,6 @@ def load_trade_histories(config: RuntimeConfiguration, context: Context):
                 "lte",
                 str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
-            Where(
-                "updateTimestamp",
-                "lte",
-                str(int(config.nextSnapshotTimestamp.timestamp())),
-            ),
         ],
         load_from_database=False,
         save_to_database=True,
@@ -164,11 +154,6 @@ def load_accounts(config: RuntimeConfiguration, context: Context):
             ),
             Where(
                 "timestamp",
-                "lte",
-                str(int(config.nextSnapshotTimestamp.timestamp())),
-            ),
-            Where(
-                "updateTimestamp",
                 "lte",
                 str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
@@ -302,11 +287,6 @@ def load_daily_histories(config: RuntimeConfiguration, context: Context):
             ),
             Where(
                 "timestamp",
-                "lte",
-                str(int(config.nextSnapshotTimestamp.timestamp())),
-            ),
-            Where(
-                "updateTimestamp",
                 "lte",
                 str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
