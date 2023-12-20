@@ -18,7 +18,13 @@ from app.models import (
     BinanceIncome,
     HedgerSnapshot,
 )
-from config.settings import Context, symmio_abi, AffiliateContext, HedgerContext
+from config.settings import (
+    Context,
+    symmio_abi,
+    AffiliateContext,
+    HedgerContext,
+    ignore_binance_trade_volume,
+)
 from cronjobs.binance_trade_volume import calculate_binance_trade_volume
 from cronjobs.data_loaders import (
     load_accounts,
@@ -459,8 +465,10 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
         * snapshot.binance_max_withdraw_amount
     )
     snapshot.binance_deposit = config.binanceDeposit
-    snapshot.binance_trade_volume = Decimal(
-        calculate_binance_trade_volume(context, hedger_context) * 10**18
+    snapshot.binance_trade_volume = (
+        0
+        if ignore_binance_trade_volume
+        else Decimal(calculate_binance_trade_volume(context, hedger_context) * 10**18)
     )
 
     # ------------------------------------------

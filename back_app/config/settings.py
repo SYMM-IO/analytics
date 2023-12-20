@@ -112,3 +112,5 @@ with open("./config/abis/erc20abi.json", "r") as f:
 
 with open("./config/abis/abi.json", "r") as f:
     symmio_abi = json.load(f)
+
+ignore_binance_trade_volume = True
