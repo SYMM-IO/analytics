@@ -273,13 +273,14 @@ def fetch_binance_income_histories(
     model,
     fetch_function,
     timestamp_field,
+    income_type,
     limit_days=7,
     asset_field="asset",
 ):
     # Get the latest timestamp from the database for the respective model
     latest_record = (
         model.select()
-        .where(model.tenant == context.tenant)
+        .where(model.tenant == context.tenant, model.type == income_type)
         .order_by(model.timestamp.desc())
         .first()
     )
@@ -301,6 +302,7 @@ def fetch_binance_income_histories(
             startTime=int(start_time.timestamp() * 1000),
             endTime=int(end_time.timestamp() * 1000),
             limit=1000,
+            incomeType=income_type,
         )
         if not data:
             start_time = end_time
@@ -318,7 +320,7 @@ def fetch_binance_income_histories(
                     item[timestamp_field] / 1000
                 ),  # Convert from milliseconds
             )
-
+        print(len(data))
         if len(data) == 1000:
             start_time = datetime.fromtimestamp(data[-1][timestamp_field] / 1000)
         else:
@@ -333,6 +335,15 @@ def update_binance_deposit_v2(context: Context, hedger_context: HedgerContext):
         BinanceIncome,
         hedger_context.utils.binance_client.futures_income_history,
         "time",
+        "FUNDING_FEE",
+    )
+    fetch_binance_income_histories(
+        context,
+        hedger_context,
+        BinanceIncome,
+        hedger_context.utils.binance_client.futures_income_history,
+        "time",
+        "TRANSFER",
     )
     total_transfers = (
         BinanceIncome.select(fn.SUM(BinanceIncome.amount))
