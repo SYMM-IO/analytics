@@ -355,6 +355,11 @@ def update_binance_deposit_v2(context: Context, hedger_context: HedgerContext):
         .scalar()
         or 0.0
     )
+    is_negative = total_transfers < 0
     config = load_config(context)
-    config.binanceDeposit = total_transfers * 10**18
+    config.binanceDeposit = (
+        -(abs(total_transfers) * 10**18)
+        if is_negative
+        else total_transfers * 10**18
+    )
     config.save()
