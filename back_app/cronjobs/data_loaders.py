@@ -75,7 +75,12 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
             Where(
                 "timestamp",
                 "lte",
-                str(int(config.lastSnapshotTimestamp.timestamp())),
+                str(int(config.nextSnapshotTimestamp.timestamp())),
+            ),
+            Where(
+                "updateTimestamp",
+                "lte",
+                str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
         ],
         load_from_database=True,
@@ -115,7 +120,12 @@ def load_trade_histories(config: RuntimeConfiguration, context: Context):
             Where(
                 "timestamp",
                 "lte",
-                str(int(config.lastSnapshotTimestamp.timestamp())),
+                str(int(config.nextSnapshotTimestamp.timestamp())),
+            ),
+            Where(
+                "updateTimestamp",
+                "lte",
+                str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
         ],
         load_from_database=False,
@@ -155,7 +165,12 @@ def load_accounts(config: RuntimeConfiguration, context: Context):
             Where(
                 "timestamp",
                 "lte",
-                str(int(config.lastSnapshotTimestamp.timestamp())),
+                str(int(config.nextSnapshotTimestamp.timestamp())),
+            ),
+            Where(
+                "updateTimestamp",
+                "lte",
+                str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
         ],
         load_from_database=False,
@@ -190,7 +205,7 @@ def load_balance_changes(config: RuntimeConfiguration, context: Context):
             Where(
                 "timestamp",
                 "lte",
-                str(int(config.lastSnapshotTimestamp.timestamp())),
+                str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
         ],
     )
@@ -216,7 +231,7 @@ def load_users(config: RuntimeConfiguration, context: Context):
             Where(
                 "timestamp",
                 "lte",
-                str(int(config.lastSnapshotTimestamp.timestamp())),
+                str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
         ],
     )
@@ -288,7 +303,12 @@ def load_daily_histories(config: RuntimeConfiguration, context: Context):
             Where(
                 "timestamp",
                 "lte",
-                str(int(config.lastSnapshotTimestamp.timestamp())),
+                str(int(config.nextSnapshotTimestamp.timestamp())),
+            ),
+            Where(
+                "updateTimestamp",
+                "lte",
+                str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
         ],
         load_from_database=False,

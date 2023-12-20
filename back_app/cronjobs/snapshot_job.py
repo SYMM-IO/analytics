@@ -53,14 +53,14 @@ def real_time_funding_rate(symbol: str) -> Decimal:
 
 
 def fetch_snapshot(context: Context):
-    current_time = datetime.utcnow() - timedelta(minutes=5)  # for subgraph sync time
+    config = load_config(context)  # Configuration may have changed during this method
+    config.nextSnapshotTimestamp = datetime.utcnow() - timedelta(
+        minutes=5
+    )  # for subgraph sync time
+    config.upsert()
 
     for hedger_context in context.hedgers:
         update_binance_deposit_v2(context, hedger_context)
-
-    config = load_config(context)  # Configuration may have changed during this method
-    config.lastSnapshotTimestamp = current_time
-    config.upsert()
 
     load_users(config, context)
     load_symbols(config, context)
@@ -69,6 +69,10 @@ def fetch_snapshot(context: Context):
     load_quotes(config, context)
     load_trade_histories(config, context)
     load_daily_histories(config, context)
+
+    config = load_config(context)  # Configuration may have changed during this method
+    config.lastSnapshotTimestamp = config.nextSnapshotTimestamp
+    config.upsert()
 
     print(f"{context.tenant}: Data loaded...\nPreparing snapshot data...")
 

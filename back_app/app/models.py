@@ -233,6 +233,7 @@ class RuntimeConfiguration(BaseModel):
     decimals = IntegerField()
     migrationVersion = IntegerField(default=0)
     lastSnapshotTimestamp = DateTimeField(default=datetime.fromtimestamp(0))
+    nextSnapshotTimestamp = DateTimeField(default=datetime.fromtimestamp(0))
     deployTimestamp = DateTimeField()
     tenant = CharField(null=False)
 
