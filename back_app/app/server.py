@@ -14,7 +14,6 @@ from config.local_settings import contexts
 from config.settings import (
     fetch_data_interval,
     fetch_stat_data_interval,
-    update_binance_deposit_interval,
     server_port,
 )
 from context.migrations import create_tables
@@ -23,7 +22,6 @@ from cronjobs import setup_telegram_client
 from cronjobs.bot.analytics_bot import report_snapshots_to_telegram
 from cronjobs.snapshot_job import fetch_snapshot
 from endpoints.snapshot_router import router as snapshot_router
-from utils.binance_utils import update_binance_deposit_v2
 from utils.telegram_utils import send_alert, escape_markdown_v1
 
 scheduler: AsyncIOScheduler
@@ -35,11 +33,6 @@ async def create_scheduler():
     scheduler = BackgroundScheduler()
     scheduler.add_listener(listener, EVENT_JOB_ERROR)
     for context in contexts:
-        for hedger_context in context.hedgers:
-            update_binance_deposit_v2(
-                context, hedger_context
-            )  # Needs to load for the first time but then can be updated from time to time
-
         scheduler.add_job(
             func=load_stats_messages_sync,
             args=[context, telegram_user_client, asyncio.get_running_loop()],
@@ -61,14 +54,6 @@ async def create_scheduler():
             seconds=fetch_data_interval,
             id=context.tenant + "_report_snapshot_to_telegram",
         )
-        for hedger_context in context.hedgers:
-            scheduler.add_job(
-                func=update_binance_deposit_v2,
-                args=[context, hedger_context],
-                trigger="interval",
-                seconds=update_binance_deposit_interval,
-                id=context.tenant + "_update_binance_deposit_v2",
-            )
         # scheduler.add_job(
         # 	func=lambda ctx=context: calculate_paid_funding(ctx),
         # 	trigger="interval",

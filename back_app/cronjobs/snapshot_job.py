@@ -30,6 +30,7 @@ from cronjobs.data_loaders import (
     load_balance_changes,
 )
 from utils.attr_dict import AttrDict
+from utils.binance_utils import update_binance_deposit_v2
 from utils.common_utils import load_config
 
 
@@ -46,8 +47,14 @@ def real_time_funding_rate(symbol: str) -> Decimal:
 
 
 def fetch_snapshot(context: Context):
-    config = load_config(context)
     current_time = datetime.utcnow() - timedelta(minutes=5)  # for subgraph sync time
+
+    for hedger_context in context.hedgers:
+        update_binance_deposit_v2(context, hedger_context)
+
+    config = load_config(context)  # Configuration may have changed during this method
+    config.lastSnapshotTimestamp = current_time
+    config.upsert()
 
     load_users(config, context)
     load_symbols(config, context)
@@ -63,10 +70,6 @@ def fetch_snapshot(context: Context):
         prepare_affiliate_snapshot(config, context, affiliate_context)
     for hedger_context in context.hedgers:
         prepare_hedger_snapshot(config, context, hedger_context)
-
-    config = load_config(context)  # Configuration may have changed during this method
-    config.lastSnapshotTimestamp = current_time
-    config.upsert()
 
 
 def prepare_affiliate_snapshot(

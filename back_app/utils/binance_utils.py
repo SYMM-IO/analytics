@@ -320,7 +320,6 @@ def fetch_binance_income_histories(
                     item[timestamp_field] / 1000
                 ),  # Convert from milliseconds
             )
-        print(len(data))
         if len(data) == 1000:
             start_time = datetime.fromtimestamp(data[-1][timestamp_field] / 1000)
         else:

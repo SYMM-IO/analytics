@@ -71,7 +71,12 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
                 "updateTimestamp",
                 "gte",
                 str(int(config.lastSnapshotTimestamp.timestamp())),
-            )
+            ),
+            Where(
+                "timestamp",
+                "lte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
+            ),
         ],
         load_from_database=True,
         save_to_database=True,
@@ -81,23 +86,12 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
         pass
 
 
-def create_trade_history(data, context: Context):
-    try:
-        th = TradeHistory(
-            **convert_timestamps(tag_tenant_quote_id(data, context)),
-            tenant=context.tenant,
-        )
-        th.upsert()
-    # except Quote.QuoteDoesNotExist: #FIXME
-    except:
-        print("TradeHistory loaded but quote is not")
-        th = None
-    return th
-
-
 def load_trade_histories(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data, ctx=context: create_trade_history(data, ctx),
+        lambda data, ctx=context: TradeHistory(
+            **convert_timestamps(tag_tenant_quote_id(data, ctx)),
+            tenant=ctx.tenant,
+        ),
         TradeHistory,
         method="tradeHistories",
         fields=[
@@ -117,7 +111,12 @@ def load_trade_histories(config: RuntimeConfiguration, context: Context):
                 "updateTimestamp",
                 "gte",
                 str(int(config.lastSnapshotTimestamp.timestamp())),
-            )
+            ),
+            Where(
+                "timestamp",
+                "lte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
+            ),
         ],
         load_from_database=False,
         save_to_database=True,
@@ -152,7 +151,12 @@ def load_accounts(config: RuntimeConfiguration, context: Context):
                 "updateTimestamp",
                 "gte",
                 str(int(config.lastSnapshotTimestamp.timestamp())),
-            )
+            ),
+            Where(
+                "timestamp",
+                "lte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
+            ),
         ],
         load_from_database=False,
         save_to_database=True,
@@ -182,6 +186,13 @@ def load_balance_changes(config: RuntimeConfiguration, context: Context):
         load_from_database=True,
         save_to_database=True,
         context=context,
+        additional_conditions=[
+            Where(
+                "timestamp",
+                "lte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
+            ),
+        ],
     )
     for o in out:
         pass
@@ -201,6 +212,13 @@ def load_users(config: RuntimeConfiguration, context: Context):
         load_from_database=True,
         save_to_database=True,
         context=context,
+        additional_conditions=[
+            Where(
+                "timestamp",
+                "lte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
+            ),
+        ],
     )
     for o in out:
         pass
@@ -265,6 +283,11 @@ def load_daily_histories(config: RuntimeConfiguration, context: Context):
             Where(
                 "updateTimestamp",
                 "gte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
+            ),
+            Where(
+                "timestamp",
+                "lte",
                 str(int(config.lastSnapshotTimestamp.timestamp())),
             ),
         ],
