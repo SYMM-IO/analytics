@@ -35,6 +35,11 @@ async def create_scheduler():
     scheduler = BackgroundScheduler()
     scheduler.add_listener(listener, EVENT_JOB_ERROR)
     for context in contexts:
+        for hedger_context in context.hedgers:
+            update_binance_deposit_v2(
+                context, hedger_context
+            )  # Needs to load for the first time but then can be updated from time to time
+
         scheduler.add_job(
             func=load_stats_messages_sync,
             args=[context, telegram_user_client, asyncio.get_running_loop()],
