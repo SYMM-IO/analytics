@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 from pyrogram import Client
@@ -41,6 +42,12 @@ async def load_stats_messages(context: Context, user_client: Client):
     print(f"{context.tenant}: Loading stats messages")
     async for msg in user_client.get_chat_history(context.telegram_stat_group_id, 1):
         store_message(context, msg)
+
+
+def load_stats_messages_sync(
+    context: Context, user_client: Client, eventloop: asyncio.BaseEventLoop
+):
+    eventloop.create_task(load_stats_messages(context, user_client))
 
 
 async def setup_telegram_client():

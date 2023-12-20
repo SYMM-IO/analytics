@@ -1,8 +1,10 @@
+import asyncio
 from contextlib import asynccontextmanager
 
 import uvicorn
 from apscheduler.events import EVENT_JOB_ERROR
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pyrogram import Client
@@ -16,7 +18,7 @@ from config.settings import (
     server_port,
 )
 from context.migrations import create_tables
-from cronjobs import load_stats_messages
+from cronjobs import load_stats_messages_sync
 from cronjobs import setup_telegram_client
 from cronjobs.bot.analytics_bot import report_snapshots_to_telegram
 from cronjobs.snapshot_job import fetch_snapshot
@@ -24,18 +26,18 @@ from endpoints.snapshot_router import router as snapshot_router
 from utils.binance_utils import update_binance_deposit_v2
 from utils.telegram_utils import send_alert, escape_markdown_v1
 
-scheduler: AsyncIOScheduler = AsyncIOScheduler()
+scheduler: AsyncIOScheduler
 telegram_user_client: Client
 
 
 async def create_scheduler():
     global scheduler
-    scheduler = AsyncIOScheduler()
+    scheduler = BackgroundScheduler()
     scheduler.add_listener(listener, EVENT_JOB_ERROR)
     for context in contexts:
         scheduler.add_job(
-            func=load_stats_messages,
-            args=[context, telegram_user_client],
+            func=load_stats_messages_sync,
+            args=[context, telegram_user_client, asyncio.get_running_loop()],
             trigger="interval",
             seconds=fetch_stat_data_interval,
             id=context.tenant + "_load_stats_messages",
