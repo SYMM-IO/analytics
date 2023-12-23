@@ -41,6 +41,16 @@ class User(BaseModel):
         return False
 
 
+class AdminUser(BaseModel):
+    username = CharField(primary_key=True)
+    password = CharField()
+    createTimestamp = DateTimeField(default=datetime.now())
+
+    @staticmethod
+    def is_timeseries():
+        return False
+
+
 class Account(BaseModel):
     id = CharField(primary_key=True)
     user = ForeignKeyField(User, backref="accounts")

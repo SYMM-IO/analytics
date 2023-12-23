@@ -1,5 +1,6 @@
-import {DailyHistory} from "./services/graph-models"
+import {DailyHistory, TotalHistory} from "./services/graph-models"
 import BigNumber from "bignumber.js"
+import {Affiliate} from "../environments/environment-interface"
 
 export function aggregateDailyHistories(histories: DailyHistory[], decimalsMap: Map<string, number> | undefined = undefined): DailyHistory {
     const keys = [
@@ -13,7 +14,7 @@ export function aggregateDailyHistories(histories: DailyHistory[], decimalsMap: 
         "newUsers",
         "newAccounts",
         "platformFee",
-        "openInterest"
+        "openInterest",
     ]
     const withDecimalsKeys = [
         "deposit",
@@ -27,6 +28,41 @@ export function aggregateDailyHistories(histories: DailyHistory[], decimalsMap: 
             if (decimalsMap != null && withDecimalsKeys.indexOf(key) >= 0) {
                 const accountSource = current.accountSource!
                 const decimals = decimalsMap.get(accountSource)!
+                value = BigNumber(value!).times(BigNumber(10).pow(18 - decimals))
+            }
+            const accValue = accumulator[key] as BigNumber || BigNumber(0)
+            accumulator[key] = accValue.plus(value as BigNumber)
+        }
+        return accumulator
+    }, base)
+}
+
+export function aggregateTotalHistories(histories: TotalHistory[], decimalsMap: Map<string, number> | undefined = undefined, flatAffiliates: Affiliate[]): TotalHistory {
+    const keys = [
+        "quotesCount",
+        "tradeVolume",
+        "deposit",
+        "users",
+        "accounts",
+        "platformFee",
+        "openInterest",
+    ]
+    const withDecimalsKeys = [
+        "deposit",
+    ]
+    let base = new TotalHistory()
+    base.id = histories[0].id
+    return histories.reduce((accumulator: TotalHistory, current: TotalHistory, currentIndex) => {
+        if (current == null)
+            return accumulator
+        for (const key of keys) {
+            let value = current[key] as BigNumber
+            if (decimalsMap != null && withDecimalsKeys.indexOf(key) >= 0) {
+                const accountSource = current.accountSource!
+                const decimals = decimalsMap.get(accountSource)!
+                let depositDiff = flatAffiliates[currentIndex].depositDiff
+                if (depositDiff != null)
+                    value = value.minus(depositDiff)
                 value = BigNumber(value!).times(BigNumber(10).pow(18 - decimals))
             }
             const accValue = accumulator[key] as BigNumber || BigNumber(0)

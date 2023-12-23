@@ -5,23 +5,25 @@ import uvicorn
 from apscheduler.events import EVENT_JOB_ERROR
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pyrogram import Client
 
 from app.exception_handlers import ExceptionHandlers, ErrorCodeResponse
 from config.local_settings import contexts
 from config.settings import (
-    fetch_data_interval,
-    fetch_stat_data_interval,
-    server_port,
+    FETCH_DATA_INTERVAL,
+    FETCH_STAT_DATA_INTERVAL,
+    SERVER_PORT,
 )
 from context.migrations import create_tables
 from cronjobs import load_stats_messages_sync
 from cronjobs import setup_telegram_client
 from cronjobs.bot.analytics_bot import report_snapshots_to_telegram
 from cronjobs.snapshot_job import fetch_snapshot
-from endpoints.snapshot_router import router as snapshot_router
+from routers.auth_router import router as auth_router
+from routers.snapshot_router import router as snapshot_router
+from security.security_utils import get_current_user
 from utils.telegram_utils import send_alert, escape_markdown_v1
 
 scheduler: AsyncIOScheduler
@@ -37,21 +39,21 @@ async def create_scheduler():
             func=load_stats_messages_sync,
             args=[context, telegram_user_client, asyncio.get_running_loop()],
             trigger="interval",
-            seconds=fetch_stat_data_interval,
+            seconds=FETCH_STAT_DATA_INTERVAL,
             id=context.tenant + "_load_stats_messages",
         )
         scheduler.add_job(
             func=fetch_snapshot,
             args=[context],
             trigger="interval",
-            seconds=fetch_data_interval,
+            seconds=FETCH_DATA_INTERVAL,
             id=context.tenant + "_fetch_snapshot",
         )
         scheduler.add_job(
             func=report_snapshots_to_telegram,
             args=[context],
             trigger="interval",
-            seconds=fetch_data_interval,
+            seconds=FETCH_DATA_INTERVAL,
             id=context.tenant + "_report_snapshot_to_telegram",
         )
         # scheduler.add_job(
@@ -112,7 +114,8 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-app.include_router(snapshot_router)
+app.include_router(snapshot_router, dependencies=(Depends(get_current_user),))
+app.include_router(auth_router)
 
 
 @app.get("/")
@@ -121,4 +124,4 @@ def read_root():
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, port=server_port)
+    uvicorn.run(app, port=SERVER_PORT)

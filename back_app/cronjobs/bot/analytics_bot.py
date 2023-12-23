@@ -5,9 +5,9 @@ from typing import List
 
 from app.models import AffiliateSnapshot, StatsBotMessage, HedgerSnapshot
 from config.settings import (
-    main_market_symbols,
-    funding_rate_alert_threshold,
-    closable_funding_rate_alert_threshold,
+    MAIN_MARKET_SYMBOLS,
+    FUNDING_RATE_ALERT_THRESHOLD,
+    CLOSABLE_FUNDING_RATE_ALERT_THRESHOLD,
     Context,
 )
 from cronjobs.bot.indicators.mismatch_indicator import MismatchIndicator, FieldCheck
@@ -37,8 +37,8 @@ quote_status_names = {
     9: "EXPIRED",
 }
 
-FUNDING_RATE_THRESHOLD = -(funding_rate_alert_threshold * 10**18)
-CLOSABLE_FUNDING_RATE_THRESHOLD = -(closable_funding_rate_alert_threshold * 10**18)
+FUNDING_RATE_THRESHOLD = -(FUNDING_RATE_ALERT_THRESHOLD * 10**18)
+CLOSABLE_FUNDING_RATE_THRESHOLD = -(CLOSABLE_FUNDING_RATE_ALERT_THRESHOLD * 10**18)
 
 
 def get_hedger_indicators(
@@ -47,7 +47,7 @@ def get_hedger_indicators(
 ) -> List[StateIndicator]:
     non_closable_funding = 0
     for market, value in hedger_snapshot.next_funding_rate.items():
-        if market in main_market_symbols:
+        if market in MAIN_MARKET_SYMBOLS:
             non_closable_funding += value
 
     non_closable_funding_indicator = StateIndicator(
@@ -60,7 +60,7 @@ def get_hedger_indicators(
     closable_market_with_high_funding = None
     for market, value in hedger_snapshot.next_funding_rate.items():
         if (
-            market not in main_market_symbols
+            market not in MAIN_MARKET_SYMBOLS
             and value < CLOSABLE_FUNDING_RATE_THRESHOLD
         ):
             closable_market_with_high_funding = market
@@ -204,7 +204,7 @@ def prepare_hedger_snapshot_message(
     non_closable_funding = 0
     closable_funding = 0
     for market, value in hedger_snapshot.next_funding_rate.items():
-        if market in main_market_symbols:
+        if market in MAIN_MARKET_SYMBOLS:
             non_closable_funding += value
         else:
             closable_funding += value

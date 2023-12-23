@@ -20,10 +20,10 @@ from app.models import (
 )
 from config.settings import (
     Context,
-    symmio_abi,
+    SYMMIO_ABI,
     AffiliateContext,
     HedgerContext,
-    ignore_binance_trade_volume,
+    IGNORE_BINANCE_TRADE_VOLUME,
 )
 from cronjobs.binance_trade_volume import calculate_binance_trade_volume
 from cronjobs.data_loaders import (
@@ -254,7 +254,7 @@ def prepare_affiliate_snapshot(
             Account.accountSource == affiliate_context.symmio_multi_account,
             Quote.partyB == hedger_context.hedger_address,
             Quote.quoteStatus == 8,
-            Quote.liquidatedSide == 0,
+            Quote.liquidatedSide == 1,
             Quote.timestamp > from_time,
             Quote.tenant == context.tenant,
         )
@@ -268,7 +268,7 @@ def prepare_affiliate_snapshot(
             Account.accountSource == affiliate_context.symmio_multi_account,
             Quote.partyB == hedger_context.hedger_address,
             Quote.quoteStatus == 8,
-            Quote.liquidatedSide == 1,
+            Quote.liquidatedSide == 0,
             Quote.timestamp > from_time,
             Quote.tenant == context.tenant,
         )
@@ -278,7 +278,7 @@ def prepare_affiliate_snapshot(
     # ------------------------------------------
     w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
     contract_multicallable = Multicallable(
-        w3.to_checksum_address(context.symmio_address), symmio_abi, w3
+        w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, w3
     )
     all_accounts = list(
         Account.select(Account.id).where(
@@ -471,7 +471,7 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
     snapshot.binance_deposit = config.binanceDeposit
     snapshot.binance_trade_volume = (
         0
-        if ignore_binance_trade_volume
+        if IGNORE_BINANCE_TRADE_VOLUME
         else Decimal(calculate_binance_trade_volume(context, hedger_context) * 10**18)
     )
 
@@ -493,7 +493,7 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
 
     w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
     contract_multicallable = Multicallable(
-        w3.to_checksum_address(context.symmio_address), symmio_abi, w3
+        w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, w3
     )
     snapshot.hedger_contract_balance = contract_multicallable.balanceOf(
         [w3.to_checksum_address(hedger_context.hedger_address)]

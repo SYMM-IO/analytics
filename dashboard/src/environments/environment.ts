@@ -1,6 +1,6 @@
-import {EnvironmentInterface} from "./environment-interface";
+import {EnvironmentInterface} from "./environment-interface"
 
 export const environment: EnvironmentInterface = {
-	assetsFolder: "",
-	environments: []
-};
+    name: "",
+    assetsFolder: "",
+}

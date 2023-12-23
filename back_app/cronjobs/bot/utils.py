@@ -5,7 +5,7 @@ import peewee
 
 from app.models import AffiliateSnapshot, HedgerSnapshot
 from config.settings import (
-    fetch_data_interval,
+    FETCH_DATA_INTERVAL,
 )
 
 
@@ -149,6 +149,6 @@ def calculate_hedger_snapshot_diff(old_data: HedgerSnapshot, new_data: HedgerSna
 def is_end_of_day():
     now = datetime.utcnow()
     end_of_day = datetime(
-        now.year, now.month, now.day, 23, 59 - (fetch_data_interval // 60), 30
+        now.year, now.month, now.day, 23, 59 - (FETCH_DATA_INTERVAL // 60), 30
     )
     return now >= end_of_day

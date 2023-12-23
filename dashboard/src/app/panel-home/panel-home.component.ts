@@ -1,14 +1,14 @@
 import {Component, Inject, Injector} from '@angular/core'
 import {FormControl, Validators} from "@angular/forms"
 import {EnvironmentService} from "../services/enviroment.service"
-import {SubEnvironmentInterface} from "../../environments/environment-interface"
+import {Affiliate, EnvironmentInterface} from "../../environments/environment-interface"
 import {TuiAlertService, TuiDialogService} from "@taiga-ui/core"
 import {PolymorpheusComponent} from '@tinkoff/ng-polymorpheus'
 import {JsonViewerComponent} from "../json-viewer/json-viewer.component"
-import {ApolloManagerService} from "../services/apollo-manager-service"
 import {LoadingService} from "../services/Loading.service"
 import {switchMap} from "rxjs"
 import {QuoteService} from "./quote.service"
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop"
 
 @Component({
     selector: 'app-panel-home',
@@ -17,9 +17,9 @@ import {QuoteService} from "./quote.service"
 })
 export class PanelHomeComponent {
     quoteForm = new FormControl<number | null>(null, Validators.required)
-    environmentForm = new FormControl<SubEnvironmentInterface | null>(null)
-    environments: SubEnvironmentInterface[]
-    assetsFolder: string
+    environmentForm = new FormControl<EnvironmentInterface | null>(null)
+    affiliateForm = new FormControl<Affiliate | null>(null)
+    environments: EnvironmentInterface[]
 
 
     constructor(readonly environmentService: EnvironmentService,
@@ -29,12 +29,19 @@ export class PanelHomeComponent {
                 @Inject(TuiDialogService) private readonly dialogs: TuiDialogService,
                 @Inject(Injector) private readonly injector: Injector) {
         this.environments = environmentService.getValue("environments")
-        this.assetsFolder = environmentService.getValue("assetsFolder")
+        this.environmentForm.valueChanges.pipe(takeUntilDestroyed()).subscribe(value => {
+            const affiliates = this.selectedEnvironment()!.affiliates!
+            this.affiliateForm.setValue(affiliates[affiliates.length - 1])
+        })
         this.environmentForm.setValue(this.environments[this.environments.length - 1])
     }
 
-    selectedEnvironment(): SubEnvironmentInterface | null {
+    selectedEnvironment(): EnvironmentInterface | null {
         return this.environmentForm.value
+    }
+
+    selectedAffiliate(): Affiliate | null {
+        return this.affiliateForm.value
     }
 
     onLoadQuote() {

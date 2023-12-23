@@ -14,7 +14,7 @@ from app.models import (
     SymbolPrice,
     BinanceIncome,
 )
-from config.settings import proxies, Context, HedgerContext
+from config.settings import PROXIES, Context, HedgerContext
 from utils.common_utils import load_config
 
 
@@ -46,7 +46,7 @@ def fetch_funding_rate_history(context: Context, symbol: str):
             "rows": limit,
         }
         url = "https://www.binance.com/bapi/futures/v1/public/future/common/get-funding-rate-history"
-        response = requests.post(url, json=json_data, proxies=proxies)
+        response = requests.post(url, json=json_data, proxies=PROXIES)
         if not response:
             continue
         data = response.json()["data"]
