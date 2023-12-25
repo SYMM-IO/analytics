@@ -87,34 +87,52 @@ def get_hedger_indicators(
     ]
 
 
-def report_snapshots_to_telegram(context: Context):
-    affiliates_snapshots = (
+def get_last_affiliate_snapshot_for(context: Context, affiliate: str):
+    snapshots = (
         AffiliateSnapshot.select()
-        .where(AffiliateSnapshot.tenant == context.tenant)
+        .where(
+            AffiliateSnapshot.tenant == context.tenant,
+            AffiliateSnapshot.name == affiliate,
+        )
         .order_by(AffiliateSnapshot.timestamp.desc())
-        .limit(len(context.affiliates))
+        .limit(1)
         .execute()
     )
+    return snapshots[0] if len(snapshots) > 0 else None
+
+
+def get_last_hedger_snapshot_for(context: Context, hedger: str):
+    snapshots = (
+        HedgerSnapshot.select()
+        .where(
+            HedgerSnapshot.tenant == context.tenant,
+            HedgerSnapshot.name == hedger,
+        )
+        .order_by(HedgerSnapshot.timestamp.desc())
+        .limit(1)
+        .execute()
+    )
+    return snapshots[0] if len(snapshots) > 0 else None
+
+
+def report_snapshots_to_telegram(context: Context):
+    affiliates_snapshots = []
+    for affiliate in context.affiliates:
+        snapshot = get_last_affiliate_snapshot_for(context, affiliate.name)
+        if snapshot:
+            affiliates_snapshots.append(snapshot)
+
     if len(affiliates_snapshots) < len(context.affiliates):
         return
 
-    assert len(set([snapshot.name for snapshot in affiliates_snapshots])) == len(
-        context.affiliates
-    )
-    hedger_snapshots = (
-        HedgerSnapshot.select()
-        .where(HedgerSnapshot.tenant == context.tenant)
-        .order_by(HedgerSnapshot.timestamp.desc())
-        .limit(len(context.hedgers))
-        .execute()
-    )
+    hedger_snapshots = []
+    for hedger in context.hedgers:
+        snapshot = get_last_hedger_snapshot_for(context, hedger.name)
+        if snapshot:
+            hedger_snapshots.append(snapshot)
 
     if len(hedger_snapshots) < len(context.hedgers):
         return
-
-    assert len(set([snapshot.name for snapshot in hedger_snapshots])) == len(
-        context.hedgers
-    )
 
     messages = (
         StatsBotMessage.select()
