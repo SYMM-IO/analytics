@@ -18,7 +18,13 @@ from app.models import (
     BinanceIncome,
     HedgerSnapshot,
 )
-from config.settings import Context, symmio_abi, AffiliateContext, HedgerContext
+from config.settings import (
+    Context,
+    SYMMIO_ABI,
+    AffiliateContext,
+    HedgerContext,
+    IGNORE_BINANCE_TRADE_VOLUME,
+)
 from cronjobs.binance_trade_volume import calculate_binance_trade_volume
 from cronjobs.data_loaders import (
     load_accounts,
@@ -30,6 +36,7 @@ from cronjobs.data_loaders import (
     load_balance_changes,
 )
 from utils.attr_dict import AttrDict
+from utils.binance_utils import update_binance_deposit_v2
 from utils.common_utils import load_config
 
 
@@ -46,8 +53,14 @@ def real_time_funding_rate(symbol: str) -> Decimal:
 
 
 def fetch_snapshot(context: Context):
-    config = load_config(context)
-    current_time = datetime.utcnow() - timedelta(minutes=5)  # for subgraph sync time
+    config = load_config(context)  # Configuration may have changed during this method
+    config.nextSnapshotTimestamp = datetime.utcnow() - timedelta(
+        minutes=5
+    )  # for subgraph sync time
+    config.upsert()
+
+    for hedger_context in context.hedgers:
+        update_binance_deposit_v2(context, hedger_context)
 
     load_users(config, context)
     load_symbols(config, context)
@@ -57,16 +70,16 @@ def fetch_snapshot(context: Context):
     load_trade_histories(config, context)
     load_daily_histories(config, context)
 
+    config = load_config(context)  # Configuration may have changed during this method
+    config.lastSnapshotTimestamp = config.nextSnapshotTimestamp
+    config.upsert()
+
     print(f"{context.tenant}: Data loaded...\nPreparing snapshot data...")
 
     for affiliate_context in context.affiliates:
         prepare_affiliate_snapshot(config, context, affiliate_context)
     for hedger_context in context.hedgers:
         prepare_hedger_snapshot(config, context, hedger_context)
-
-    config = load_config(context)  # Configuration may have changed during this method
-    config.lastSnapshotTimestamp = current_time
-    config.upsert()
 
 
 def prepare_affiliate_snapshot(
@@ -241,7 +254,7 @@ def prepare_affiliate_snapshot(
             Account.accountSource == affiliate_context.symmio_multi_account,
             Quote.partyB == hedger_context.hedger_address,
             Quote.quoteStatus == 8,
-            Quote.liquidatedSide == 0,
+            Quote.liquidatedSide == 1,
             Quote.timestamp > from_time,
             Quote.tenant == context.tenant,
         )
@@ -255,7 +268,7 @@ def prepare_affiliate_snapshot(
             Account.accountSource == affiliate_context.symmio_multi_account,
             Quote.partyB == hedger_context.hedger_address,
             Quote.quoteStatus == 8,
-            Quote.liquidatedSide == 1,
+            Quote.liquidatedSide == 0,
             Quote.timestamp > from_time,
             Quote.tenant == context.tenant,
         )
@@ -265,7 +278,7 @@ def prepare_affiliate_snapshot(
     # ------------------------------------------
     w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
     contract_multicallable = Multicallable(
-        w3.to_checksum_address(context.symmio_address), symmio_abi, w3
+        w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, w3
     )
     all_accounts = list(
         Account.select(Account.id).where(
@@ -456,8 +469,10 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
         * snapshot.binance_max_withdraw_amount
     )
     snapshot.binance_deposit = config.binanceDeposit
-    snapshot.binance_trade_volume = Decimal(
-        calculate_binance_trade_volume(context, hedger_context) * 10**18
+    snapshot.binance_trade_volume = (
+        0
+        if IGNORE_BINANCE_TRADE_VOLUME
+        else Decimal(calculate_binance_trade_volume(context, hedger_context) * 10**18)
     )
 
     # ------------------------------------------
@@ -478,7 +493,7 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
 
     w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
     contract_multicallable = Multicallable(
-        w3.to_checksum_address(context.symmio_address), symmio_abi, w3
+        w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, w3
     )
     snapshot.hedger_contract_balance = contract_multicallable.balanceOf(
         [w3.to_checksum_address(hedger_context.hedger_address)]

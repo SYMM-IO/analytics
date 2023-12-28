@@ -1,5 +1,5 @@
 <tui-root *tuiLet="stateService.nightMode | async as night"
-          [tuiMode]="night ? 'onDark' : null">
+          [tuiMode]="night ? 'onDark' : null" class="h-full">
     <tui-theme-night *ngIf="night"></tui-theme-night>
     <div class="root flex flex-column h-full flex-grow p-2">
         <div class="flex-none toolbar p-3">

@@ -1,8 +1,8 @@
 import {Inject, Injectable} from '@angular/core'
-import {GraphQlClient} from "../services/graphql-client"
+import {GraphQlClient} from "./graphql-client"
 import {catchError, Observable} from "rxjs"
-import {ApolloManagerService} from "../services/apollo-manager-service"
-import {LoadingService} from "../services/Loading.service"
+import {ApolloManagerService} from "./apollo-manager-service"
+import {LoadingService} from "./Loading.service"
 import {TuiAlertService} from "@taiga-ui/core"
 
 @Injectable({

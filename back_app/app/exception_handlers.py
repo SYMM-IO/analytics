@@ -24,7 +24,7 @@ class ErrorInfoContainer:
     model_validation_error = ErrorInfoModel(code=3, message="Model validation error")
     not_found_error = ErrorInfoModel(code=4, message="Not found")
     incorrect_username_password = ErrorInfoModel(
-        code=8, message="incorrect username or password"
+        code=8, message="Incorrect username or password"
     )
     token_expired = ErrorInfoModel(
         code=9,
@@ -33,22 +33,16 @@ class ErrorInfoContainer:
     )
     invalid_token = ErrorInfoModel(
         code=10,
-        message="invalid token set Authorization in the header with"
+        message="Invalid token set Authorization in the header with"
         " value 'Bearer valid_token' ",
     )
-
-    quote_not_found = ErrorInfoModel(code=201, message="quote not found")
-    error_code_not_found = ErrorInfoModel(code=202, message="error code not found.")
-
-    invalid_sub_address = ErrorInfoModel(code=301, message="invalid sub address")
-    invalid_address = ErrorInfoModel(code=302, message="invalid address")
-    invalid_leverage = ErrorInfoModel(code=303, message="invalid leverage value")
+    error_code_not_found = ErrorInfoModel(code=202, message="Error code not found.")
 
 
 class ErrorResponseModel(BaseModel):
     error_code: int = None
     error_message: str = None
-    error_detail: list = None
+    error_detail: list | None = None
 
 
 class ErrorCodeResponse(Exception):

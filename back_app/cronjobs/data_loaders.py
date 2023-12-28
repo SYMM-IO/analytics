@@ -23,11 +23,18 @@ def tag_tenant_quote_id(data, context: Context):
     return data
 
 
+def tag_tenant_symbol_id(data, context: Context):
+    data["symbolId"] = f"{context.tenant}_{data['symbolId']}"
+    return data
+
+
 def load_quotes(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: Quote(
-            **convert_timestamps(tag_tenant_to_id(data, context)),
-            tenant=context.tenant,
+        lambda data, ctx=context: Quote(
+            **convert_timestamps(
+                tag_tenant_to_id(tag_tenant_symbol_id(data, ctx), ctx)
+            ),
+            tenant=ctx.tenant,
         ),
         Quote,
         method="quotes",
@@ -64,7 +71,12 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
                 "updateTimestamp",
                 "gte",
                 str(int(config.lastSnapshotTimestamp.timestamp())),
-            )
+            ),
+            Where(
+                "timestamp",
+                "lte",
+                str(int(config.nextSnapshotTimestamp.timestamp())),
+            ),
         ],
         load_from_database=True,
         save_to_database=True,
@@ -74,22 +86,12 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
         pass
 
 
-def create_trade_history(data, context: Context):
-    try:
-        th = TradeHistory(
-            **convert_timestamps(tag_tenant_quote_id(data, context)),
-            tenant=context.tenant,
-        )
-    # except Quote.QuoteDoesNotExist: #FIXME
-    except:
-        print("TradeHistory loaded but quote is not")
-        th = None
-    return th
-
-
 def load_trade_histories(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: create_trade_history(data, context),
+        lambda data, ctx=context: TradeHistory(
+            **convert_timestamps(tag_tenant_quote_id(data, ctx)),
+            tenant=ctx.tenant,
+        ),
         TradeHistory,
         method="tradeHistories",
         fields=[
@@ -109,7 +111,12 @@ def load_trade_histories(config: RuntimeConfiguration, context: Context):
                 "updateTimestamp",
                 "gte",
                 str(int(config.lastSnapshotTimestamp.timestamp())),
-            )
+            ),
+            Where(
+                "timestamp",
+                "lte",
+                str(int(config.nextSnapshotTimestamp.timestamp())),
+            ),
         ],
         load_from_database=False,
         save_to_database=True,
@@ -121,7 +128,9 @@ def load_trade_histories(config: RuntimeConfiguration, context: Context):
 
 def load_accounts(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: Account(**convert_timestamps(data), tenant=context.tenant),
+        lambda data, ctx=context: Account(
+            **convert_timestamps(data), tenant=ctx.tenant
+        ),
         Account,
         method="accounts",
         fields=[
@@ -142,7 +151,12 @@ def load_accounts(config: RuntimeConfiguration, context: Context):
                 "updateTimestamp",
                 "gte",
                 str(int(config.lastSnapshotTimestamp.timestamp())),
-            )
+            ),
+            Where(
+                "timestamp",
+                "lte",
+                str(int(config.nextSnapshotTimestamp.timestamp())),
+            ),
         ],
         load_from_database=False,
         save_to_database=True,
@@ -154,7 +168,9 @@ def load_accounts(config: RuntimeConfiguration, context: Context):
 
 def load_balance_changes(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: BalanceChange(**convert_timestamps(data), tenant=context.tenant),
+        lambda data, ctx=context: BalanceChange(
+            **convert_timestamps(data), tenant=ctx.tenant
+        ),
         BalanceChange,
         method="balanceChanges",
         fields=[
@@ -170,6 +186,13 @@ def load_balance_changes(config: RuntimeConfiguration, context: Context):
         load_from_database=True,
         save_to_database=True,
         context=context,
+        additional_conditions=[
+            Where(
+                "timestamp",
+                "lte",
+                str(int(config.nextSnapshotTimestamp.timestamp())),
+            ),
+        ],
     )
     for o in out:
         pass
@@ -177,7 +200,7 @@ def load_balance_changes(config: RuntimeConfiguration, context: Context):
 
 def load_users(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: User(**convert_timestamps(data), tenant=context.tenant),
+        lambda data, ctx=context: User(**convert_timestamps(data), tenant=ctx.tenant),
         User,
         method="users",
         fields=[
@@ -189,6 +212,13 @@ def load_users(config: RuntimeConfiguration, context: Context):
         load_from_database=True,
         save_to_database=True,
         context=context,
+        additional_conditions=[
+            Where(
+                "timestamp",
+                "lte",
+                str(int(config.nextSnapshotTimestamp.timestamp())),
+            ),
+        ],
     )
     for o in out:
         pass
@@ -196,7 +226,9 @@ def load_users(config: RuntimeConfiguration, context: Context):
 
 def load_symbols(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: Symbol(**convert_timestamps(data), tenant=context.tenant),
+        lambda data, ctx=context: Symbol(
+            **convert_timestamps(tag_tenant_to_id(data, ctx)), tenant=ctx.tenant
+        ),
         Symbol,
         method="symbols",
         fields=[
@@ -224,7 +256,9 @@ def load_symbols(config: RuntimeConfiguration, context: Context):
 
 def load_daily_histories(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data: DailyHistory(**convert_timestamps(data), tenant=context.tenant),
+        lambda data, ctx=context: DailyHistory(
+            **convert_timestamps(data), tenant=ctx.tenant
+        ),
         DailyHistory,
         method="dailyHistories",
         fields=[
@@ -250,6 +284,11 @@ def load_daily_histories(config: RuntimeConfiguration, context: Context):
                 "updateTimestamp",
                 "gte",
                 str(int(config.lastSnapshotTimestamp.timestamp())),
+            ),
+            Where(
+                "timestamp",
+                "lte",
+                str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
         ],
         load_from_database=False,

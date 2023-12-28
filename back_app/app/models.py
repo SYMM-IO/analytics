@@ -1,4 +1,6 @@
+import json
 from datetime import datetime
+from decimal import Decimal
 from typing import List
 
 from peewee import *
@@ -33,6 +35,16 @@ class User(BaseModel):
     timestamp = DateTimeField()
     transaction = CharField()
     tenant = CharField(null=False)
+
+    @staticmethod
+    def is_timeseries():
+        return False
+
+
+class AdminUser(BaseModel):
+    username = CharField(primary_key=True)
+    password = CharField()
+    createTimestamp = DateTimeField(default=datetime.now())
 
     @staticmethod
     def is_timeseries():
@@ -231,6 +243,7 @@ class RuntimeConfiguration(BaseModel):
     decimals = IntegerField()
     migrationVersion = IntegerField(default=0)
     lastSnapshotTimestamp = DateTimeField(default=datetime.fromtimestamp(0))
+    nextSnapshotTimestamp = DateTimeField(default=datetime.fromtimestamp(0))
     deployTimestamp = DateTimeField()
     tenant = CharField(null=False)
 
@@ -272,6 +285,9 @@ class AffiliateSnapshot(BaseModel):
     hedger_name = CharField(null=False)
     tenant = CharField(null=False)
 
+    def get_status_quotes(self):
+        return json.loads(self.status_quotes.replace("'", '"'))
+
 
 class HedgerSnapshot(BaseModel):
     hedger_contract_balance = DecimalField(max_digits=40, decimal_places=0)
@@ -292,6 +308,7 @@ class HedgerSnapshot(BaseModel):
     name = CharField(null=False)
     tenant = CharField(null=False)
     timestamp = DateTimeField(primary_key=True)
+    calculated_total_state: int = 0
 
     @property
     def binance_profit(self):

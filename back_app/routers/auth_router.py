@@ -1,0 +1,34 @@
+from typing import Annotated
+
+from fastapi import APIRouter
+from fastapi import Depends, status
+from fastapi.security import OAuth2PasswordRequestForm
+
+from app.exception_handlers import ErrorCodeResponse, ErrorInfoContainer
+from app.models import AdminUser
+from security.security_utils import (
+    get_jwt_token,
+    get_current_user,
+    verify_password,
+)
+
+router = APIRouter(prefix="/auth", tags=["Auth"])
+
+
+@router.post("/login")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = AdminUser.get_or_none(AdminUser.username == form_data.username)
+    if not user or not verify_password(form_data.password, user.password):
+        raise ErrorCodeResponse(
+            error=ErrorInfoContainer.incorrect_username_password,
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    return {"access_token": get_jwt_token(user.username)}
+
+
+@router.get("/me")
+async def read_me(current_user: Annotated[AdminUser, Depends(get_current_user)]):
+    return {
+        "username": current_user.username,
+        "createTimestamp": current_user.createTimestamp,
+    }

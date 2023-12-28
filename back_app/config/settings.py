@@ -66,19 +66,18 @@ class Context:
         raise RuntimeError("Invalid Configuration")
 
 
-proxies = {}
-server_port = 7231
+PROXIES = {}
+SERVER_PORT = 7231
 
 # Intervals
-fetch_stat_data_interval = 2 * 60
-fetch_data_interval = 2 * 61
-funding_fetch_data_interval = 30 * 60
-update_binance_deposit_interval = 60 * 60
+FETCH_STAT_DATA_INTERVAL = 2 * 60
+FETCH_DATA_INTERVAL = 2 * 61
+FUNDING_FETCH_DATA_INTERVAL = 30 * 60
 
 # Alerting system
-funding_rate_alert_threshold = 100
-closable_funding_rate_alert_threshold = 100
-main_market_symbols = [
+FUNDING_RATE_ALERT_THRESHOLD = 100
+CLOSABLE_FUNDING_RATE_ALERT_THRESHOLD = 100
+MAIN_MARKET_SYMBOLS = [
     "BTCUSDT",
     "ETHUSDT",
     "BCHUSDT",
@@ -102,14 +101,21 @@ main_market_symbols = [
 ]
 
 # DB
-db_name = "postgres"
-db_user = "postgres"
-db_password = "password"
-db_host = "localhost"
-db_port = 5432
+DB_NAME = "postgres"
+DB_USER = "postgres"
+DB_PASSWORD = "password"
+DB_HOST = "localhost"
+DB_PORT = 5432
 
 with open("./config/abis/erc20abi.json", "r") as f:
-    erc20_abi = json.load(f)
+    ERC20_ABI = json.load(f)
 
 with open("./config/abis/abi.json", "r") as f:
-    symmio_abi = json.load(f)
+    SYMMIO_ABI = json.load(f)
+
+IGNORE_BINANCE_TRADE_VOLUME = True
+
+# JWT setting
+ACCESS_TOKEN_EXPIRE_TIME = 3 * 24 * 60 * 60  # 3 Days
+JWT_ALGORITHM = "HS256"
+JWT_SECRET_KEY = ""

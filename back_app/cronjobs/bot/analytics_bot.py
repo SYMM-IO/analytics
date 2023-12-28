@@ -5,9 +5,9 @@ from typing import List
 
 from app.models import AffiliateSnapshot, StatsBotMessage, HedgerSnapshot
 from config.settings import (
-    main_market_symbols,
-    funding_rate_alert_threshold,
-    closable_funding_rate_alert_threshold,
+    MAIN_MARKET_SYMBOLS,
+    FUNDING_RATE_ALERT_THRESHOLD,
+    CLOSABLE_FUNDING_RATE_ALERT_THRESHOLD,
     Context,
 )
 from cronjobs.bot.indicators.mismatch_indicator import MismatchIndicator, FieldCheck
@@ -37,16 +37,17 @@ quote_status_names = {
     9: "EXPIRED",
 }
 
-FUNDING_RATE_THRESHOLD = -(funding_rate_alert_threshold * 10**18)
-CLOSABLE_FUNDING_RATE_THRESHOLD = -(closable_funding_rate_alert_threshold * 10**18)
+FUNDING_RATE_THRESHOLD = -(FUNDING_RATE_ALERT_THRESHOLD * 10**18)
+CLOSABLE_FUNDING_RATE_THRESHOLD = -(CLOSABLE_FUNDING_RATE_ALERT_THRESHOLD * 10**18)
 
 
 def get_hedger_indicators(
-    hedger_snapshot: HedgerSnapshot, parsed_stat_message: dict
+    hedger_snapshot: HedgerSnapshot,
+    parsed_stat_message: dict,
 ) -> List[StateIndicator]:
     non_closable_funding = 0
     for market, value in hedger_snapshot.next_funding_rate.items():
-        if market in main_market_symbols:
+        if market in MAIN_MARKET_SYMBOLS:
             non_closable_funding += value
 
     non_closable_funding_indicator = StateIndicator(
@@ -59,7 +60,7 @@ def get_hedger_indicators(
     closable_market_with_high_funding = None
     for market, value in hedger_snapshot.next_funding_rate.items():
         if (
-            market not in main_market_symbols
+            market not in MAIN_MARKET_SYMBOLS
             and value < CLOSABLE_FUNDING_RATE_THRESHOLD
         ):
             closable_market_with_high_funding = market
@@ -76,7 +77,7 @@ def get_hedger_indicators(
     mismatch_indicator.update_state(
         hedger_snapshot,
         parsed_stat_message,
-        [FieldCheck("total_state", "total state", 5)],
+        [FieldCheck("calculated_total_state", "total state", 5)],
     )
 
     return [
@@ -86,35 +87,52 @@ def get_hedger_indicators(
     ]
 
 
-def report_snapshots_to_telegram(context: Context):
-    affiliates_snapshots = (
+def get_last_affiliate_snapshot_for(context: Context, affiliate: str):
+    snapshots = (
         AffiliateSnapshot.select()
-        .where(AffiliateSnapshot.tenant == context.tenant)
+        .where(
+            AffiliateSnapshot.tenant == context.tenant,
+            AffiliateSnapshot.name == affiliate,
+        )
         .order_by(AffiliateSnapshot.timestamp.desc())
-        .limit(len(context.affiliates))
+        .limit(1)
         .execute()
     )
+    return snapshots[0] if len(snapshots) > 0 else None
+
+
+def get_last_hedger_snapshot_for(context: Context, hedger: str):
+    snapshots = (
+        HedgerSnapshot.select()
+        .where(
+            HedgerSnapshot.tenant == context.tenant,
+            HedgerSnapshot.name == hedger,
+        )
+        .order_by(HedgerSnapshot.timestamp.desc())
+        .limit(1)
+        .execute()
+    )
+    return snapshots[0] if len(snapshots) > 0 else None
+
+
+def report_snapshots_to_telegram(context: Context):
+    affiliates_snapshots = []
+    for affiliate in context.affiliates:
+        snapshot = get_last_affiliate_snapshot_for(context, affiliate.name)
+        if snapshot:
+            affiliates_snapshots.append(snapshot)
+
     if len(affiliates_snapshots) < len(context.affiliates):
         return
 
-    assert len(set([snapshot.name for snapshot in affiliates_snapshots])) == len(
-        context.affiliates
-    )
-
-    hedger_snapshots = (
-        HedgerSnapshot.select()
-        .where(HedgerSnapshot.tenant == context.tenant)
-        .order_by(HedgerSnapshot.timestamp.desc())
-        .limit(len(context.hedgers))
-        .execute()
-    )
+    hedger_snapshots = []
+    for hedger in context.hedgers:
+        snapshot = get_last_hedger_snapshot_for(context, hedger.name)
+        if snapshot:
+            hedger_snapshots.append(snapshot)
 
     if len(hedger_snapshots) < len(context.hedgers):
         return
-
-    assert len(set([snapshot.name for snapshot in hedger_snapshots])) == len(
-        context.hedgers
-    )
 
     messages = (
         StatsBotMessage.select()
@@ -139,12 +157,12 @@ def report_snapshots_to_telegram(context: Context):
             context, hedger_snapshot, related_affiliate_snapshots, parsed_message
         )
         hedger_messages.append(msg)
-        indicators.append(indis)
+        indicators += indis
 
     for affiliates_snapshot in affiliates_snapshots:
         msg, indis = prepare_affiliate_snapshot_message(affiliates_snapshot)
         affiliates_messages.append(msg)
-        indicators.append(indis)
+        indicators += indis
 
     report = "".join(indicator.mode for indicator in indicators)
     report += "\n".join(hedger_messages)
@@ -155,7 +173,7 @@ def report_snapshots_to_telegram(context: Context):
 
     mentions = set()
     for indicator in indicators:
-        mentions.update(indicator.get_mentions())
+        mentions.update(indicator.get_mentions(context))
 
     print(report)
     send_message(
@@ -204,14 +222,18 @@ def prepare_hedger_snapshot_message(
     non_closable_funding = 0
     closable_funding = 0
     for market, value in hedger_snapshot.next_funding_rate.items():
-        if market in main_market_symbols:
+        if market in MAIN_MARKET_SYMBOLS:
             non_closable_funding += value
         else:
             closable_funding += value
 
+    hedger_snapshot.calculated_total_state = hedger_snapshot.total_state(
+        affiliate_snapshots
+    )
+
     msg = f"""
 \n--- ⚖️ {hedger_snapshot.name} ⚖️ ---\n
-Total State: {format(hedger_snapshot.total_state(affiliate_snapshots))} | {format(snapshot_diff.total_state(affiliate_snapshots_diff))}
+Total State: {format(hedger_snapshot.calculated_total_state)} | {format(snapshot_diff.total_state(affiliate_snapshots_diff))}
 Total State - CVA: {format(hedger_snapshot.total_state(affiliate_snapshots) - HedgerSnapshot.earned_cva(affiliate_snapshots))} | {format(snapshot_diff.total_state(affiliate_snapshots_diff) - HedgerSnapshot.earned_cva(affiliate_snapshots_diff))}
 Binance Profit: {format(hedger_snapshot.binance_profit)} | {format(snapshot_diff.binance_profit)}
 Contract Profit: {format(hedger_snapshot.contract_profit(affiliate_snapshots))} | {format(snapshot_diff.contract_profit(affiliate_snapshots_diff))}
@@ -250,7 +272,7 @@ def prepare_affiliate_snapshot_message(
 
     quote_stats_lines = [
         f"{quote_status_names[int(id)]} : {count} | {snapshot_diff.status_quotes[id]}"
-        for id, count in affiliate_snapshot.status_quotes.items()
+        for id, count in affiliate_snapshot.get_status_quotes().items()
     ]
     quote_stats_info = "\n".join(quote_stats_lines)
 

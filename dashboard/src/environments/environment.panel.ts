@@ -1,21 +1,18 @@
 import {EnvironmentInterface} from "./environment-interface"
 
-import {subEnvironment as thenaEnvV1} from "./environment.alpha_thena_v1"
-import {subEnvironment as thenaEnvV2} from "./environment.alpha_thena_v2"
-import {subEnvironment as basedEnv} from "./environment.based"
-import {subEnvironment as cloverfieldBnbEnv} from "./environment.cloverfield_bsc"
-import {subEnvironment as cloverfieldFantomEnv} from "./environment.cloverfield_fantom"
-import {subEnvironment as intentXEnv} from "./environment.intentx"
+
+import {environment as bnbEnv} from "./environment.bnb_8"
+import {environment as ftmEnv} from "./environment.ftm_8"
+import {environment as baseEnv} from "./environment.base_8"
 
 export const environment: EnvironmentInterface = {
-	assetsFolder: "panel",
-	panel: true,
-	environments: [
-		cloverfieldFantomEnv,
-		cloverfieldBnbEnv,
-		thenaEnvV1,
-		thenaEnvV2,
-		basedEnv,
-		intentXEnv,
-	]
+    name: "panel",
+    assetsFolder: "panel",
+    serverUrl: "https://api.analytics.symm.io",
+    panel: true,
+    environments: [
+        ftmEnv,
+        bnbEnv,
+        baseEnv,
+    ],
 }

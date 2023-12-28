@@ -2,7 +2,7 @@ import datetime
 
 import web3
 
-from config.settings import erc20_abi, Context
+from config.settings import ERC20_ABI, Context
 
 
 def load_config(context: Context, name: str = "DefaultConfiguration"):
@@ -14,7 +14,7 @@ def load_config(context: Context, name: str = "DefaultConfiguration"):
         w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
         collateral_contract = w3.eth.contract(
             address=w3.to_checksum_address(context.symmio_collateral_address),
-            abi=erc20_abi,
+            abi=ERC20_ABI,
         )
         decimals = collateral_contract.functions.decimals().call()
         config = RuntimeConfiguration.create(

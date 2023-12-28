@@ -177,11 +177,18 @@ class GraphQlClient:
                 pagination_field_name,
                 context=context,
             )
+            is_done = False
             if len(temp) > 0:
                 yield [d for d in temp if d not in result]
                 result.update(temp)
-                pagination_value = getattr(temp[-1], pagination_field_name_std)
-            if len(temp) < limit:
+                for item in reversed(temp):
+                    if item:
+                        pagination_value = getattr(temp[-1], pagination_field_name_std)
+                        break
+                    else:
+                        is_done = True
+
+            if is_done or len(temp) < limit:
                 break
 
         if save_to_database:

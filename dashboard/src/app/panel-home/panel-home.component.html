@@ -1,17 +1,18 @@
 <div class="root flex flex-column gap-2">
-    <form tuiGroup class="group" [collapsed]="true">
-        @for (env of environments;track env.name) {
-            <tui-radio-block contentAlign="right" [formControl]="environmentForm" [item]="env" size="l">
-                <div class="flex flex-row gap-2">
-                    <div [ngStyle]="{'background-color': env.mainColor}" class="color-dot">
-                    </div>
+    <div class="flex flex-row gap-2 align-items-center mx-2">
+        <span class="text-lg">Environment</span>
+        <form tuiGroup class="group w-full" [collapsed]="true">
+            @for (env of environments;track env.name) {
+                <tui-radio-block contentAlign="right" [formControl]="environmentForm" [item]="env" size="l">
+                    <div class="flex flex-row gap-2">
                     <span>
                         {{ env.name }}
                     </span>
-                </div>
-            </tui-radio-block>
-        }
-    </form>
+                    </div>
+                </tui-radio-block>
+            }
+        </form>
+    </div>
     <tui-island size="l" textAlign="center" class="flex flex-column align-items-center gap-2 quote_loader">
         <h3 class="title"> Load a quote data </h3>
         <form class="w-full">
@@ -21,8 +22,107 @@
             </tui-input-number>
         </form>
         <button tuiButton type="button" class="quote_loader_action_button" (click)="onLoadQuote()" [disabled]="!quoteForm.valid"
-                [showLoader]="(loadingService.loading$() | async) || false">
+                [showLoader]="loadingService.loading()">
             Load
         </button>
     </tui-island>
+    <div class="flex flex-row flex-wrap w-full gap-2" *tuiLet="selectedEnvironment()?.collateralDecimal as decimals">
+        <tui-island size="l" class="flex flex-column gap-2">
+            <h3 class="title w-full"> Hedger Snapshots </h3>
+            <div class="w-full flex flex-row flex-wrap gap-2">
+                @for (hedger of selectedEnvironment()!.hedgers;track hedger.name) {
+                    <tui-island size="l" textAlign="left" class="flex flex-column gap-2" *tuiLet="hedgerSnapshotsMaps.get(hedger.name!) as hedgerSnapshot">
+                        <h3 class="title"> {{ hedger.name }} </h3>
+                        <div>Hedger Contract
+                            Balance: {{ hedgerSnapshot?.hedger_contract_balance | bigNumberFormat }}
+                        </div>
+                        <div>Hedger Contract
+                            Deposit: {{ hedgerSnapshot?.hedger_contract_deposit | bigNumberFormat }}
+                        </div>
+                        <div>Hedger Contract
+                            Withdraw: {{ hedgerSnapshot?.hedger_contract_withdraw | bigNumberFormat }}
+                        </div>
+                        <div>Max Open
+                            Interest: {{ hedgerSnapshot?.max_open_interest | bigNumberFormat }}
+                        </div>
+                        <div>Binance Maintenance
+                            Margin: {{ hedgerSnapshot?.binance_maintenance_margin | bigNumberFormat }}
+                        </div>
+                        <div>Binance Total
+                            Balance: {{ hedgerSnapshot?.binance_total_balance | bigNumberFormat }}
+                        </div>
+                        <div>Binance Account Health
+                            Ratio: {{ hedgerSnapshot?.binance_account_health_ratio | bigNumberFormat }}
+                        </div>
+                        <div>Binance Cross
+                            UPnL: {{ hedgerSnapshot?.binance_cross_upnl | bigNumberFormat }}
+                        </div>
+                        <div>Binance Average
+                            Balance: {{ hedgerSnapshot?.binance_av_balance | bigNumberFormat }}
+                        </div>
+                        <div>Binance Total Initial
+                            Margin: {{ hedgerSnapshot?.binance_total_initial_margin | bigNumberFormat }}
+                        </div>
+                        <div>Binance Max Withdraw
+                            Amount: {{ hedgerSnapshot?.binance_max_withdraw_amount | bigNumberFormat }}
+                        </div>
+                        <div>Binance Deposit: {{ hedgerSnapshot?.binance_deposit | bigNumberFormat }}
+                        </div>
+                        <div>Binance Trade Volume: {{ hedgerSnapshot?.binance_trade_volume | bigNumberFormat }}
+                        </div>
+                        <div>Paid Funding Rate: {{ hedgerSnapshot?.paid_funding_rate | bigNumberFormat }}
+                        </div>
+                        <div>Next Funding Rate: {{ hedgerSnapshot?.next_funding_rate }}</div>
+                        <div>Tenant: {{ hedgerSnapshot?.tenant }}</div>
+                        <div>Timestamp: {{ hedgerSnapshot?.timestamp }}</div>
+                        <div>Calculated Total State: {{ hedgerSnapshot?.calculated_total_state }}</div>
+                    </tui-island>
+                }
+            </div>
+        </tui-island>
+        <tui-island size="l" class="flex flex-column align-items-center gap-2">
+            <h3 class="title w-full"> Affiliate Snapshots </h3>
+            <div class="w-full flex flex-row flex-wrap gap-2">
+                @for (affiliate of selectedEnvironment()!.affiliates;track affiliate.name) {
+                    <tui-island size="l" textAlign="left" class="flex flex-column gap-2" *tuiLet="affiliateSnapshotsMaps.get(affiliate.name!) as affiliateSnapshot">
+                        <h3 class="title"> {{ affiliate.name }} </h3>
+                        <span class="source-info">Source: {{ affiliateSnapshot?.account_source }}</span>
+                        <div>PnL of Closed: {{ affiliateSnapshot?.pnl_of_closed | bigNumberFormat }}</div>
+                        <div>PnL of
+                            Liquidated: {{ affiliateSnapshot?.pnl_of_liquidated | bigNumberFormat }}
+                        </div>
+                        <div>Closed Notional
+                            Value: {{ affiliateSnapshot?.closed_notional_value | bigNumberFormat }}
+                        </div>
+                        <div>Liquidated Notional
+                            Value: {{ affiliateSnapshot?.liquidated_notional_value | bigNumberFormat }}
+                        </div>
+                        <div>Opened Notional
+                            Value: {{ affiliateSnapshot?.opened_notional_value | bigNumberFormat }}
+                        </div>
+                        <div>Trade Volume: {{ affiliateSnapshot?.trade_volume | bigNumberFormat }}</div>
+                        <div>Earned CVA: {{ affiliateSnapshot?.earned_cva | bigNumberFormat }}</div>
+                        <div>Loss CVA: {{ affiliateSnapshot?.loss_cva | bigNumberFormat }}</div>
+                        <div>Hedger Contract
+                            Allocated: {{ affiliateSnapshot?.hedger_contract_allocated | bigNumberFormat }}
+                        </div>
+                        <div>Hedger UPnL: {{ affiliateSnapshot?.hedger_upnl | bigNumberFormat }}</div>
+                        <div>Accounts Count: {{ affiliateSnapshot?.accounts_count }}</div>
+                        <div>Active Accounts: {{ affiliateSnapshot?.active_accounts }}</div>
+                        <div>Users Count: {{ affiliateSnapshot?.users_count }}</div>
+                        <div>Active Users: {{ affiliateSnapshot?.active_users }}</div>
+                        <div>All Contract
+                            Deposit: {{ affiliateSnapshot?.all_contract_deposit | bigNumberFormat:decimals }}
+                        </div>
+                        <div>All Contract
+                            Withdraw: {{ affiliateSnapshot?.all_contract_withdraw | bigNumberFormat:decimals }}
+                        </div>
+                        <div>Platform Fee: {{ affiliateSnapshot?.platform_fee | bigNumberFormat }}</div>
+                        <div>Status Quotes: {{ affiliateSnapshot?.status_quotes }}</div>
+                        <div>Timestamp: {{ affiliateSnapshot?.timestamp }}</div>
+                    </tui-island>
+                }
+            </div>
+        </tui-island>
+    </div>
 </div>
