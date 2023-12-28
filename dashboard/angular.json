@@ -164,6 +164,41 @@
               "sourceMap": true,
               "namedChunks": true
             },
+            "legacy_thena": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "5mb",
+                  "maximumError": "10mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.legacy_thena.ts"
+                }
+              ]
+            },
+            "legacy_thena_dev": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.legacy_thena.ts"
+                }
+              ],
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            },
             "development": {
               "buildOptimizer": false,
               "optimization": false,
@@ -189,6 +224,9 @@
             },
             "thena": {
               "buildTarget": "symmio-analytics-dashboard:build:thena_dev"
+            },
+            "legacy_thena": {
+              "buildTarget": "symmio-analytics-dashboard:build:legacy_thena_dev"
             },
             "development": {
               "buildTarget": "symmio-analytics-dashboard:build:development"

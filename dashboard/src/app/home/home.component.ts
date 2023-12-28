@@ -43,6 +43,7 @@ export class HomeComponent implements OnInit {
         const flatAffiliates = this.environments
             .map((env: EnvironmentInterface) => env.affiliates!)
             .flat()
+            .filter(aff => this.singleAffiliate == null || aff.name == this.singleAffiliate)
         this.dailyAffiliateHistories = combineLatest(
             this.environments
                 .map((env: EnvironmentInterface) => {
