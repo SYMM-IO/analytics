@@ -1,6 +1,6 @@
 import {Component, Inject, OnInit} from '@angular/core'
 import {catchError, combineLatest, Observable, shareReplay, tap} from "rxjs"
-import {DailyHistory, TotalHistory} from "../services/graph-models"
+import {DailyHistory, TotalHistory} from "../models"
 import BigNumber from "bignumber.js"
 import {GraphQlClient} from "../services/graphql-client"
 import {LoadingService} from "../services/Loading.service"
@@ -24,6 +24,7 @@ export class HomeComponent implements OnInit {
     lastDayHistory?: DailyHistory
     environments: EnvironmentInterface[]
     decimalsMap = new Map<string, number>()
+    singleAffiliate: string
 
     constructor(
         private loadingService: LoadingService,
@@ -35,6 +36,7 @@ export class HomeComponent implements OnInit {
         for (const env of this.environments)
             for (const affiliate of env.affiliates!)
                 this.decimalsMap.set(affiliate.accountSource!.toLowerCase(), env.collateralDecimal!)
+        this.singleAffiliate = this.environmentService.getValue("singleAffiliateName")
     }
 
     ngOnInit(): void {
@@ -44,12 +46,14 @@ export class HomeComponent implements OnInit {
         this.dailyAffiliateHistories = combineLatest(
             this.environments
                 .map((env: EnvironmentInterface) => {
-                    return env.affiliates!.map(aff => {
-                        return {
-                            affiliate: aff,
-                            graphQlClient: new GraphQlClient(this.apolloService.getClient(env.subgraphUrl!)!, this.loadingService),
-                        }
-                    })
+                    return env.affiliates!
+                        .filter(aff => this.singleAffiliate == null || aff.name == this.singleAffiliate)
+                        .map(aff => {
+                            return {
+                                affiliate: aff,
+                                graphQlClient: new GraphQlClient(this.apolloService.getClient(env.subgraphUrl!)!, this.loadingService),
+                            }
+                        })
                 })
                 .flat()
                 .map(context => {

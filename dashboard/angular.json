@@ -129,6 +129,41 @@
               "sourceMap": true,
               "namedChunks": true
             },
+            "thena": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "5mb",
+                  "maximumError": "10mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.thena.ts"
+                }
+              ]
+            },
+            "thena_dev": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.thena.ts"
+                }
+              ],
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            },
             "development": {
               "buildOptimizer": false,
               "optimization": false,
@@ -151,6 +186,9 @@
             },
             "panel": {
               "buildTarget": "symmio-analytics-dashboard:build:panel_dev"
+            },
+            "thena": {
+              "buildTarget": "symmio-analytics-dashboard:build:thena_dev"
             },
             "development": {
               "buildTarget": "symmio-analytics-dashboard:build:development"

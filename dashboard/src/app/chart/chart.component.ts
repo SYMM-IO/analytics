@@ -1,7 +1,7 @@
 import {Component, ElementRef, Input, OnDestroy, OnInit, ViewChild} from "@angular/core"
 import {EChartsOption} from "echarts"
 import {max, Observable} from "rxjs"
-import {DailyHistory} from "../services/graph-models"
+import {DailyHistory} from "../models"
 import BigNumber from "bignumber.js"
 import {aggregateDailyHistories} from "../utils"
 import {StateService} from "../state.service"

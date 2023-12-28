@@ -14,7 +14,7 @@ import {
 import {NgModule} from "@angular/core"
 import {BrowserModule} from "@angular/platform-browser"
 
-import {HttpClientModule} from "@angular/common/http"
+import {provideHttpClient, withInterceptors} from "@angular/common/http"
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations"
 import {Apollo} from "apollo-angular"
 import {NgxEchartsModule} from "ngx-echarts"
@@ -31,21 +31,23 @@ import {TuiInputNumberModule, TuiIslandModule, TuiRadioBlockModule} from "@taiga
 import {PanelHomeComponent} from "./panel-home/panel-home.component"
 import {ReactiveFormsModule} from "@angular/forms"
 import {NgxJsonViewerModule} from "ngx-json-viewer"
+import {httpInterceptor} from "./http.Interceptor"
+import {BigNumberFormatPipe} from "./big-number-format.pipe"
 
 @NgModule({
-	declarations: [
-		AppComponent,
-		InfoComponent,
-		ChartComponent,
-		HomeComponent,
-		ResizeObserverDirective,
-		PanelHomeComponent
-	],
+    declarations: [
+        AppComponent,
+        InfoComponent,
+        ChartComponent,
+        HomeComponent,
+        ResizeObserverDirective,
+        PanelHomeComponent,
+        BigNumberFormatPipe
+    ],
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
         AppRoutingModule,
-        HttpClientModule,
         NgxEchartsModule.forRoot({
             echarts: () => import("echarts"),
         }),
@@ -65,12 +67,15 @@ import {NgxJsonViewerModule} from "ngx-json-viewer"
         NgxJsonViewerModule,
         TuiHintModule,
     ],
-	providers: [
-		{provide: ENVIRONMENT, useValue: environment},
-		Apollo,
-		{provide: TUI_SANITIZER, useClass: NgDompurifySanitizer}
-	],
-	bootstrap: [AppComponent],
+    providers: [
+        provideHttpClient(
+            withInterceptors([httpInterceptor]),
+        ),
+        {provide: ENVIRONMENT, useValue: environment},
+        Apollo,
+        {provide: TUI_SANITIZER, useClass: NgDompurifySanitizer},
+    ],
+    bootstrap: [AppComponent],
 })
 export class AppModule {
 }

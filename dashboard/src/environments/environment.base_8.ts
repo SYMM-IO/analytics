@@ -17,12 +17,12 @@ export const intentx: Affiliate = {
 }
 
 export const hedger: Hedger = {
-    name: "Thena_Hedger",
+    name: "Based_IntentX_Hedger",
 }
 
 export const environment: EnvironmentInterface = {
     name: "BASE_8",
-    assetsFolder: "based",
+    serverUrl: "https://api.analytics.symm.io",
     subgraphUrl: "https://api.thegraph.com/subgraphs/name/symmiograph/symmioanalytics_base_8",
     collateralDecimal: 6,
     affiliates: [

@@ -1,4 +1,4 @@
-import {DailyHistory, TotalHistory} from "./services/graph-models"
+import {DailyHistory, TotalHistory} from "./models"
 import BigNumber from "bignumber.js"
 import {Affiliate} from "../environments/environment-interface"
 

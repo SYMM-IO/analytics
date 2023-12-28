@@ -15,7 +15,6 @@ export class InfoComponent {
     @Input() formatMoney: boolean = false
     @Input() decimals: number = 18
 
-
     constructor(readonly loadingService: LoadingService) {
 
     }

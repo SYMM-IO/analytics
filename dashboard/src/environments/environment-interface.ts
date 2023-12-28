@@ -2,10 +2,12 @@ import BigNumber from "bignumber.js"
 
 export interface EnvironmentInterface {
     name: string;
-    assetsFolder: string;
+    assetsFolder?: string;
     panel?: boolean;
+    serverUrl?: string;
     subgraphUrl?: string;
     collateralDecimal?: number;
+    singleAffiliateName?: string;
     affiliates?: Affiliate[];
     hedgers?: Hedger[];
     environments?: EnvironmentInterface[];

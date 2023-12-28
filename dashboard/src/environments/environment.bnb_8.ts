@@ -10,7 +10,7 @@ export const alpha_v1: Affiliate = {
 
 export const alpha_v2: Affiliate = {
     name: "Alpha Thena V2",
-    mainColor: "#ED00C9",
+    mainColor: "#6c2c62",
     accountSource: "0x75c539eFB5300234e5DaA684502735Fc3886e8b4",
     fromTimestamp: null,
 }
@@ -28,7 +28,7 @@ export const hedger: Hedger = {
 
 export const environment: EnvironmentInterface = {
     name: "BNB_8",
-    assetsFolder: "thena",
+    serverUrl: "https://api.analytics.symm.io",
     subgraphUrl: "https://api.thegraph.com/subgraphs/name/symmiograph/symmioanalytics_bnb_8",
     collateralDecimal: 18,
     affiliates: [

@@ -1,19 +1,19 @@
-import {Injectable} from "@angular/core"
-import {BehaviorSubject, Observable} from "rxjs"
+import {computed, effect, Injectable, signal} from "@angular/core"
 
 @Injectable({
-	providedIn: "root",
+    providedIn: "root",
 })
 export class LoadingService {
-	private loading: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(
-		false
-	)
+    private loadingLevel = signal(0)
+    public loading = computed(() => this.loadingLevel() > 0)
 
-	public loading$(): Observable<boolean> {
-		return this.loading.asObservable()
-	}
+    constructor() {
+        effect(() => {
+            console.log(`The loading level is: ${this.loadingLevel()})`)
+        })
+    }
 
-	public setLoading(b: boolean) {
-		this.loading.next(b)
-	}
+    public setLoading(b: boolean) {
+        this.loadingLevel.update(value => b ? value + 1 : Math.max(value - 1, 0))
+    }
 }
