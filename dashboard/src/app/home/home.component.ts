@@ -115,7 +115,6 @@ export class HomeComponent implements OnInit {
                 this.alert.open("Error loading data from subgraph\n" + err.message).subscribe()
                 throw err
             }),
-            shareReplay(1),
             tap(value => {
                 let totalHistories = value.map(value1 => value1[1]).map(value1 => value1[0])
                 this.totalHistory = aggregateTotalHistories(totalHistories, this.decimalsMap, flatAffiliates)
@@ -143,6 +142,22 @@ export class HomeComponent implements OnInit {
                     affiliateHistory.histories = this.justifyHistoriesToDates(affiliateHistory.histories, all_dates)
                 return affiliateHistories
             }),
+            map((affiliateHistories: AffiliateHistory[]) => {
+                let map = new Map<string, AffiliateHistory>()
+                for (const affiliateHistory of affiliateHistories) {
+                    const affiliate = affiliateHistory.affiliate.name!
+                    if (map.has(affiliate)) {
+                        for (let i = 0; i < affiliateHistory.histories.length; i++) {
+                            map.get(affiliate)!.histories[i] = aggregateDailyHistories([
+                                affiliateHistory.histories[i], map.get(affiliate)!.histories[i],
+                            ], this.decimalsMap)
+                        }
+                    } else {
+                        map.set(affiliate, affiliateHistory)
+                    }
+                }
+                return [...map.values()]
+            }),
             tap({
                 next: (affiliateHistories: AffiliateHistory[]) => {
                     this.todayHistory = aggregateDailyHistories(affiliateHistories.map(a => {
@@ -153,6 +168,7 @@ export class HomeComponent implements OnInit {
                     }), this.decimalsMap)
                 },
             }),
+            shareReplay(1),
         )
     }
 

@@ -22,6 +22,7 @@ export function aggregateDailyHistories(histories: DailyHistory[], decimalsMap: 
     ]
     let base = new DailyHistory()
     base.id = histories[0].id
+    base.accountSource = histories[0].accountSource
     return histories.reduce((accumulator: DailyHistory, current: DailyHistory) => {
         for (const key of keys) {
             let value = current[key] as BigNumber

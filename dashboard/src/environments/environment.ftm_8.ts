@@ -1,8 +1,8 @@
 import {Affiliate, EnvironmentInterface, Hedger} from "./environment-interface"
 
 export const cloverfield: Affiliate = {
-    name: "Cloverfield Fantom",
-    mainColor: "#0eb1fc",
+    name: "Cloverfield",
+    mainColor: "#A2D4EA",
     accountSource: "0x0937bC09b8D073E4F1abE85470969475f714Ca6c",
     fromTimestamp: null,
 }

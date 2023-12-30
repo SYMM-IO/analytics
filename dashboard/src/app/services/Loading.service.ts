@@ -8,9 +8,9 @@ export class LoadingService {
     public loading = computed(() => this.loadingLevel() > 0)
 
     constructor() {
-        effect(() => {
-            console.log(`The loading level is: ${this.loadingLevel()})`)
-        })
+        // effect(() => {
+        //     console.log(`The loading level is: ${this.loadingLevel()})`)
+        // })
     }
 
     public setLoading(b: boolean) {
