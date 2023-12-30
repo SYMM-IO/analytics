@@ -4,7 +4,7 @@ import {environment as bnb82Env} from "./environment.bnb_8_2"
 export const environment: EnvironmentInterface = {
     name: "Alpha Thena",
     assetsFolder: "thena",
-    singleAffiliateName: "Alpha Thena V3",
+    singleAffiliateName: "Alpha Thena",
     environments: [
         bnb82Env,
     ],
