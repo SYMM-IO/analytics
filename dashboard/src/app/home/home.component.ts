@@ -143,6 +143,22 @@ export class HomeComponent implements OnInit {
                     affiliateHistory.histories = this.justifyHistoriesToDates(affiliateHistory.histories, all_dates)
                 return affiliateHistories
             }),
+            map((affiliateHistories: AffiliateHistory[]) => {
+                let map = new Map<string, AffiliateHistory>()
+                for (const affiliateHistory of affiliateHistories) {
+                    const affiliate = affiliateHistory.affiliate.name!
+                    if (map.has(affiliate)) {
+                        for (let i = 0; i < affiliateHistory.histories.length; i++) {
+                            map.get(affiliate)!.histories[i] = aggregateDailyHistories([
+                                affiliateHistory.histories[i], map.get(affiliate)!.histories[i],
+                            ], this.decimalsMap)
+                        }
+                    } else {
+                        map.set(affiliate, affiliateHistory)
+                    }
+                }
+                return [...map.values()]
+            }),
             tap({
                 next: (affiliateHistories: AffiliateHistory[]) => {
                     this.todayHistory = aggregateDailyHistories(affiliateHistories.map(a => {
