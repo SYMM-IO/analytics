@@ -115,7 +115,6 @@ export class HomeComponent implements OnInit {
                 this.alert.open("Error loading data from subgraph\n" + err.message).subscribe()
                 throw err
             }),
-            shareReplay(1),
             tap(value => {
                 let totalHistories = value.map(value1 => value1[1]).map(value1 => value1[0])
                 this.totalHistory = aggregateTotalHistories(totalHistories, this.decimalsMap, flatAffiliates)
@@ -169,6 +168,7 @@ export class HomeComponent implements OnInit {
                     }), this.decimalsMap)
                 },
             }),
+            shareReplay(1),
         )
     }
 
