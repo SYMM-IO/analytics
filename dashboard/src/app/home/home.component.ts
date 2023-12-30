@@ -24,7 +24,7 @@ export class HomeComponent implements OnInit {
     lastDayHistory?: DailyHistory
     environments: EnvironmentInterface[]
     decimalsMap = new Map<string, number>()
-    singleAffiliate: string
+    singleAffiliateAccountSource: string
 
     constructor(
         private loadingService: LoadingService,
@@ -36,19 +36,19 @@ export class HomeComponent implements OnInit {
         for (const env of this.environments)
             for (const affiliate of env.affiliates!)
                 this.decimalsMap.set(affiliate.accountSource!.toLowerCase(), env.collateralDecimal!)
-        this.singleAffiliate = this.environmentService.getValue("singleAffiliateName")
+        this.singleAffiliateAccountSource = this.environmentService.getValue("singleAffiliateAccountSource")
     }
 
     ngOnInit(): void {
         const flatAffiliates = this.environments
             .map((env: EnvironmentInterface) => env.affiliates!)
             .flat()
-            .filter(aff => this.singleAffiliate == null || aff.name == this.singleAffiliate)
+            .filter(aff => this.singleAffiliateAccountSource == null || aff.accountSource == this.singleAffiliateAccountSource)
         this.dailyAffiliateHistories = combineLatest(
             this.environments
                 .map((env: EnvironmentInterface) => {
                     return env.affiliates!
-                        .filter(aff => this.singleAffiliate == null || aff.name == this.singleAffiliate)
+                        .filter(aff => this.singleAffiliateAccountSource == null || aff.accountSource == this.singleAffiliateAccountSource)
                         .map(aff => {
                             return {
                                 affiliate: aff,

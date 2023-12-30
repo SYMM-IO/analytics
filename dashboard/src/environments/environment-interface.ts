@@ -7,7 +7,7 @@ export interface EnvironmentInterface {
     serverUrl?: string;
     subgraphUrl?: string;
     collateralDecimal?: number;
-    singleAffiliateName?: string;
+    singleAffiliateAccountSource?: string;
     affiliates?: Affiliate[];
     hedgers?: Hedger[];
     environments?: EnvironmentInterface[];
