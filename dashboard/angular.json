@@ -199,6 +199,78 @@
               "sourceMap": true,
               "namedChunks": true
             },
+
+            "based": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "5mb",
+                  "maximumError": "10mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.based.ts"
+                }
+              ]
+            },
+            "based_dev": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.based.ts"
+                }
+              ],
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            },
+            "legacy_based": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "5mb",
+                  "maximumError": "10mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kb",
+                  "maximumError": "4kb"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.legacy_based.ts"
+                }
+              ]
+            },
+            "legacy_based_dev": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.legacy_based.ts"
+                }
+              ],
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            },
+
             "development": {
               "buildOptimizer": false,
               "optimization": false,
@@ -227,6 +299,12 @@
             },
             "legacy_thena": {
               "buildTarget": "symmio-analytics-dashboard:build:legacy_thena_dev"
+            },
+            "based": {
+              "buildTarget": "symmio-analytics-dashboard:build:based_dev"
+            },
+            "legacy_based": {
+              "buildTarget": "symmio-analytics-dashboard:build:legacy_based_dev"
             },
             "development": {
               "buildTarget": "symmio-analytics-dashboard:build:development"
