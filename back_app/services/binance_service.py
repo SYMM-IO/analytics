@@ -15,7 +15,7 @@ from app.models import (
     BinanceIncome,
 )
 from config.settings import PROXIES, Context, HedgerContext
-from utils.common_utils import load_config
+from services.config_service import load_config
 
 
 def _get_signature(query_string, api_secret):

@@ -24,7 +24,7 @@ from cronjobs.snapshot_job import fetch_snapshot
 from routers.auth_router import router as auth_router
 from routers.snapshot_router import router as snapshot_router
 from security.security_utils import get_current_user
-from utils.telegram_utils import send_alert, escape_markdown_v1
+from services.telegram_service import send_alert, escape_markdown_v1
 
 scheduler: AsyncIOScheduler
 telegram_user_client: Client
@@ -35,13 +35,13 @@ async def create_scheduler():
     scheduler = BackgroundScheduler()
     scheduler.add_listener(listener, EVENT_JOB_ERROR)
     for context in contexts:
-        scheduler.add_job(
-            func=load_stats_messages_sync,
-            args=[context, telegram_user_client, asyncio.get_running_loop()],
-            trigger="interval",
-            seconds=FETCH_STAT_DATA_INTERVAL,
-            id=context.tenant + "_load_stats_messages",
-        )
+        # scheduler.add_job(
+        #     func=load_stats_messages_sync,
+        #     args=[context, telegram_user_client, asyncio.get_running_loop()],
+        #     trigger="interval",
+        #     seconds=FETCH_STAT_DATA_INTERVAL,
+        #     id=context.tenant + "_load_stats_messages",
+        # )
         scheduler.add_job(
             func=fetch_snapshot,
             args=[context],

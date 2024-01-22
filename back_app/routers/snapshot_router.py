@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Path
 
 from app.models import AffiliateSnapshot, HedgerSnapshot
+from utils.context_utils import get_context
 
 router = APIRouter(prefix="/snapshots", tags=["Snapshot"])
 
@@ -38,7 +39,9 @@ async def get_hedger_snapshot(
         .dicts()
     )
     try:
-        snapshot = query.get()
+        snapshot: HedgerSnapshot = query.get()
+        context = get_context(tenant)
+        snapshot.fill_calculated_fields(context)
     except HedgerSnapshot.DoesNotExist:
         snapshot = None
 

@@ -6,7 +6,10 @@ from tqdm import tqdm
 
 from app.models import FundingRate, BinanceTrade, SymbolPrice, PaidFundingRate
 from config.settings import Context
-from utils.binance_utils import fetch_symbol_price_history, fetch_funding_rate_history
+from services.binance_service import (
+    fetch_symbol_price_history,
+    fetch_funding_rate_history,
+)
 
 
 def fetch_new_data(context: Context):

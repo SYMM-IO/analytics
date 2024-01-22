@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from starlette import status
 from starlette.responses import JSONResponse
 
-from utils.telegram_utils import send_alert
+from services.telegram_service import send_alert
 
 
 class ErrorInfoModel:

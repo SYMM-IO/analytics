@@ -10,7 +10,7 @@ from app.models import (
 )
 from config.settings import Context
 from context.graphql_client import Where
-from utils.common_utils import convert_timestamps
+from services.config_service import convert_timestamps
 
 
 def tag_tenant_to_id(data, context: Context):
@@ -52,8 +52,8 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
             "partyBsWhiteList",
             "orderType",
             "openPrice",
-            "mm",
-            "maxInterestRate",
+            "partyAmm",
+            "partyBmm",
             "marketPrice",
             "lf",
             "id",

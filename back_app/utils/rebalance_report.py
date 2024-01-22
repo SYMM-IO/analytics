@@ -4,7 +4,7 @@ from typing import List
 from app.models import BalanceChange, BinanceIncome
 from config.local_settings import contexts
 from config.settings import Context
-from utils.common_utils import load_config
+from services.config_service import load_config
 
 
 def write_balance_changes(
@@ -57,34 +57,42 @@ def get_rebalance_report():
         )
         for context in contexts:
             print(f"Going for {context.tenant}")
-            balance_changes = (
-                BalanceChange.select()
-                .where(
-                    BalanceChange.collateral == context.symmio_collateral_address,
-                    BalanceChange.account == context.hedger_address,
-                    BalanceChange.tenant == context.tenant,
-                )
-                .order_by(BalanceChange.timestamp)
-            )
-            print(f"Found {len(balance_changes)} hedger balance changes")
-            write_balance_changes(context, writer, balance_changes, "Hedger")
-            for liq in context.symmio_liquidators:
+            for hedger in context.hedgers:
                 balance_changes = (
                     BalanceChange.select()
                     .where(
                         BalanceChange.collateral == context.symmio_collateral_address,
-                        BalanceChange.account == liq,
+                        BalanceChange.account == hedger.hedger_address,
                         BalanceChange.tenant == context.tenant,
                     )
                     .order_by(BalanceChange.timestamp)
                 )
-                write_balance_changes(context, writer, balance_changes, "Liquidator")
-            incomes = (
-                BinanceIncome.select()
-                .where(
-                    BinanceIncome.tenant == context.tenant,
-                    BinanceIncome.type == BinanceIncome.type == "TRANSFER",
+                print(f"Found {len(balance_changes)} hedger balance changes")
+                write_balance_changes(context, writer, balance_changes, "Hedger")
+            for affiliate in context.affiliates:
+                for liq in affiliate.symmio_liquidators:
+                    balance_changes = (
+                        BalanceChange.select()
+                        .where(
+                            BalanceChange.collateral
+                            == context.symmio_collateral_address,
+                            BalanceChange.account == liq,
+                            BalanceChange.tenant == context.tenant,
+                        )
+                        .order_by(BalanceChange.timestamp)
+                    )
+                    write_balance_changes(
+                        context, writer, balance_changes, "Liquidator"
+                    )
+                incomes = (
+                    BinanceIncome.select()
+                    .where(
+                        BinanceIncome.tenant == context.tenant,
+                        BinanceIncome.type == BinanceIncome.type == "TRANSFER",
+                    )
+                    .order_by(BinanceIncome.timestamp)
                 )
-                .order_by(BinanceIncome.timestamp)
-            )
-            write_incomes(context, writer, incomes)
+                write_incomes(context, writer, incomes)
+
+
+get_rebalance_report()

@@ -36,8 +36,8 @@ from cronjobs.data_loaders import (
     load_balance_changes,
 )
 from utils.attr_dict import AttrDict
-from utils.binance_utils import update_binance_deposit_v2
-from utils.common_utils import load_config
+from services.binance_service import update_binance_deposit_v2
+from services.config_service import load_config
 
 
 def real_time_funding_rate(symbol: str) -> Decimal:
@@ -286,7 +286,7 @@ def prepare_affiliate_snapshot(
             Account.tenant == context.tenant,
         )
     )
-    pages_count = len(all_accounts) // 100 if len(all_accounts) > 0 else 100
+    pages_count = len(all_accounts) // 100 if len(all_accounts) > 100 else 1
     hedger_addr = w3.to_checksum_address(hedger_context.hedger_address)
     snapshot.hedger_contract_allocated = Decimal(
         sum(
