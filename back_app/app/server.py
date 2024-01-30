@@ -1,4 +1,3 @@
-import asyncio
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -13,13 +12,10 @@ from app.exception_handlers import ExceptionHandlers, ErrorCodeResponse
 from config.local_settings import contexts
 from config.settings import (
     FETCH_DATA_INTERVAL,
-    FETCH_STAT_DATA_INTERVAL,
     SERVER_PORT,
 )
 from context.migrations import create_tables
-from cronjobs import load_stats_messages_sync
 from cronjobs import setup_telegram_client
-from cronjobs.bot.analytics_bot import report_snapshots_to_telegram
 from cronjobs.snapshot_job import fetch_snapshot
 from routers.auth_router import router as auth_router
 from routers.snapshot_router import router as snapshot_router
@@ -35,13 +31,6 @@ async def create_scheduler():
     scheduler = BackgroundScheduler()
     scheduler.add_listener(listener, EVENT_JOB_ERROR)
     for context in contexts:
-        # scheduler.add_job(
-        #     func=load_stats_messages_sync,
-        #     args=[context, telegram_user_client, asyncio.get_running_loop()],
-        #     trigger="interval",
-        #     seconds=FETCH_STAT_DATA_INTERVAL,
-        #     id=context.tenant + "_load_stats_messages",
-        # )
         scheduler.add_job(
             func=fetch_snapshot,
             args=[context],
@@ -49,13 +38,20 @@ async def create_scheduler():
             seconds=FETCH_DATA_INTERVAL,
             id=context.tenant + "_fetch_snapshot",
         )
-        scheduler.add_job(
-            func=report_snapshots_to_telegram,
-            args=[context],
-            trigger="interval",
-            seconds=FETCH_DATA_INTERVAL,
-            id=context.tenant + "_report_snapshot_to_telegram",
-        )
+        # scheduler.add_job(
+        #     func=load_stats_messages_sync,
+        #     args=[context, telegram_user_client, asyncio.get_running_loop()],
+        #     trigger="interval",
+        #     seconds=FETCH_STAT_DATA_INTERVAL,
+        #     id=context.tenant + "_load_stats_messages",
+        # )
+        # scheduler.add_job(
+        #     func=report_snapshots_to_telegram,
+        #     args=[context],
+        #     trigger="interval",
+        #     seconds=FETCH_DATA_INTERVAL,
+        #     id=context.tenant + "_report_snapshot_to_telegram",
+        # )
         # scheduler.add_job(
         # 	func=lambda ctx=context: calculate_paid_funding(ctx),
         # 	trigger="interval",

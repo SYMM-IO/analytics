@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 import requests
@@ -40,21 +40,9 @@ from services.binance_service import update_binance_deposit_v2
 from services.config_service import load_config
 
 
-def real_time_funding_rate(symbol: str) -> Decimal:
-    url = f"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}"
-    response = requests.get(url)
-    funding_rate = Decimal(0)
-    if response.status_code == 200:
-        data = response.json()
-        funding_rate = Decimal(data["lastFundingRate"])
-    else:
-        print("An error occurred:", response.status_code)
-    return funding_rate
-
-
 def fetch_snapshot(context: Context):
     config = load_config(context)  # Configuration may have changed during this method
-    config.nextSnapshotTimestamp = datetime.utcnow() - timedelta(
+    config.nextSnapshotTimestamp = datetime.now(timezone.utc) - timedelta(
         minutes=5
     )  # for subgraph sync time
     config.upsert()
@@ -80,6 +68,18 @@ def fetch_snapshot(context: Context):
         prepare_affiliate_snapshot(config, context, affiliate_context)
     for hedger_context in context.hedgers:
         prepare_hedger_snapshot(config, context, hedger_context)
+
+
+def real_time_funding_rate(symbol: str) -> Decimal:
+    url = f"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}"
+    response = requests.get(url)
+    funding_rate = Decimal(0)
+    if response.status_code == 200:
+        data = response.json()
+        funding_rate = Decimal(data["lastFundingRate"])
+    else:
+        print("An error occurred:", response.status_code)
+    return funding_rate
 
 
 def prepare_affiliate_snapshot(
@@ -329,7 +329,8 @@ def prepare_affiliate_snapshot(
     print(f"{context.tenant}: Diff of open quotes with subgraph")
     for pp in ppp:
         for quote in pp:
-            key = f"{context.tenant}_{quote[0]}-{quote[5]}-{quote[9]}-{quote[8]}"
+            # key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}"
+            key = f"{context.tenant}_{quote[0]}-{quote[5]}-{quote[10]}-{quote[9]}"
             if key not in subgraph_open_quotes:
                 db_quote = Quote.get_or_none(
                     Quote.id == quote[0], Quote.tenant == context.tenant

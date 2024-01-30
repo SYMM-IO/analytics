@@ -298,6 +298,7 @@ def fetch_binance_income_histories(
         print(
             f"{context.tenant}: Fetching binance income histories between {start_time} and {end_time}"
         )
+        time.sleep(5)
         data = fetch_function(
             startTime=int(start_time.timestamp() * 1000),
             endTime=int(end_time.timestamp() * 1000),
