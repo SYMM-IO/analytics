@@ -334,7 +334,7 @@ class HedgerSnapshot(BaseModel):
     def fill_calculated_fields(
         self, context: Context, affiliate_snapshots: List[AffiliateSnapshot] = None
     ):
-        if len(affiliate_snapshots) == 0:
+        if not affiliate_snapshots or len(affiliate_snapshots) == 0:
             affiliate_snapshots = self.get_last_related_affiliate_snapshots(context)
         binance_deposit = self.binance_deposit if self.binance_deposit else 0
         binance_profit = self.binance_total_balance - binance_deposit
@@ -358,6 +358,13 @@ class HedgerSnapshot(BaseModel):
             earned_cva=earned_cva,
             loss_cva=loss_cva,
         )
+
+    def to_dict(self):
+        output = {}
+        for key, value in self.__data__.items():
+            output[key] = value
+        output["calculated"] = self.calculated
+        return output
 
     @staticmethod
     def _earned_cva(affiliate_snapshots: List[AffiliateSnapshot]):

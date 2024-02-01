@@ -36,7 +36,6 @@ async def get_hedger_snapshot(
         .where(HedgerSnapshot.tenant == tenant, HedgerSnapshot.name == hedger)
         .order_by(HedgerSnapshot.timestamp.desc())
         .limit(1)
-        .dicts()
     )
     try:
         snapshot: HedgerSnapshot = query.get()
@@ -45,4 +44,4 @@ async def get_hedger_snapshot(
     except HedgerSnapshot.DoesNotExist:
         snapshot = None
 
-    return snapshot if snapshot else {}
+    return snapshot.to_dict() if snapshot else {}

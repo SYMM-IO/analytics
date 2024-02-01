@@ -14,7 +14,7 @@ export const hedger: Hedger = {
 
 export const environment: EnvironmentInterface = {
     name: "BNB_8_2",
-    serverUrl: "https://api.analytics.symm.io",
+    serverUrl: "https://analytics-api.symmio.io",
     assetsFolder: "thena",
     subgraphUrl: "https://api.thegraph.com/subgraphs/name/symmiograph/symmioanalytics_bnb_8_2",
     collateralDecimal: 18,

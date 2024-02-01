@@ -9,7 +9,7 @@ import {environment as baseEnv} from "./environment.base_8"
 export const environment: EnvironmentInterface = {
     name: "aggregate",
     assetsFolder: "aggregate",
-    serverUrl: "https://api.analytics.symm.io",
+    serverUrl: "https://analytics-api.symmio.io",
     environments: [
         ftmEnv,
         bnbEnv,
