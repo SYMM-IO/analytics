@@ -28,6 +28,18 @@ class Where:
             return f"{self.field}{f'_{self.operator}' if self.operator else ''}: {self.value}"
 
 
+def aggregate_wheres(wheres: List[Where]):
+    filtered_dict = {}
+    for where in wheres:
+        key = f"{where.field}-{where.operator}"
+        if key in filtered_dict:
+            if where.value > filtered_dict[key].value:
+                filtered_dict[key] = where
+        else:
+            filtered_dict[key] = where
+    return list(filtered_dict.values())
+
+
 class GraphQlClient:
     def __init__(self, endpoint: str, proxies: dict = None):
         self.endpoint = endpoint
@@ -45,7 +57,7 @@ class GraphQlClient:
     ):
         if wheres is None:
             wheres = []
-        wheres = [w for w in wheres if not w.is_empty()]
+        wheres = aggregate_wheres([w for w in wheres if not w.is_empty()])
         where_str = ""
         if len(wheres) > 0:
             where_str += f"where: "
@@ -187,10 +199,12 @@ class GraphQlClient:
                         break
                     else:
                         is_done = True
-
             if is_done or len(temp) < limit:
                 break
 
         if save_to_database:
-            for res in result:
-                res.upsert()
+            from app import pg_db
+
+            with pg_db.atomic():
+                for res in result:
+                    res.upsert()

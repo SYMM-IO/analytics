@@ -189,6 +189,11 @@ def load_balance_changes(config: RuntimeConfiguration, context: Context):
         additional_conditions=[
             Where(
                 "timestamp",
+                "gte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
+            ),
+            Where(
+                "timestamp",
                 "lte",
                 str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
@@ -213,6 +218,11 @@ def load_users(config: RuntimeConfiguration, context: Context):
         save_to_database=True,
         context=context,
         additional_conditions=[
+            Where(
+                "timestamp",
+                "gte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
+            ),
             Where(
                 "timestamp",
                 "lte",
