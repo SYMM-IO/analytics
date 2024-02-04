@@ -3,6 +3,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import List
 
+import requests
+
 from app.models import AffiliateSnapshot, StatsBotMessage, HedgerSnapshot
 from config.settings import (
     MAIN_MARKET_SYMBOLS,
@@ -10,7 +12,6 @@ from config.settings import (
     CLOSABLE_FUNDING_RATE_ALERT_THRESHOLD,
     Context,
 )
-from cronjobs.bot.indicators.mismatch_indicator import MismatchIndicator, FieldCheck
 from cronjobs.bot.indicators.state_indicator import StateIndicator, IndicatorMode
 from cronjobs.bot.utils import (
     is_end_of_day,
@@ -19,14 +20,13 @@ from cronjobs.bot.utils import (
     get_yesterday_last_affiliate_snapshot,
     calculate_affiliates_snapshot_diff,
 )
-from cronjobs.snapshot_job import real_time_funding_rate
 from services.snaphshot_service import (
     get_last_affiliate_snapshot_for,
     get_last_hedger_snapshot_for,
 )
+from services.telegram_service import send_message, escape_markdown_v1
 from utils.formatter_utils import format
 from utils.parser_utils import parse_message
-from services.telegram_service import send_message, escape_markdown_v1
 
 quote_status_names = {
     0: "PENDING",
@@ -43,6 +43,18 @@ quote_status_names = {
 
 FUNDING_RATE_THRESHOLD = -(FUNDING_RATE_ALERT_THRESHOLD * 10**18)
 CLOSABLE_FUNDING_RATE_THRESHOLD = -(CLOSABLE_FUNDING_RATE_ALERT_THRESHOLD * 10**18)
+
+
+def real_time_funding_rate(symbol: str) -> Decimal:
+    url = f"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}"
+    response = requests.get(url)
+    funding_rate = Decimal(0)
+    if response.status_code == 200:
+        data = response.json()
+        funding_rate = Decimal(data["lastFundingRate"])
+    else:
+        print("An error occurred:", response.status_code)
+    return funding_rate
 
 
 def get_hedger_indicators(

@@ -16,7 +16,7 @@ from config.settings import (
 )
 from context.migrations import create_tables
 from cronjobs import setup_telegram_client
-from cronjobs.snapshot_job import fetch_snapshot
+from cronjobs.snapshot.snapshot_job import fetch_snapshot
 from routers.auth_router import router as auth_router
 from routers.snapshot_router import router as snapshot_router
 from security.security_utils import get_current_user
