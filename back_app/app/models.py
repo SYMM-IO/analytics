@@ -2,11 +2,14 @@ import json
 from datetime import datetime
 from decimal import Decimal
 from typing import List
+from dataclasses import dataclass
 
 from peewee import *
 from playhouse.postgres_ext import JSONField
 
 from app import pg_db
+from config.settings import Context
+from services.snaphshot_service import get_last_affiliate_snapshot_for
 
 
 class BaseModel(Model):
@@ -181,7 +184,8 @@ class Quote(BaseModel):
     quantity = DecimalField(max_digits=40, decimal_places=0)
     closedAmount = DecimalField(max_digits=40, decimal_places=0)
     cva = DecimalField(max_digits=40, decimal_places=0)
-    mm = DecimalField(max_digits=40, decimal_places=0)
+    partyAmm = DecimalField(max_digits=40, decimal_places=0)
+    partyBmm = DecimalField(max_digits=40, decimal_places=0)
     lf = DecimalField(max_digits=40, decimal_places=0)
     quoteStatus = CharField()
     blockNumber = DecimalField(max_digits=40, decimal_places=0)
@@ -290,6 +294,14 @@ class AffiliateSnapshot(BaseModel):
 
 
 class HedgerSnapshot(BaseModel):
+    @dataclass
+    class HedgerSnapshotCalculated:
+        binance_profit: int
+        contract_profit: int
+        total_state: int
+        earned_cva: int
+        loss_cva: int
+
     hedger_contract_balance = DecimalField(max_digits=40, decimal_places=0)
     hedger_contract_deposit = DecimalField(max_digits=40, decimal_places=0)
     hedger_contract_withdraw = DecimalField(max_digits=40, decimal_places=0)
@@ -304,22 +316,30 @@ class HedgerSnapshot(BaseModel):
     binance_deposit = DecimalField(max_digits=40, decimal_places=0)
     binance_trade_volume = DecimalField(max_digits=40, decimal_places=0)
     paid_funding_rate = DecimalField(max_digits=40, decimal_places=0)
-    next_funding_rate: dict
+    next_funding_rate = DecimalField(max_digits=40, decimal_places=0)
     name = CharField(null=False)
     tenant = CharField(null=False)
     timestamp = DateTimeField(primary_key=True)
-    calculated_total_state: int = 0
+    calculated: HedgerSnapshotCalculated
 
-    @property
-    def binance_profit(self):
+    def get_last_related_affiliate_snapshots(self, context: Context):
+        affiliates_snapshots = []
+        for affiliate in context.affiliates:
+            if affiliate.hedger_name != self.name:
+                return
+            snapshot = get_last_affiliate_snapshot_for(context, affiliate.name)
+            if snapshot:
+                affiliates_snapshots.append(snapshot)
+        return affiliates_snapshots
+
+    def fill_calculated_fields(
+        self, context: Context, affiliate_snapshots: List[AffiliateSnapshot] = None
+    ):
+        if not affiliate_snapshots or len(affiliate_snapshots) == 0:
+            affiliate_snapshots = self.get_last_related_affiliate_snapshots(context)
         binance_deposit = self.binance_deposit if self.binance_deposit else 0
-        return self.binance_total_balance - binance_deposit
-
-    def total_state(self, affiliate_snapshots: List[AffiliateSnapshot]):
-        return self.binance_profit + self.contract_profit(affiliate_snapshots)
-
-    def contract_profit(self, affiliate_snapshots: List[AffiliateSnapshot]):
-        return (
+        binance_profit = self.binance_total_balance - binance_deposit
+        contract_profit = (
             self.hedger_contract_balance
             + sum(
                 [snapshot.hedger_contract_allocated for snapshot in affiliate_snapshots]
@@ -328,13 +348,31 @@ class HedgerSnapshot(BaseModel):
             - self.hedger_contract_deposit
             + self.hedger_contract_withdraw
         )
+        total_state = binance_profit + contract_profit
+        earned_cva = HedgerSnapshot._earned_cva(affiliate_snapshots)
+        loss_cva = HedgerSnapshot._loss_cva(affiliate_snapshots)
+
+        self.calculated = HedgerSnapshot.HedgerSnapshotCalculated(
+            binance_profit=binance_profit,
+            contract_profit=contract_profit,
+            total_state=total_state,
+            earned_cva=earned_cva,
+            loss_cva=loss_cva,
+        )
+
+    def to_dict(self):
+        output = {}
+        for key, value in self.__data__.items():
+            output[key] = value
+        output["calculated"] = self.calculated
+        return output
 
     @staticmethod
-    def earned_cva(affiliate_snapshots: List[AffiliateSnapshot]):
+    def _earned_cva(affiliate_snapshots: List[AffiliateSnapshot]):
         return sum([snapshot.earned_cva for snapshot in affiliate_snapshots])
 
     @staticmethod
-    def loss_cva(affiliate_snapshots: List[AffiliateSnapshot]):
+    def _loss_cva(affiliate_snapshots: List[AffiliateSnapshot]):
         return sum([snapshot.loss_cva for snapshot in affiliate_snapshots])
 
     @staticmethod

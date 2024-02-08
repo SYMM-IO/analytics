@@ -10,7 +10,7 @@ from app.models import (
 )
 from config.settings import Context
 from context.graphql_client import Where
-from utils.common_utils import convert_timestamps
+from services.config_service import convert_timestamps
 
 
 def tag_tenant_to_id(data, context: Context):
@@ -52,8 +52,8 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
             "partyBsWhiteList",
             "orderType",
             "openPrice",
-            "mm",
-            "maxInterestRate",
+            "partyAmm",
+            "partyBmm",
             "marketPrice",
             "lf",
             "id",
@@ -189,6 +189,11 @@ def load_balance_changes(config: RuntimeConfiguration, context: Context):
         additional_conditions=[
             Where(
                 "timestamp",
+                "gte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
+            ),
+            Where(
+                "timestamp",
                 "lte",
                 str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
@@ -213,6 +218,11 @@ def load_users(config: RuntimeConfiguration, context: Context):
         save_to_database=True,
         context=context,
         additional_conditions=[
+            Where(
+                "timestamp",
+                "gte",
+                str(int(config.lastSnapshotTimestamp.timestamp())),
+            ),
             Where(
                 "timestamp",
                 "lte",

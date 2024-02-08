@@ -1,12 +1,98 @@
+import time
 from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
 
+import requests
 from tqdm import tqdm
 
 from app.models import FundingRate, BinanceTrade, SymbolPrice, PaidFundingRate
-from config.settings import Context
-from utils.binance_utils import fetch_symbol_price_history, fetch_funding_rate_history
+from config.settings import Context, PROXIES
+
+
+def fetch_funding_rate_history(context: Context, symbol: str):
+    latest_record = (
+        FundingRate.select()
+        .where(FundingRate.symbol == symbol)
+        .order_by(FundingRate.timestamp.desc())
+        .first()
+    )
+    if latest_record:
+        last_timestamp = round(latest_record.timestamp.timestamp() * 1000)
+    else:
+        last_timestamp = context.from_unix_timestamp - 1000
+    page = 1
+    history = []
+    limit = 10000
+    while True:
+        # data = binance_client.history(symbol=symbol, page=page, rows=limit)
+        json_data = {
+            "symbol": symbol,
+            "page": page,
+            "rows": limit,
+        }
+        url = "https://www.binance.com/bapi/futures/v1/public/future/common/get-funding-rate-history"
+        response = requests.post(url, json=json_data, proxies=PROXIES)
+        if not response:
+            continue
+        data = response.json()["data"]
+        assert type(data) == list
+        if not data:
+            break
+        page += 1
+        if data[-1]["calcTime"] <= last_timestamp:
+            history.extend(filter(lambda x: x["calcTime"] > last_timestamp, data))
+            break
+        history.extend(data)
+        if len(data) < limit:
+            break
+
+    for item in sorted(history, key=lambda x: x["calcTime"]):
+        FundingRate.create(
+            tenant=context.tenant,
+            symbol=item["symbol"],
+            rate=Decimal(item["lastFundingRate"]),
+            timestamp=datetime.fromtimestamp(item["calcTime"] / 1000),
+        )
+    return history
+
+
+def fetch_symbol_price_history(context: Context, symbol: str):
+    latest_record = (
+        SymbolPrice.select()
+        .where(SymbolPrice.symbol == symbol)
+        .order_by(SymbolPrice.timestamp.desc())
+        .first()
+    )
+    if latest_record:
+        start_time = round(latest_record.timestamp.timestamp() * 1000) + 1000
+    else:
+        start_time = context.from_unix_timestamp
+    # url = 'https://fapi.binance.com/fapi/v1/klines'
+    timestamp = round(time.time() * 1000)
+    while start_time < timestamp:
+        data = context.utils.binance_client.futures_klines(
+            symbol=symbol, interval="1h", limit=1500, startTime=start_time
+        )
+        # params = {
+        #     'symbol': symbol,
+        #     'interval': '1h',
+        #     'limit': 1500,
+        #     'startTime': start_time,
+        # }
+        # response = requests.get(url, params=params, proxies=proxies)
+        if not data:
+            break
+        for item in data:
+            close_price = Decimal(item[4])
+            close_time = item[6]
+            SymbolPrice.create(
+                tenant=context.tenant,
+                symbol=symbol,
+                price=close_price,
+                timestamp=datetime.fromtimestamp(close_time / 1000),
+            )
+        start_time = close_time + 60_000
 
 
 def fetch_new_data(context: Context):

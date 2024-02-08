@@ -3,6 +3,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import List
 
+import requests
+
 from app.models import AffiliateSnapshot, StatsBotMessage, HedgerSnapshot
 from config.settings import (
     MAIN_MARKET_SYMBOLS,
@@ -10,7 +12,6 @@ from config.settings import (
     CLOSABLE_FUNDING_RATE_ALERT_THRESHOLD,
     Context,
 )
-from cronjobs.bot.indicators.mismatch_indicator import MismatchIndicator, FieldCheck
 from cronjobs.bot.indicators.state_indicator import StateIndicator, IndicatorMode
 from cronjobs.bot.utils import (
     is_end_of_day,
@@ -19,10 +20,13 @@ from cronjobs.bot.utils import (
     get_yesterday_last_affiliate_snapshot,
     calculate_affiliates_snapshot_diff,
 )
-from cronjobs.snapshot_job import real_time_funding_rate
+from services.snaphshot_service import (
+    get_last_affiliate_snapshot_for,
+    get_last_hedger_snapshot_for,
+)
+from services.telegram_service import send_message, escape_markdown_v1
 from utils.formatter_utils import format
 from utils.parser_utils import parse_message
-from utils.telegram_utils import send_message, escape_markdown_v1
 
 quote_status_names = {
     0: "PENDING",
@@ -73,46 +77,18 @@ def get_hedger_indicators(
         else IndicatorMode.GREEN,
     )
 
-    mismatch_indicator = MismatchIndicator("MisMatch")
-    mismatch_indicator.update_state(
-        hedger_snapshot,
-        parsed_stat_message,
-        [FieldCheck("calculated_total_state", "total state", 5)],
-    )
+    # mismatch_indicator = MismatchIndicator("MisMatch")
+    # mismatch_indicator.update_state(
+    #     hedger_snapshot,
+    #     parsed_stat_message,
+    #     [FieldCheck("calculated_total_state", "total state", 5)],
+    # )
 
     return [
         non_closable_funding_indicator,
         closable_funding_indicator,
-        mismatch_indicator,
+        # mismatch_indicator,
     ]
-
-
-def get_last_affiliate_snapshot_for(context: Context, affiliate: str):
-    snapshots = (
-        AffiliateSnapshot.select()
-        .where(
-            AffiliateSnapshot.tenant == context.tenant,
-            AffiliateSnapshot.name == affiliate,
-        )
-        .order_by(AffiliateSnapshot.timestamp.desc())
-        .limit(1)
-        .execute()
-    )
-    return snapshots[0] if len(snapshots) > 0 else None
-
-
-def get_last_hedger_snapshot_for(context: Context, hedger: str):
-    snapshots = (
-        HedgerSnapshot.select()
-        .where(
-            HedgerSnapshot.tenant == context.tenant,
-            HedgerSnapshot.name == hedger,
-        )
-        .order_by(HedgerSnapshot.timestamp.desc())
-        .limit(1)
-        .execute()
-    )
-    return snapshots[0] if len(snapshots) > 0 else None
 
 
 def report_snapshots_to_telegram(context: Context):
@@ -150,9 +126,11 @@ def report_snapshots_to_telegram(context: Context):
     hedger_messages = []
     affiliates_messages = []
     for hedger_snapshot in hedger_snapshots:
+        hedger_snapshot: HedgerSnapshot
         related_affiliate_snapshots = [
             af for af in affiliates_snapshots if af.hedger_name == hedger_snapshot.name
         ]
+        hedger_snapshot.fill_calculated_fields(context, related_affiliate_snapshots)
         msg, indis = prepare_hedger_snapshot_message(
             context, hedger_snapshot, related_affiliate_snapshots, parsed_message
         )
@@ -193,7 +171,6 @@ def prepare_hedger_snapshot_message(
 ) -> (str, List[StateIndicator]):
     last_day_snapshot = get_yesterday_last_hedger_snapshot(hedger_snapshot)
     snapshot_diff = calculate_hedger_snapshot_diff(last_day_snapshot, hedger_snapshot)
-
     last_day_affiliates = [
         get_yesterday_last_affiliate_snapshot(af) for af in affiliate_snapshots
     ]
@@ -201,23 +178,7 @@ def prepare_hedger_snapshot_message(
         calculate_affiliates_snapshot_diff(af_old, af_new)
         for af_new, af_old in zip(affiliate_snapshots, last_day_affiliates)
     ]
-
-    positions = context.hedger_with_name(
-        hedger_snapshot.name
-    ).utils.binance_client.futures_position_information()
-    open_positions = [p for p in positions if Decimal(p["notional"]) != 0]
-    next_funding_rate = defaultdict(lambda: Decimal(0))
-    for pos in open_positions:
-        notional, symbol, side = (
-            Decimal(pos["notional"]),
-            pos["symbol"],
-            pos["positionSide"],
-        )
-        funding_rate = pos["fundingRate"] = real_time_funding_rate(symbol=symbol)
-        funding_rate_fee = -1 * notional * funding_rate
-        next_funding_rate[symbol] += funding_rate_fee * 10**18
-
-    hedger_snapshot.next_funding_rate = next_funding_rate
+    snapshot_diff.fill_calculated_fields(context, affiliate_snapshots_diff)
 
     non_closable_funding = 0
     closable_funding = 0
@@ -227,16 +188,12 @@ def prepare_hedger_snapshot_message(
         else:
             closable_funding += value
 
-    hedger_snapshot.calculated_total_state = hedger_snapshot.total_state(
-        affiliate_snapshots
-    )
-
     msg = f"""
 \n--- ⚖️ {hedger_snapshot.name} ⚖️ ---\n
-Total State: {format(hedger_snapshot.calculated_total_state)} | {format(snapshot_diff.total_state(affiliate_snapshots_diff))}
-Total State - CVA: {format(hedger_snapshot.total_state(affiliate_snapshots) - HedgerSnapshot.earned_cva(affiliate_snapshots))} | {format(snapshot_diff.total_state(affiliate_snapshots_diff) - HedgerSnapshot.earned_cva(affiliate_snapshots_diff))}
-Binance Profit: {format(hedger_snapshot.binance_profit)} | {format(snapshot_diff.binance_profit)}
-Contract Profit: {format(hedger_snapshot.contract_profit(affiliate_snapshots))} | {format(snapshot_diff.contract_profit(affiliate_snapshots_diff))}
+Total State: {format(hedger_snapshot.calculated.total_state)} | {format(snapshot_diff.calculated.total_state)}
+Total State - CVA: {format(hedger_snapshot.calculated.total_state - hedger_snapshot.calculated.earned_cva)} | {format(snapshot_diff.calculated.total_state - snapshot_diff.calculated.earned_cva)}
+Binance Profit: {format(hedger_snapshot.calculated.binance_profit)} | {format(snapshot_diff.calculated.binance_profit)}
+Contract Profit: {format(hedger_snapshot.calculated.contract_profit)} | {format(snapshot_diff.calculated.contract_profit)}
 
 Binance Deposit: {format(hedger_snapshot.binance_deposit)} | {format(snapshot_diff.binance_deposit)}
 Binance Balance: {format(hedger_snapshot.binance_total_balance)} | {format(snapshot_diff.binance_total_balance)}
