@@ -1,0 +1,77 @@
+<tui-island size="l" textAlign="left" class="flex flex-column gap-2 hedger_snapshot_island">
+    <h3 class="title"> {{ hedger.name }} </h3>
+    <tui-accordion class="container" [closeOthers]="false">
+        <tui-accordion-item [open]="true">
+            State
+            <ng-template tuiAccordionItemContent>
+                <div>Total State : {{ hedgerSnapshot?.calculated?.total_state | bigNumberFormat }}</div>
+                <div>Binance Profit: {{ hedgerSnapshot?.calculated?.binance_profit | bigNumberFormat }}</div>
+                <div>Contract Profit: {{ hedgerSnapshot?.calculated?.contract_profit | bigNumberFormat }}</div>
+                <div>Max Open
+                    Interest: {{ hedgerSnapshot?.max_open_interest | bigNumberFormat }}
+                </div>
+            </ng-template>
+        </tui-accordion-item>
+        <tui-accordion-item>
+            Contract Balances
+            <ng-template tuiAccordionItemContent>
+                <div>
+                    Balance: {{ hedgerSnapshot?.hedger_contract_balance | bigNumberFormat }}
+                </div>
+                <div>
+                    Deposit: {{ hedgerSnapshot?.hedger_contract_deposit | bigNumberFormat }}
+                </div>
+                <div>
+                    Withdraw: {{ hedgerSnapshot?.hedger_contract_withdraw | bigNumberFormat }}
+                </div>
+            </ng-template>
+        </tui-accordion-item>
+        <tui-accordion-item>
+            Binance State
+            <ng-template tuiAccordionItemContent>
+                <div>Maintenance
+                    Margin: {{ hedgerSnapshot?.binance_maintenance_margin | bigNumberFormat }}
+                </div>
+                <div>Total
+                    Balance: {{ hedgerSnapshot?.binance_total_balance | bigNumberFormat }}
+                </div>
+                <div>Account Health
+                    Ratio: {{ hedgerSnapshot?.binance_account_health_ratio | bigNumberFormat }}
+                </div>
+                <div>Cross
+                    UPnL: {{ hedgerSnapshot?.binance_cross_upnl | bigNumberFormat }}
+                </div>
+                <div>Average
+                    Balance: {{ hedgerSnapshot?.binance_av_balance | bigNumberFormat }}
+                </div>
+                <div>Total Initial
+                    Margin: {{ hedgerSnapshot?.binance_total_initial_margin | bigNumberFormat }}
+                </div>
+                <div>Max Withdraw
+                    Amount: {{ hedgerSnapshot?.binance_max_withdraw_amount | bigNumberFormat }}
+                </div>
+                <div>Deposit: {{ hedgerSnapshot?.binance_deposit | bigNumberFormat }}
+                </div>
+                <div>Trade
+                    Volume: {{ hedgerSnapshot?.binance_trade_volume | bigNumberFormat }}
+                </div>
+            </ng-template>
+        </tui-accordion-item>
+        <tui-accordion-item>
+            Funding Rate
+            <ng-template tuiAccordionItemContent>
+                <div>Next Funding Rate: {{ hedgerSnapshot?.next_funding_rate | bigNumberFormat}}</div>
+                <div>Paid Funding
+                    Rate: {{ hedgerSnapshot?.paid_funding_rate | bigNumberFormat:0 }}
+                </div>
+            </ng-template>
+        </tui-accordion-item>
+        <tui-accordion-item>
+            CVA
+            <ng-template tuiAccordionItemContent>
+                <div>Earned: {{ hedgerSnapshot?.calculated?.earned_cva | bigNumberFormat }}</div>
+                <div>Loss: {{ hedgerSnapshot?.calculated?.loss_cva | bigNumberFormat }}</div>
+            </ng-template>
+        </tui-accordion-item>
+    </tui-accordion>
+</tui-island>

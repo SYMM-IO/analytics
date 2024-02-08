@@ -18,7 +18,6 @@ import {AffiliateSnapshot, HedgerSnapshot} from "../models"
     styleUrl: './panel-home.component.scss',
 })
 export class PanelHomeComponent {
-    quoteForm = new FormControl<number | null>(null, Validators.required)
     environmentForm = new FormControl<EnvironmentInterface | null>(null)
     environments: EnvironmentInterface[]
 
@@ -51,19 +50,5 @@ export class PanelHomeComponent {
 
     selectedEnvironment(): EnvironmentInterface | null {
         return this.environmentForm.value
-    }
-
-    onLoadQuote() {
-        this.quoteService.loadQuote(this.selectedEnvironment()!.subgraphUrl!, this.quoteForm.value!)
-            .pipe(
-                switchMap(data => this.dialogs.open<number>(
-                    new PolymorpheusComponent(JsonViewerComponent, this.injector),
-                    {
-                        data: data['quote'][0],
-                        dismissible: true,
-                        label: 'Quote Data',
-                    },
-                )),
-            ).subscribe()
     }
 }

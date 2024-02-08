@@ -1,15 +1,15 @@
 import {NgDompurifySanitizer} from "@tinkoff/ng-dompurify"
 import {
-    TUI_SANITIZER,
-    TuiAlertModule,
-    TuiButtonModule,
-    TuiDialogModule,
-    TuiGroupModule,
-    TuiHintModule,
-    TuiModeModule,
-    TuiRootModule,
-    TuiTextfieldControllerModule,
-    TuiThemeNightModule,
+	TUI_SANITIZER,
+	TuiAlertModule,
+	TuiButtonModule,
+	TuiDialogModule, TuiDropdownModule,
+	TuiGroupModule,
+	TuiHintModule,
+	TuiModeModule,
+	TuiRootModule,
+	TuiTextfieldControllerModule,
+	TuiThemeNightModule,
 } from "@taiga-ui/core"
 import {NgModule} from "@angular/core"
 import {BrowserModule} from "@angular/platform-browser"
@@ -27,12 +27,15 @@ import {ChartComponent} from './chart/chart.component'
 import {HomeComponent} from './home/home.component'
 import {TuiLetModule} from "@taiga-ui/cdk"
 import {ResizeObserverDirective} from './resize-observer.directive'
-import {TuiInputNumberModule, TuiIslandModule, TuiRadioBlockModule} from "@taiga-ui/kit"
+import {TuiAccordionModule, TuiInputNumberModule, TuiIslandModule, TuiRadioBlockModule} from "@taiga-ui/kit"
 import {PanelHomeComponent} from "./panel-home/panel-home.component"
 import {ReactiveFormsModule} from "@angular/forms"
 import {NgxJsonViewerModule} from "ngx-json-viewer"
 import {httpInterceptor} from "./http.Interceptor"
 import {BigNumberFormatPipe} from "./big-number-format.pipe"
+import {QuoteLoaderComponent} from "./panel-home/quote-loader/quote-loader.component"
+import {HedgerStateViewerComponent} from "./panel-home/hedger-state-viewer/hedger-state-viewer.component"
+import {AffiliateStateViewerComponent} from "./panel-home/affiliate-state-viewer/affiliate-state-viewer.component"
 
 @NgModule({
     declarations: [
@@ -42,31 +45,36 @@ import {BigNumberFormatPipe} from "./big-number-format.pipe"
         HomeComponent,
         ResizeObserverDirective,
         PanelHomeComponent,
-        BigNumberFormatPipe
+        BigNumberFormatPipe,
+		QuoteLoaderComponent,
+		HedgerStateViewerComponent,
+		AffiliateStateViewerComponent,
     ],
-    imports: [
-        BrowserModule,
-        BrowserAnimationsModule,
-        AppRoutingModule,
-        NgxEchartsModule.forRoot({
-            echarts: () => import("echarts"),
-        }),
-        TuiRootModule,
-        TuiDialogModule,
-        TuiAlertModule,
-        TuiThemeNightModule,
-        TuiModeModule,
-        TuiLetModule,
-        TuiIslandModule,
-        TuiInputNumberModule,
-        ReactiveFormsModule,
-        TuiTextfieldControllerModule,
-        TuiButtonModule,
-        TuiGroupModule,
-        TuiRadioBlockModule,
-        NgxJsonViewerModule,
-        TuiHintModule,
-    ],
+	imports: [
+		BrowserModule,
+		BrowserAnimationsModule,
+		AppRoutingModule,
+		NgxEchartsModule.forRoot({
+			echarts: () => import("echarts"),
+		}),
+		TuiRootModule,
+		TuiDialogModule,
+		TuiAlertModule,
+		TuiThemeNightModule,
+		TuiModeModule,
+		TuiLetModule,
+		TuiIslandModule,
+		TuiInputNumberModule,
+		ReactiveFormsModule,
+		TuiTextfieldControllerModule,
+		TuiButtonModule,
+		TuiGroupModule,
+		TuiRadioBlockModule,
+		NgxJsonViewerModule,
+		TuiHintModule,
+		TuiAccordionModule,
+		TuiDropdownModule,
+	],
     providers: [
         provideHttpClient(
             withInterceptors([httpInterceptor]),
