@@ -316,6 +316,7 @@ class HedgerSnapshot(BaseModel):
     binance_deposit = DecimalField(max_digits=40, decimal_places=0)
     binance_trade_volume = DecimalField(max_digits=40, decimal_places=0)
     paid_funding_rate = DecimalField(max_digits=40, decimal_places=0)
+    next_funding_rate = DecimalField(max_digits=40, decimal_places=0)
     name = CharField(null=False)
     tenant = CharField(null=False)
     timestamp = DateTimeField(primary_key=True)

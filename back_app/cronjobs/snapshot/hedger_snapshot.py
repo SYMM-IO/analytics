@@ -1,6 +1,8 @@
+from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
 
+import requests
 import web3
 from multicallable import Multicallable
 from peewee import fn
@@ -19,6 +21,18 @@ from config.settings import (
 )
 from cronjobs.binance_trade_volume import calculate_binance_trade_volume
 from utils.attr_dict import AttrDict
+
+
+def real_time_funding_rate(symbol: str) -> Decimal:
+    url = f"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}"
+    response = requests.get(url)
+    funding_rate = Decimal(0)
+    if response.status_code == 200:
+        data = response.json()
+        funding_rate = Decimal(data["lastFundingRate"])
+    else:
+        print("An error occurred:", response.status_code)
+    return funding_rate
 
 
 def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerContext):
@@ -98,6 +112,22 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
     ).scalar() or Decimal(0)
     snapshot.hedger_contract_withdraw = hedger_withdraw * 10 ** (18 - config.decimals)
 
+    positions = context.hedger_with_name(
+        hedger_context.name
+    ).utils.binance_client.futures_position_information()
+    open_positions = [p for p in positions if Decimal(p["notional"]) != 0]
+    next_funding_rate = 0
+    for pos in open_positions:
+        notional, symbol, side = (
+            Decimal(pos["notional"]),
+            pos["symbol"],
+            pos["positionSide"],
+        )
+        funding_rate = pos["fundingRate"] = real_time_funding_rate(symbol=symbol)
+        funding_rate_fee = -1 * notional * funding_rate
+        next_funding_rate += funding_rate_fee * 10**18
+
+    snapshot.next_funding_rate = next_funding_rate
     snapshot.timestamp = datetime.utcnow()
     snapshot.name = hedger_context.name
     snapshot.tenant = context.tenant

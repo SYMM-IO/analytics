@@ -147,7 +147,7 @@ def prepare_affiliate_snapshot(
                 )
                 if db_quote:
                     print(
-                        f"{context.tenant} => Contract: {key}  Local DB: {db_quote.id}-{db_quote.openPrice}-{db_quote.closedAmount}-{db_quote.quantity}"
+                        f"{context.tenant} => Contract: {key} Local DB: {db_quote.id}-{db_quote.openPrice}-{db_quote.closedAmount}-{db_quote.quantity}"
                     )
                 else:
                     print(
