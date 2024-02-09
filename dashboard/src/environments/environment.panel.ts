@@ -5,7 +5,7 @@ import {environment as base82Env} from "./environment.base_8_2"
 export const environment: EnvironmentInterface = {
     name: "panel",
     assetsFolder: "panel",
-    serverUrl: "http://analytics-api.symm.io",
+    serverUrl: "https://analytics-api.symm.io",
     panel: true,
     environments: [
         // ftmEnv,
