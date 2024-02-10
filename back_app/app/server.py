@@ -1,96 +1,30 @@
 from contextlib import asynccontextmanager
 
 import uvicorn
-from apscheduler.events import EVENT_JOB_ERROR
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pyrogram import Client
 
 from app.exception_handlers import ExceptionHandlers, ErrorCodeResponse
-from config.local_settings import contexts
 from config.settings import (
-    FETCH_DATA_INTERVAL,
     SERVER_PORT,
 )
 from context.migrations import create_tables
-from cronjobs import setup_telegram_client
-from cronjobs.snapshot.snapshot_job import fetch_snapshot
 from routers.auth_router import router as auth_router
 from routers.snapshot_router import router as snapshot_router
 from security.security_utils import get_current_user
-from services.telegram_service import send_alert, escape_markdown_v1
-
-scheduler: AsyncIOScheduler
-telegram_user_client: Client
 
 
-async def create_scheduler():
-    global scheduler
-    scheduler = BackgroundScheduler()
-    scheduler.add_listener(listener, EVENT_JOB_ERROR)
-    for context in contexts:
-        scheduler.add_job(
-            func=fetch_snapshot,
-            args=[context],
-            trigger="interval",
-            seconds=FETCH_DATA_INTERVAL,
-            id=context.tenant + "_fetch_snapshot",
-        )
-        # scheduler.add_job(
-        #     func=load_stats_messages_sync,
-        #     args=[context, telegram_user_client, asyncio.get_running_loop()],
-        #     trigger="interval",
-        #     seconds=FETCH_STAT_DATA_INTERVAL,
-        #     id=context.tenant + "_load_stats_messages",
-        # )
-        # scheduler.add_job(
-        #     func=report_snapshots_to_telegram,
-        #     args=[context],
-        #     trigger="interval",
-        #     seconds=FETCH_DATA_INTERVAL,
-        #     id=context.tenant + "_report_snapshot_to_telegram",
-        # )
-        # scheduler.add_job(
-        # 	func=lambda ctx=context: calculate_paid_funding(ctx),
-        # 	trigger="interval",
-        # 	seconds=funding_fetch_data_interval
-        #   id=context.tenant + "_calculate_paid_funding"
-        # )
-        # scheduler.add_job(
-        # 	func=lambda ctx=context: update_binance_deposit(ctx),
-        # 	trigger="interval",
-        # 	seconds=update_binance_deposit_interval
-        #   id=context.tenant + "_update_binance_deposit"
-        # )
-    scheduler.start()
-
-
-async def listener(event):
-    global scheduler
-    send_alert(
-        escape_markdown_v1(
-            f"BackgroundJob {event.job_id} raised {event.exception.__class__.__name__}\n {event.exception}"
-        )
-    )
-    scheduler.shutdown(wait=False)
-    await create_scheduler()
+# telegram_user_client: Client
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global scheduler
     create_tables()
-
-    global telegram_user_client
-    telegram_user_client = await setup_telegram_client()
-    await telegram_user_client.start()
-
-    await create_scheduler()
+    # global telegram_user_client
+    # telegram_user_client = await setup_telegram_client()
+    # await telegram_user_client.start()
     yield
-    scheduler.shutdown(wait=False)
-    await telegram_user_client.stop()
+    # await telegram_user_client.stop()
 
 
 app = FastAPI(
