@@ -3,7 +3,7 @@ import {HttpClient} from "@angular/common/http"
 import {EnvironmentInterface} from "../../environments/environment-interface"
 import {map} from "rxjs/operators"
 import {AffiliateSnapshot, HedgerSnapshot} from "../models"
-import {catchError, Observable} from "rxjs"
+import {Observable} from "rxjs"
 
 @Injectable({
 	providedIn: 'root',
@@ -21,8 +21,8 @@ export class SnapshotService {
 			)
 	}
 
-	loadAffiliateSnapshot(env: EnvironmentInterface, affiliate: string): Observable<AffiliateSnapshot> {
-		return this.httpClient.get(`${env.serverUrl}/snapshots/affiliate/${env.name}/${affiliate}`)
+	loadAffiliateSnapshot(env: EnvironmentInterface, hedger: string, affiliate: string): Observable<AffiliateSnapshot> {
+		return this.httpClient.get(`${env.serverUrl}/snapshots/affiliate/${env.name}/${hedger}/${affiliate}`)
 			.pipe(map(value => AffiliateSnapshot.fromRawObject(value)))
 	}
 }

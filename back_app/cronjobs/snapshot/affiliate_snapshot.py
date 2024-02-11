@@ -37,7 +37,7 @@ def prepare_affiliate_snapshot(
     snapshot = AttrDict()
 
     snapshot.status_quotes = count_quotes_per_status(
-        affiliate_context, context, from_time
+        affiliate_context, hedger_context, context, from_time
     )
 
     snapshot.pnl_of_closed = calculate_pnl_of_hedger(
@@ -52,13 +52,13 @@ def prepare_affiliate_snapshot(
     )
 
     snapshot.closed_notional_value = calculate_notional_value(
-        context, affiliate_context, 7, from_time
+        context, affiliate_context, hedger_context, 7, from_time
     )
     snapshot.liquidated_notional_value = calculate_notional_value(
-        context, affiliate_context, 8, from_time
+        context, affiliate_context, hedger_context, 8, from_time
     )
     snapshot.opened_notional_value = calculate_notional_value(
-        context, affiliate_context, 4, from_time
+        context, affiliate_context, hedger_context, 4, from_time
     )
     # ------------------------------------------
 
@@ -257,13 +257,21 @@ def prepare_affiliate_snapshot(
     return affiliate_snapshot
 
 
-def calculate_notional_value(context, affiliate_context, quote_status, from_time):
+def calculate_notional_value(
+    context,
+    affiliate_context: AffiliateContext,
+    hedger_context: HedgerContext,
+    quote_status,
+    from_time,
+):
     closed_trade_histories = (
         TradeHistory.select()
         .join(Account)
+        .join(Quote)
         .where(
             Account.accountSource == affiliate_context.symmio_multi_account,
             TradeHistory.quoteStatus == quote_status,
+            Quote.partyB == hedger_context.hedger_address,
             TradeHistory.timestamp > from_time,
             TradeHistory.tenant == context.tenant,
         )
@@ -354,7 +362,9 @@ def calculate_pnl_of_hedger(
     return pnl
 
 
-def count_quotes_per_status(affiliate_context, context, from_time):
+def count_quotes_per_status(
+    affiliate_context, hedger_context: HedgerContext, context, from_time
+):
     q_counts = (
         Quote.select(Quote.quoteStatus, fn.Count(Quote.id).alias("count"))
         .join(Account)
@@ -362,6 +372,7 @@ def count_quotes_per_status(affiliate_context, context, from_time):
             Quote.timestamp > from_time,
             Account.accountSource == affiliate_context.symmio_multi_account,
             Quote.tenant == context.tenant,
+            Quote.partyB == hedger_context.hedger_address,
         )
         .group_by(Quote.quoteStatus)
     )

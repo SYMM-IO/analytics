@@ -32,4 +32,5 @@ export class HedgerStateViewerComponent {
 			})
 	}
 
+	protected readonly isNaN = isNaN
 }
