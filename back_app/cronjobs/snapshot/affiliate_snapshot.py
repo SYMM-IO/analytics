@@ -62,8 +62,8 @@ def prepare_affiliate_snapshot(
     )
     # ------------------------------------------
 
-    party_b_liquidated_party_a_quotes = (
-        Quote.select()
+    snapshot.earned_cva = (
+        Quote.select(fn.Sum(Quote.cva))
         .join(Account)
         .where(
             Account.accountSource == affiliate_context.symmio_multi_account,
@@ -73,11 +73,11 @@ def prepare_affiliate_snapshot(
             Quote.timestamp > from_time,
             Quote.tenant == context.tenant,
         )
-    )
-    snapshot.earned_cva = sum(int(q.cva) for q in party_b_liquidated_party_a_quotes)
+        .scalar()
+    ) or Decimal(0)
 
-    party_b_liquidated_party_b_quotes = (
-        Quote.select()
+    snapshot.loss_cva = (
+        Quote.select(fn.Sum(Quote.cva))
         .join(Account)
         .where(
             Account.accountSource == affiliate_context.symmio_multi_account,
@@ -87,8 +87,8 @@ def prepare_affiliate_snapshot(
             Quote.timestamp > from_time,
             Quote.tenant == context.tenant,
         )
-    )
-    snapshot.loss_cva = sum(int(q.cva) for q in party_b_liquidated_party_b_quotes)
+        .scalar()
+    ) or Decimal(0)
 
     # ------------------------------------------
     w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
@@ -264,8 +264,8 @@ def calculate_notional_value(
     quote_status,
     from_time,
 ):
-    closed_trade_histories = (
-        TradeHistory.select()
+    return (
+        TradeHistory.select(fn.Sum(TradeHistory.volume))
         .join(Account)
         .join(Quote)
         .where(
@@ -275,8 +275,9 @@ def calculate_notional_value(
             TradeHistory.timestamp > from_time,
             TradeHistory.tenant == context.tenant,
         )
+        .scalar()
+        or 0
     )
-    return sum(int(th.volume) for th in closed_trade_histories)
 
 
 def calculate_hedger_upnl(context, affiliate_context, hedger_context, from_time):
