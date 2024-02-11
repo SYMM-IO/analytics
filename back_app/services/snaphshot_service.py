@@ -1,7 +1,7 @@
 from config.settings import Context
 
 
-def get_last_affiliate_snapshot_for(context: Context, affiliate: str):
+def get_last_affiliate_snapshot_for(context: Context, affiliate: str, hedger: str):
     from app.models import AffiliateSnapshot
 
     snapshots = (
@@ -9,6 +9,7 @@ def get_last_affiliate_snapshot_for(context: Context, affiliate: str):
         .where(
             AffiliateSnapshot.tenant == context.tenant,
             AffiliateSnapshot.name == affiliate,
+            AffiliateSnapshot.hedger_name == hedger,
         )
         .order_by(AffiliateSnapshot.timestamp.desc())
         .limit(1)

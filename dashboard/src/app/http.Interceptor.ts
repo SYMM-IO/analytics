@@ -2,7 +2,7 @@ import {HttpInterceptorFn} from '@angular/common/http'
 import {LoadingService} from "./services/Loading.service"
 import {inject} from "@angular/core"
 import {finalize} from "rxjs"
-import {AuthService} from "./auth.service"
+import {AuthService} from "./services/auth.service"
 import {EnvironmentService} from "./services/enviroment.service"
 
 export const httpInterceptor: HttpInterceptorFn = (req, next) => {

@@ -8,7 +8,8 @@ from context.context import ContextUtils, HedgerContextUtils
 @dataclass
 class HedgerContext:
     name: str  # Should be unique
-    deposit_diff: int
+    binance_deposit_diff: int
+    contract_deposit_diff: int
 
     hedger_address: str
     hedger_max_open_interest_ratio: int
@@ -27,7 +28,6 @@ class AffiliateContext:
     name: str  # Should be unique
     symmio_multi_account: str
     symmio_liquidators: List[str]
-    hedger_name: str  # The name of hedger in hedgerContext
 
 
 @dataclass
@@ -51,14 +51,6 @@ class Context:
 
     utils: ContextUtils | None
 
-    def hedger_for_affiliate(self, affiliate_name: str):
-        for affiliate in self.affiliates:
-            if affiliate.name == affiliate_name:
-                for hedger in self.hedgers:
-                    if hedger.name == affiliate.hedger_name:
-                        return hedger
-        raise RuntimeError("Invalid Configuration")
-
     def hedger_with_name(self, hedger_name: str):
         for hedger in self.hedgers:
             if hedger.name == hedger_name:
@@ -70,8 +62,8 @@ PROXIES = {}
 SERVER_PORT = 7231
 
 # Intervals
-FETCH_STAT_DATA_INTERVAL = 2 * 60
-FETCH_DATA_INTERVAL = 2 * 61
+FETCH_STAT_DATA_INTERVAL = 2 * 59
+FETCH_DATA_INTERVAL = 2 * 60
 FUNDING_FETCH_DATA_INTERVAL = 30 * 60
 
 # Alerting system

@@ -10,21 +10,20 @@ from config.settings import Context, HedgerContext
 from services.config_service import load_config
 
 
-def fetch_binance_income_histories(
+def fetch_binance_income_histories_of_type(
     context: Context,
     hedger_context: HedgerContext,
-    model,
-    fetch_function,
-    timestamp_field,
     income_type,
     limit_days=7,
     asset_field="asset",
 ):
     # Get the latest timestamp from the database for the respective model
     latest_record = (
-        model.select()
-        .where(model.tenant == context.tenant, model.type == income_type)
-        .order_by(model.timestamp.desc())
+        BinanceIncome.select()
+        .where(
+            BinanceIncome.tenant == context.tenant, BinanceIncome.type == income_type
+        )
+        .order_by(BinanceIncome.timestamp.desc())
         .first()
     )
 
@@ -39,10 +38,10 @@ def fetch_binance_income_histories(
 
     while start_time < current_time:
         print(
-            f"{context.tenant}: Fetching binance income histories between {start_time} and {end_time}"
+            f"{context.tenant}: Fetching binance {income_type} income histories between {start_time} and {end_time}"
         )
         time.sleep(5)
-        data = fetch_function(
+        data = hedger_context.utils.binance_client.futures_income_history(
             startTime=int(start_time.timestamp() * 1000),
             endTime=int(end_time.timestamp() * 1000),
             limit=1000,
@@ -54,40 +53,37 @@ def fetch_binance_income_histories(
             continue
 
         for item in data:
-            model.create(
+            BinanceIncome.create(
                 tenant=context.tenant,
                 asset=item[asset_field],
                 amount=item["income"],
                 type=item["incomeType"],
                 hedger=hedger_context.name,
                 timestamp=datetime.fromtimestamp(
-                    item[timestamp_field] / 1000
+                    item["time"] / 1000
                 ),  # Convert from milliseconds
             )
         if len(data) == 1000:
-            start_time = datetime.fromtimestamp(data[-1][timestamp_field] / 1000)
+            start_time = datetime.fromtimestamp(data[-1]["time"] / 1000)
         else:
             start_time = end_time
         end_time = start_time + timedelta(days=limit_days)
 
 
-def update_binance_deposit(context: Context, hedger_context: HedgerContext):
-    fetch_binance_income_histories(
+def fetch_binance_income_histories(context, hedger_context):
+    fetch_binance_income_histories_of_type(
         context,
         hedger_context,
-        BinanceIncome,
-        hedger_context.utils.binance_client.futures_income_history,
-        "time",
         "FUNDING_FEE",
     )
-    fetch_binance_income_histories(
+    fetch_binance_income_histories_of_type(
         context,
         hedger_context,
-        BinanceIncome,
-        hedger_context.utils.binance_client.futures_income_history,
-        "time",
         "TRANSFER",
     )
+
+
+def update_binance_deposit(context: Context, hedger_context: HedgerContext):
     total_transfers = (
         BinanceIncome.select(fn.SUM(BinanceIncome.amount))
         .where(

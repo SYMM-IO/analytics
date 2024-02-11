@@ -4,7 +4,7 @@ import {FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} fr
 import {TuiAlertService, TuiButtonModule, TuiTextfieldControllerModule} from "@taiga-ui/core"
 import {TuiInputModule, TuiInputNumberModule, TuiIslandModule} from "@taiga-ui/kit"
 import {LoadingService} from "../services/Loading.service"
-import {AuthService} from "../auth.service"
+import {AuthService} from "../services/auth.service"
 import {Router} from "@angular/router"
 
 @Component({

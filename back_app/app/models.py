@@ -305,18 +305,26 @@ class HedgerSnapshot(BaseModel):
     hedger_contract_balance = DecimalField(max_digits=40, decimal_places=0)
     hedger_contract_deposit = DecimalField(max_digits=40, decimal_places=0)
     hedger_contract_withdraw = DecimalField(max_digits=40, decimal_places=0)
-    max_open_interest = DecimalField(max_digits=40, decimal_places=0)
-    binance_maintenance_margin = DecimalField(max_digits=40, decimal_places=0)
-    binance_total_balance = DecimalField(max_digits=40, decimal_places=0)
-    binance_account_health_ratio = DecimalField(max_digits=40, decimal_places=0)
-    binance_cross_upnl = DecimalField(max_digits=40, decimal_places=0)
-    binance_av_balance = DecimalField(max_digits=40, decimal_places=0)
-    binance_total_initial_margin = DecimalField(max_digits=40, decimal_places=0)
-    binance_max_withdraw_amount = DecimalField(max_digits=40, decimal_places=0)
-    binance_deposit = DecimalField(max_digits=40, decimal_places=0)
-    binance_trade_volume = DecimalField(max_digits=40, decimal_places=0)
-    paid_funding_rate = DecimalField(max_digits=40, decimal_places=0)
-    next_funding_rate = DecimalField(max_digits=40, decimal_places=0)
+    max_open_interest = DecimalField(max_digits=40, decimal_places=0, null=True)
+    binance_maintenance_margin = DecimalField(
+        max_digits=40, decimal_places=0, null=True
+    )
+    binance_total_balance = DecimalField(max_digits=40, decimal_places=0, null=True)
+    binance_account_health_ratio = DecimalField(
+        max_digits=40, decimal_places=0, null=True
+    )
+    binance_cross_upnl = DecimalField(max_digits=40, decimal_places=0, null=True)
+    binance_av_balance = DecimalField(max_digits=40, decimal_places=0, null=True)
+    binance_total_initial_margin = DecimalField(
+        max_digits=40, decimal_places=0, null=True
+    )
+    binance_max_withdraw_amount = DecimalField(
+        max_digits=40, decimal_places=0, null=True
+    )
+    binance_deposit = DecimalField(max_digits=40, decimal_places=0, null=True)
+    binance_trade_volume = DecimalField(max_digits=40, decimal_places=0, null=True)
+    paid_funding_rate = DecimalField(max_digits=40, decimal_places=0, null=True)
+    next_funding_rate = DecimalField(max_digits=40, decimal_places=0, null=True)
     name = CharField(null=False)
     tenant = CharField(null=False)
     timestamp = DateTimeField(primary_key=True)
@@ -325,9 +333,9 @@ class HedgerSnapshot(BaseModel):
     def get_last_related_affiliate_snapshots(self, context: Context):
         affiliates_snapshots = []
         for affiliate in context.affiliates:
-            if affiliate.hedger_name != self.name:
-                return
-            snapshot = get_last_affiliate_snapshot_for(context, affiliate.name)
+            snapshot = get_last_affiliate_snapshot_for(
+                context, affiliate.name, self.name
+            )
             if snapshot:
                 affiliates_snapshots.append(snapshot)
         return affiliates_snapshots
@@ -337,8 +345,7 @@ class HedgerSnapshot(BaseModel):
     ):
         if not affiliate_snapshots or len(affiliate_snapshots) == 0:
             affiliate_snapshots = self.get_last_related_affiliate_snapshots(context)
-        binance_deposit = self.binance_deposit if self.binance_deposit else 0
-        binance_profit = self.binance_total_balance - binance_deposit
+
         contract_profit = (
             self.hedger_contract_balance
             + sum(
@@ -348,7 +355,15 @@ class HedgerSnapshot(BaseModel):
             - self.hedger_contract_deposit
             + self.hedger_contract_withdraw
         )
-        total_state = binance_profit + contract_profit
+        if self.binance_deposit:
+            binance_deposit = self.binance_deposit if self.binance_deposit else 0
+            binance_profit = self.binance_total_balance - binance_deposit
+            total_state = binance_profit + contract_profit
+        else:
+            binance_deposit = None
+            binance_profit = None
+            total_state = None
+
         earned_cva = HedgerSnapshot._earned_cva(affiliate_snapshots)
         loss_cva = HedgerSnapshot._loss_cva(affiliate_snapshots)
 

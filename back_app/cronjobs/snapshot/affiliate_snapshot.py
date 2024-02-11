@@ -19,19 +19,25 @@ from config.settings import (
     Context,
     SYMMIO_ABI,
     AffiliateContext,
+    HedgerContext,
 )
 from utils.attr_dict import AttrDict
 
 
 def prepare_affiliate_snapshot(
-    config, context: Context, affiliate_context: AffiliateContext
+    config,
+    context: Context,
+    affiliate_context: AffiliateContext,
+    hedger_context: HedgerContext,
 ):
+    print(
+        f"----------------Prepare Affiliate Snapshot Of {hedger_context.name} -> {affiliate_context.name}"
+    )
     from_time = datetime.fromtimestamp(context.from_unix_timestamp / 1000)
-    hedger_context = context.hedger_for_affiliate(affiliate_context.name)
     snapshot = AttrDict()
 
     snapshot.status_quotes = count_quotes_per_status(
-        affiliate_context, context, from_time
+        affiliate_context, hedger_context, context, from_time
     )
 
     snapshot.pnl_of_closed = calculate_pnl_of_hedger(
@@ -46,13 +52,13 @@ def prepare_affiliate_snapshot(
     )
 
     snapshot.closed_notional_value = calculate_notional_value(
-        context, affiliate_context, 7, from_time
+        context, affiliate_context, hedger_context, 7, from_time
     )
     snapshot.liquidated_notional_value = calculate_notional_value(
-        context, affiliate_context, 8, from_time
+        context, affiliate_context, hedger_context, 8, from_time
     )
     snapshot.opened_notional_value = calculate_notional_value(
-        context, affiliate_context, 4, from_time
+        context, affiliate_context, hedger_context, 4, from_time
     )
     # ------------------------------------------
 
@@ -135,7 +141,7 @@ def prepare_affiliate_snapshot(
         [(w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]
     ).call(n=pages_count)
 
-    print(f"{context.tenant}: Diff of open quotes with subgraph")
+    print(f"{context.tenant}: Checking diff of open quotes with subgraph")
     for pp in ppp:
         for quote in pp:
             # key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}"
@@ -145,6 +151,8 @@ def prepare_affiliate_snapshot(
                 db_quote = Quote.get_or_none(
                     Quote.id == quote_id, Quote.tenant == context.tenant
                 )
+                if db_quote and db_quote.partyB != hedger_context.hedger_address:
+                    continue
                 if db_quote:
                     print(
                         f"{context.tenant} => Contract: {key} Local DB: {db_quote.id}-{db_quote.openPrice}-{db_quote.closedAmount}-{db_quote.quantity}"
@@ -153,7 +161,6 @@ def prepare_affiliate_snapshot(
                     print(
                         f"{context.tenant} => Contract opened quote not found in the subgraph: {key}"
                     )
-    print("----------------------------------")
 
     # ------------------------------------------
 
@@ -250,13 +257,21 @@ def prepare_affiliate_snapshot(
     return affiliate_snapshot
 
 
-def calculate_notional_value(context, affiliate_context, quote_status, from_time):
+def calculate_notional_value(
+    context,
+    affiliate_context: AffiliateContext,
+    hedger_context: HedgerContext,
+    quote_status,
+    from_time,
+):
     closed_trade_histories = (
         TradeHistory.select()
         .join(Account)
+        .join(Quote)
         .where(
             Account.accountSource == affiliate_context.symmio_multi_account,
             TradeHistory.quoteStatus == quote_status,
+            Quote.partyB == hedger_context.hedger_address,
             TradeHistory.timestamp > from_time,
             TradeHistory.tenant == context.tenant,
         )
@@ -265,7 +280,13 @@ def calculate_notional_value(context, affiliate_context, quote_status, from_time
 
 
 def calculate_hedger_upnl(context, affiliate_context, hedger_context, from_time):
-    prices = hedger_context.utils.binance_client.futures_mark_price()
+    if hedger_context.utils.binance_client:
+        prices = hedger_context.utils.binance_client.futures_mark_price()
+    else:
+        prices = context.hedgers[
+            0
+        ].utils.binance_client.futures_mark_price()  # FIXME: Find a better way later
+
     prices_map = {}
     for p in prices:
         prices_map[p["symbol"]] = p["markPrice"]
@@ -341,7 +362,9 @@ def calculate_pnl_of_hedger(
     return pnl
 
 
-def count_quotes_per_status(affiliate_context, context, from_time):
+def count_quotes_per_status(
+    affiliate_context, hedger_context: HedgerContext, context, from_time
+):
     q_counts = (
         Quote.select(Quote.quoteStatus, fn.Count(Quote.id).alias("count"))
         .join(Account)
@@ -349,6 +372,7 @@ def count_quotes_per_status(affiliate_context, context, from_time):
             Quote.timestamp > from_time,
             Account.accountSource == affiliate_context.symmio_multi_account,
             Quote.tenant == context.tenant,
+            Quote.partyB == hedger_context.hedger_address,
         )
         .group_by(Quote.quoteStatus)
     )

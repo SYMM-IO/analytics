@@ -28,43 +28,56 @@
         </tui-accordion-item>
         <tui-accordion-item>
             Binance State
-            <ng-template tuiAccordionItemContent>
-                <div>Maintenance
-                    Margin: {{ hedgerSnapshot?.binance_maintenance_margin | bigNumberFormat }}
-                </div>
-                <div>Total
-                    Balance: {{ hedgerSnapshot?.binance_total_balance | bigNumberFormat }}
-                </div>
-                <div>Account Health
-                    Ratio: {{ hedgerSnapshot?.binance_account_health_ratio | bigNumberFormat }}
-                </div>
-                <div>Cross
-                    UPnL: {{ hedgerSnapshot?.binance_cross_upnl | bigNumberFormat }}
-                </div>
-                <div>Average
-                    Balance: {{ hedgerSnapshot?.binance_av_balance | bigNumberFormat }}
-                </div>
-                <div>Total Initial
-                    Margin: {{ hedgerSnapshot?.binance_total_initial_margin | bigNumberFormat }}
-                </div>
-                <div>Max Withdraw
-                    Amount: {{ hedgerSnapshot?.binance_max_withdraw_amount | bigNumberFormat }}
-                </div>
-                <div>Deposit: {{ hedgerSnapshot?.binance_deposit | bigNumberFormat }}
-                </div>
-                <div>Trade
-                    Volume: {{ hedgerSnapshot?.binance_trade_volume | bigNumberFormat }}
-                </div>
-            </ng-template>
+            @if (hedgerSnapshot?.binance_maintenance_margin) {
+                <ng-template tuiAccordionItemContent>
+                    <div>Maintenance
+                        Margin: {{ hedgerSnapshot?.binance_maintenance_margin | bigNumberFormat }}
+                    </div>
+                    <div>Total
+                        Balance: {{ hedgerSnapshot?.binance_total_balance | bigNumberFormat }}
+                    </div>
+                    <div>Account Health
+                        Ratio: {{ hedgerSnapshot?.binance_account_health_ratio | bigNumberFormat }}
+                    </div>
+                    <div>Cross
+                        UPnL: {{ hedgerSnapshot?.binance_cross_upnl | bigNumberFormat }}
+                    </div>
+                    <div>Average
+                        Balance: {{ hedgerSnapshot?.binance_av_balance | bigNumberFormat }}
+                    </div>
+                    <div>Total Initial
+                        Margin: {{ hedgerSnapshot?.binance_total_initial_margin | bigNumberFormat }}
+                    </div>
+                    <div>Max Withdraw
+                        Amount: {{ hedgerSnapshot?.binance_max_withdraw_amount | bigNumberFormat }}
+                    </div>
+                    <div>Deposit: {{ hedgerSnapshot?.binance_deposit | bigNumberFormat }}
+                    </div>
+                    <div>Trade
+                        Volume: {{ hedgerSnapshot?.binance_trade_volume | bigNumberFormat }}
+                    </div>
+                </ng-template>
+            } @else {
+                <ng-template tuiAccordionItemContent>
+                    Not Available
+                </ng-template>
+            }
+
         </tui-accordion-item>
         <tui-accordion-item>
             Funding Rate
-            <ng-template tuiAccordionItemContent>
-                <div>Next Funding Rate: {{ hedgerSnapshot?.next_funding_rate | bigNumberFormat}}</div>
-                <div>Paid Funding
-                    Rate: {{ hedgerSnapshot?.paid_funding_rate | bigNumberFormat:0 }}
-                </div>
-            </ng-template>
+            @if (hedgerSnapshot?.binance_maintenance_margin) {
+                <ng-template tuiAccordionItemContent>
+                    <div>Next Funding Rate: {{ hedgerSnapshot?.next_funding_rate | bigNumberFormat }}</div>
+                    <div>Paid Funding
+                        Rate: {{ hedgerSnapshot?.paid_funding_rate | bigNumberFormat:0 }}
+                    </div>
+                </ng-template>
+            } @else {
+                <ng-template tuiAccordionItemContent>
+                    Not Available
+                </ng-template>
+            }
         </tui-accordion-item>
         <tui-accordion-item>
             CVA
@@ -73,5 +86,19 @@
                 <div>Loss: {{ hedgerSnapshot?.calculated?.loss_cva | bigNumberFormat }}</div>
             </ng-template>
         </tui-accordion-item>
+
+        <tui-accordion-item (openChange)="onOpen($event)" *tuiLet="environmentService.selectedEnvironment.value as env">
+            Affiliates
+            <ng-template tuiAccordionItemContent>
+                <div class="flex flex-row gap-2">
+                    @for (affiliate of env!.affiliates; track affiliate.name) {
+                        <affiliate-state-viewer [affiliateSnapshot]="affiliateSnapshotsMaps.get(affiliate.name!)"
+                                                [affiliate]="affiliate" [decimals]="env!.collateralDecimal ">
+                        </affiliate-state-viewer>
+                    }
+                </div>
+            </ng-template>
+        </tui-accordion-item>
+
     </tui-accordion>
 </tui-island>

@@ -6,21 +6,23 @@ import {AffiliateSnapshot, HedgerSnapshot} from "../models"
 import {Observable} from "rxjs"
 
 @Injectable({
-    providedIn: 'root',
+	providedIn: 'root',
 })
 export class SnapshotService {
 
-    constructor(readonly httpClient: HttpClient) {
+	constructor(readonly httpClient: HttpClient) {
 
-    }
+	}
 
-    loadHedgerSnapshot(env: EnvironmentInterface, hedger: string): Observable<HedgerSnapshot> {
-        return this.httpClient.get(`${env.serverUrl}/snapshots/hedger/${env.name}/${hedger}`)
-            .pipe(map(value => HedgerSnapshot.fromRawObject(value)))
-    }
+	loadHedgerSnapshot(env: EnvironmentInterface, hedger: string): Observable<HedgerSnapshot> {
+		return this.httpClient.get(`${env.serverUrl}/snapshots/hedger/${env.name}/${hedger}`)
+			.pipe(
+				map(value => HedgerSnapshot.fromRawObject(value)),
+			)
+	}
 
-    loadAffiliateSnapshot(env: EnvironmentInterface, affiliate: string): Observable<AffiliateSnapshot> {
-        return this.httpClient.get(`${env.serverUrl}/snapshots/affiliate/${env.name}/${affiliate}`)
-            .pipe(map(value => AffiliateSnapshot.fromRawObject(value)))
-    }
+	loadAffiliateSnapshot(env: EnvironmentInterface, hedger: string, affiliate: string): Observable<AffiliateSnapshot> {
+		return this.httpClient.get(`${env.serverUrl}/snapshots/affiliate/${env.name}/${hedger}/${affiliate}`)
+			.pipe(map(value => AffiliateSnapshot.fromRawObject(value)))
+	}
 }

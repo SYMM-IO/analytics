@@ -6,14 +6,19 @@ from utils.context_utils import get_context
 router = APIRouter(prefix="/snapshots", tags=["Snapshot"])
 
 
-@router.get("/affiliate/{tenant}/{affiliate}")
+@router.get("/affiliate/{tenant}/{hedger}/{affiliate}")
 async def get_affiliate_snapshot(
     tenant: str = Path(..., description="The tenant of this affiliate"),
     affiliate: str = Path(..., description="Name of the affiliate"),
+    hedger: str = Path(..., description="Name of the hedger"),
 ):
     query = (
         AffiliateSnapshot.select()
-        .where(AffiliateSnapshot.tenant == tenant, AffiliateSnapshot.name == affiliate)
+        .where(
+            AffiliateSnapshot.tenant == tenant,
+            AffiliateSnapshot.name == affiliate,
+            AffiliateSnapshot.hedger_name == hedger,
+        )
         .order_by(AffiliateSnapshot.timestamp.desc())
         .limit(1)
         .dicts()
