@@ -99,13 +99,20 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
         positions = hedger_context.utils.binance_client.futures_position_information()
         open_positions = [p for p in positions if Decimal(p["notional"]) != 0]
         next_funding_rate = 0
+        funding_rate_symbol_cache = {}
         for pos in open_positions:
             notional, symbol, side = (
                 Decimal(pos["notional"]),
                 pos["symbol"],
                 pos["positionSide"],
             )
-            funding_rate = pos["fundingRate"] = real_time_funding_rate(symbol=symbol)
+            if symbol in funding_rate_symbol_cache:
+                funding_rate = funding_rate_symbol_cache[symbol]
+            else:
+                funding_rate = pos["fundingRate"] = real_time_funding_rate(
+                    symbol=symbol
+                )
+                funding_rate_symbol_cache[symbol] = funding_rate
             funding_rate_fee = -1 * notional * funding_rate
             next_funding_rate += funding_rate_fee * 10**18
 
