@@ -12,6 +12,10 @@ export const hedger: Hedger = {
     name: "Thena_Hedger",
 }
 
+export const hedger2: Hedger = {
+    name: "Dragos_Hedger",
+}
+
 export const environment: EnvironmentInterface = {
     name: "BNB_8_2",
     serverUrl: "https://analytics-api.symm.io",
@@ -23,6 +27,7 @@ export const environment: EnvironmentInterface = {
     ],
     hedgers: [
         hedger,
+        hedger2,
     ],
 }
 

@@ -4,7 +4,7 @@ import {max, Observable} from "rxjs"
 import {DailyHistory} from "../models"
 import BigNumber from "bignumber.js"
 import {aggregateDailyHistories} from "../utils"
-import {StateService} from "../state.service"
+import {StateService} from "../services/state.service"
 import {AffiliateHistory} from "../affiliate.history"
 
 @Component({

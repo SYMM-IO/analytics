@@ -26,5 +26,7 @@ class HedgerContextUtils:
             binance_client=BinanceClient(
                 context.binance_api_key, context.binance_api_secret
             )
+            if len(context.binance_api_key) > 0
+            else None,
         )
         return context

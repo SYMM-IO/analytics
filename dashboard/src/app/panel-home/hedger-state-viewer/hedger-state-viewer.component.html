@@ -60,7 +60,7 @@
         <tui-accordion-item>
             Funding Rate
             <ng-template tuiAccordionItemContent>
-                <div>Next Funding Rate: {{ hedgerSnapshot?.next_funding_rate | bigNumberFormat}}</div>
+                <div>Next Funding Rate: {{ hedgerSnapshot?.next_funding_rate | bigNumberFormat }}</div>
                 <div>Paid Funding
                     Rate: {{ hedgerSnapshot?.paid_funding_rate | bigNumberFormat:0 }}
                 </div>
@@ -73,5 +73,19 @@
                 <div>Loss: {{ hedgerSnapshot?.calculated?.loss_cva | bigNumberFormat }}</div>
             </ng-template>
         </tui-accordion-item>
+
+        <tui-accordion-item (openChange)="onOpen($event)" *tuiLet="environmentService.selectedEnvironment.value as env">
+            Affiliates
+            <ng-template tuiAccordionItemContent>
+               <div class="flex flex-row gap-2">
+                   @for (affiliate of env!.affiliates; track affiliate.name) {
+                       <affiliate-state-viewer [affiliateSnapshot]="affiliateSnapshotsMaps.get(affiliate.name!)"
+                                               [affiliate]="affiliate" [decimals]="env!.collateralDecimal ">
+                       </affiliate-state-viewer>
+                   }
+               </div>
+            </ng-template>
+        </tui-accordion-item>
+
     </tui-accordion>
 </tui-island>

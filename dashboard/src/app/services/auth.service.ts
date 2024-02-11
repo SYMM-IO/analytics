@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core'
 import {HttpClient} from "@angular/common/http"
-import {EnvironmentService} from "./services/enviroment.service"
+import {EnvironmentService} from "./enviroment.service"
 import {catchError, Observable, of, tap} from "rxjs"
 import {map} from "rxjs/operators"
 

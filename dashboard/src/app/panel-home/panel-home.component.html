@@ -1,35 +1,8 @@
 <div class="root flex flex-column gap-2">
-    <div class="flex flex-row gap-2 align-items-center mx-2">
-        <span class="text-lg">Environment</span>
-        <form tuiGroup class="group w-full" [collapsed]="true">
-            @for (env of environments;track env.name) {
-                <tui-radio-block contentAlign="right" [formControl]="environmentForm" [item]="env" size="l">
-                    <div class="flex flex-row gap-2">
-                    <span>
-                        {{ env.name }}
-                    </span>
-                    </div>
-                </tui-radio-block>
-            }
-        </form>
+    <quote-loader></quote-loader>
+    <div class="w-full flex flex-row flex-wrap gap-2" *tuiLet="environmentService.selectedEnvironment.value! as env">
+        @for (hedger of env.hedgers; track hedger.name) {
+            <hedger-state-viewer [hedgerSnapshot]="hedgerSnapshotsMaps.get(hedger.name!)" [hedger]="hedger"></hedger-state-viewer>
+        }
     </div>
-    <div class="flex flex-row flex-wrap gap-2">
-        <quote-loader [environment]="selectedEnvironment()"></quote-loader>
-        <tui-island size="l" textAlign="center" class="flex flex-column gap-2 flex-grow-1">
-            <h3 class="title w-full"> Hedgers </h3>
-            <div class="w-full flex flex-row flex-wrap gap-2">
-                @for (hedger of selectedEnvironment()!.hedgers;track hedger.name) {
-                    <hedger-state-viewer [hedgerSnapshot]="hedgerSnapshotsMaps.get(hedger.name!)" [hedger]="hedger"></hedger-state-viewer>
-                }
-            </div>
-        </tui-island>
-    </div>
-    <tui-island size="l" textAlign="center" class="flex flex-column align-items-center gap-2">
-        <h3 class="title w-full"> Affiliates </h3>
-        <div class="w-full flex flex-row flex-wrap gap-2">
-            @for (affiliate of selectedEnvironment()!.affiliates;track affiliate.name) {
-                <affiliate-state-viewer [affiliateSnapshot]="affiliateSnapshotsMaps.get(affiliate.name!)" [affiliate]="affiliate" [decimals]="selectedEnvironment()?.collateralDecimal "></affiliate-state-viewer>
-            }
-        </div>
-    </tui-island>
 </div>
