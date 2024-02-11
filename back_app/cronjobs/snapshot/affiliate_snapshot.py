@@ -39,18 +39,15 @@ def prepare_affiliate_snapshot(
     snapshot.status_quotes = count_quotes_per_status(
         affiliate_context, hedger_context, context, from_time
     )
-
     snapshot.pnl_of_closed = calculate_pnl_of_hedger(
         context, affiliate_context, hedger_context, 7, from_time
     )
     snapshot.pnl_of_liquidated = calculate_pnl_of_hedger(
         context, affiliate_context, hedger_context, 8, from_time
     )
-
     snapshot.hedger_upnl, subgraph_open_quotes = calculate_hedger_upnl(
         context, affiliate_context, hedger_context, from_time
     )
-
     snapshot.closed_notional_value = calculate_notional_value(
         context, affiliate_context, hedger_context, 7, from_time
     )

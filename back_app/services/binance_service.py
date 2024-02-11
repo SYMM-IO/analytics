@@ -81,6 +81,11 @@ def fetch_binance_income_histories(context, hedger_context):
         hedger_context,
         "TRANSFER",
     )
+    fetch_binance_income_histories_of_type(
+        context,
+        hedger_context,
+        "INTERNAL_TRANSFER",
+    )
 
 
 def update_binance_deposit(context: Context, hedger_context: HedgerContext):
@@ -93,7 +98,17 @@ def update_binance_deposit(context: Context, hedger_context: HedgerContext):
         )
         .scalar()
         or 0.0
+    ) + (
+        BinanceIncome.select(fn.SUM(BinanceIncome.amount))
+        .where(
+            BinanceIncome.type == "INTERNAL_TRANSFER",
+            BinanceIncome.tenant == context.tenant,
+            BinanceIncome.hedger == hedger_context.name,
+        )
+        .scalar()
+        or 0.0
     )
+
     is_negative = total_transfers < 0
     config = load_config(context)
     config.binanceDeposit = (
