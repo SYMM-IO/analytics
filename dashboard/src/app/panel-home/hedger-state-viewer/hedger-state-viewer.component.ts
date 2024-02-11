@@ -25,7 +25,7 @@ export class HedgerStateViewerComponent {
 		if (!value)
 			return
 		let env = this.environmentService.selectedEnvironment.value
-		combineLatest(env!.affiliates!.map(value => this.snapshotService.loadAffiliateSnapshot(env!, value.name!)))
+		combineLatest(env!.affiliates!.map(value => this.snapshotService.loadAffiliateSnapshot(env!, this.hedger.name!, value.name!)))
 			.subscribe((value: AffiliateSnapshot[]) => {
 				for (const affiliateSnapshot of value)
 					this.affiliateSnapshotsMaps.set(affiliateSnapshot.name!, affiliateSnapshot)
