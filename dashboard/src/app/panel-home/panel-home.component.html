@@ -1,6 +1,6 @@
-<div class="root flex flex-column gap-2">
+<div class="root flex flex-column gap-3">
     <quote-loader></quote-loader>
-    <div class="w-full flex flex-row flex-wrap gap-2" *tuiLet="environmentService.selectedEnvironment.value! as env">
+    <div class="w-full flex flex-row flex-wrap gap-3" *tuiLet="environmentService.selectedEnvironment.value! as env">
         @for (hedger of env.hedgers; track hedger.name) {
             <hedger-state-viewer [hedgerSnapshot]="hedgerSnapshotsMaps.get(hedger.name!)" [hedger]="hedger"></hedger-state-viewer>
         }
