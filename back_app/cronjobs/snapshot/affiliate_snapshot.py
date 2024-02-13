@@ -333,7 +333,9 @@ def calculate_pnl_of_hedger(
     context, affiliate_context, hedger_context, quote_status, from_time
 ):
     party_b_quotes = (
-        Quote.select()
+        Quote.select(
+            Quote.quantity, Quote.avgClosedPrice, Quote.openPrice, Quote.positionType
+        )
         .join(Account)
         .where(
             Account.accountSource == affiliate_context.symmio_multi_account,
