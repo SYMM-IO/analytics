@@ -28,9 +28,9 @@ def fetch_snapshot(context: Context):
     )  # for subgraph sync time
     config.upsert()
 
-    # for hedger_context in context.hedgers:
-    #     if hedger_context.utils.binance_client:
-    #         fetch_binance_income_histories(context, hedger_context)
+    for hedger_context in context.hedgers:
+        if hedger_context.utils.binance_client:
+            fetch_binance_income_histories(context, hedger_context)
 
     load_users(config, context)
     load_symbols(config, context)
