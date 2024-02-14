@@ -1,60 +1,57 @@
-<tui-island size="l" textAlign="left" class="flex flex-column gap-2 hedger_snapshot_island">
-    <h3 class="title"> {{ hedger.name }} </h3>
-    <tui-accordion class="container" [closeOthers]="false">
-        <tui-accordion-item [open]="true">
-            State
-            <ng-template tuiAccordionItemContent>
-                <div>Total State : {{ hedgerSnapshot?.calculated?.total_state | bigNumberFormat }}</div>
-                <div>Binance Profit: {{ hedgerSnapshot?.calculated?.binance_profit | bigNumberFormat }}</div>
-                <div>Contract Profit: {{ hedgerSnapshot?.calculated?.contract_profit | bigNumberFormat }}</div>
-                <div>Max Open
-                    Interest: {{ hedgerSnapshot?.max_open_interest | bigNumberFormat }}
-                </div>
-            </ng-template>
-        </tui-accordion-item>
+<div class="flex flex-row gap-2 align-items-start">
+    <tui-island *tuiLet="(hedgerSnapshot|async) as hedgerSnap">
+        <span class="tui-island__title">State</span>
+        <div class="flex flex-column gap-1 mt-2">
+            <span>Total State : {{ hedgerSnap?.calculated?.total_state | bigNumberFormat }}</span>
+            <span>Binance Profit: {{ hedgerSnap?.calculated?.binance_profit | bigNumberFormat }}</span>
+            <span>Contract Profit: {{ hedgerSnap?.calculated?.contract_profit | bigNumberFormat }}</span>
+            <span>Max Open Interest: {{ hedgerSnap?.max_open_interest | bigNumberFormat }}    </span>
+        </div>
+    </tui-island>
+    <tui-accordion class="container" [closeOthers]="false" *tuiLet="(hedgerSnapshot|async) as hedgerSnap">
         <tui-accordion-item>
             Contract Balances
             <ng-template tuiAccordionItemContent>
                 <div>
-                    Balance: {{ hedgerSnapshot?.hedger_contract_balance | bigNumberFormat }}
+                    Balance: {{ hedgerSnap?.hedger_contract_balance | bigNumberFormat }}
                 </div>
                 <div>
-                    Deposit: {{ hedgerSnapshot?.hedger_contract_deposit | bigNumberFormat }}
+                    Deposit: {{ hedgerSnap?.hedger_contract_deposit | bigNumberFormat }}
                 </div>
                 <div>
-                    Withdraw: {{ hedgerSnapshot?.hedger_contract_withdraw | bigNumberFormat }}
+                    Withdraw: {{ hedgerSnap?.hedger_contract_withdraw | bigNumberFormat }}
                 </div>
             </ng-template>
         </tui-accordion-item>
         <tui-accordion-item>
             Binance State
-            @if (hedgerSnapshot?.binance_maintenance_margin) {
+            @if (hedgerSnap?.binance_maintenance_margin) {
                 <ng-template tuiAccordionItemContent>
                     <div>Maintenance
-                        Margin: {{ hedgerSnapshot?.binance_maintenance_margin | bigNumberFormat }}
+                        Margin: {{ hedgerSnap?.binance_maintenance_margin | bigNumberFormat }}
                     </div>
                     <div>Total
-                        Balance: {{ hedgerSnapshot?.binance_total_balance | bigNumberFormat }}
+                        Balance: {{ hedgerSnap?.binance_total_balance | bigNumberFormat }}
                     </div>
                     <div>Account Health
-                        Ratio: {{ hedgerSnapshot?.binance_account_health_ratio | bigNumberFormat }}
+                        Ratio: {{ hedgerSnap?.binance_account_health_ratio | bigNumberFormat }}
                     </div>
                     <div>Cross
-                        UPnL: {{ hedgerSnapshot?.binance_cross_upnl | bigNumberFormat }}
+                        UPnL: {{ hedgerSnap?.binance_cross_upnl | bigNumberFormat }}
                     </div>
                     <div>Average
-                        Balance: {{ hedgerSnapshot?.binance_av_balance | bigNumberFormat }}
+                        Balance: {{ hedgerSnap?.binance_av_balance | bigNumberFormat }}
                     </div>
                     <div>Total Initial
-                        Margin: {{ hedgerSnapshot?.binance_total_initial_margin | bigNumberFormat }}
+                        Margin: {{ hedgerSnap?.binance_total_initial_margin | bigNumberFormat }}
                     </div>
                     <div>Max Withdraw
-                        Amount: {{ hedgerSnapshot?.binance_max_withdraw_amount | bigNumberFormat }}
+                        Amount: {{ hedgerSnap?.binance_max_withdraw_amount | bigNumberFormat }}
                     </div>
-                    <div>Deposit: {{ hedgerSnapshot?.binance_deposit | bigNumberFormat }}
+                    <div>Deposit: {{ hedgerSnap?.binance_deposit | bigNumberFormat }}
                     </div>
                     <div>Trade
-                        Volume: {{ hedgerSnapshot?.binance_trade_volume | bigNumberFormat }}
+                        Volume: {{ hedgerSnap?.binance_trade_volume | bigNumberFormat }}
                     </div>
                 </ng-template>
             } @else {
@@ -66,11 +63,11 @@
         </tui-accordion-item>
         <tui-accordion-item>
             Funding Rate
-            @if (hedgerSnapshot?.binance_maintenance_margin) {
+            @if (hedgerSnap?.binance_maintenance_margin) {
                 <ng-template tuiAccordionItemContent>
-                    <div>Next Funding Rate: {{ hedgerSnapshot?.next_funding_rate | bigNumberFormat }}</div>
+                    <div>Next Funding Rate: {{ hedgerSnap?.next_funding_rate | bigNumberFormat }}</div>
                     <div>Paid Funding
-                        Rate: {{ hedgerSnapshot?.paid_funding_rate | bigNumberFormat:0 }}
+                        Rate: {{ hedgerSnap?.paid_funding_rate | bigNumberFormat:0 }}
                     </div>
                 </ng-template>
             } @else {
@@ -82,8 +79,8 @@
         <tui-accordion-item>
             CVA
             <ng-template tuiAccordionItemContent>
-                <div>Earned: {{ hedgerSnapshot?.calculated?.earned_cva | bigNumberFormat }}</div>
-                <div>Loss: {{ hedgerSnapshot?.calculated?.loss_cva | bigNumberFormat }}</div>
+                <div>Earned: {{ hedgerSnap?.calculated?.earned_cva | bigNumberFormat }}</div>
+                <div>Loss: {{ hedgerSnap?.calculated?.loss_cva | bigNumberFormat }}</div>
             </ng-template>
         </tui-accordion-item>
 
@@ -101,4 +98,4 @@
         </tui-accordion-item>
 
     </tui-accordion>
-</tui-island>
+</div>

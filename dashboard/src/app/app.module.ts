@@ -2,12 +2,12 @@ import {NgDompurifySanitizer} from "@tinkoff/ng-dompurify"
 import {
 	TUI_SANITIZER,
 	TuiAlertModule,
-	TuiButtonModule,
+	TuiButtonModule, TuiDataListModule,
 	TuiDialogModule, TuiDropdownModule,
 	TuiGroupModule,
 	TuiHintModule,
 	TuiModeModule,
-	TuiRootModule,
+	TuiRootModule, TuiSvgModule,
 	TuiTextfieldControllerModule,
 	TuiThemeNightModule,
 } from "@taiga-ui/core"
@@ -74,6 +74,8 @@ import {AffiliateStateViewerComponent} from "./panel-home/affiliate-state-viewer
 		TuiHintModule,
 		TuiAccordionModule,
 		TuiDropdownModule,
+		TuiDataListModule,
+		TuiSvgModule,
 	],
     providers: [
         provideHttpClient(
