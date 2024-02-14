@@ -15,9 +15,9 @@ import {map, switchMap} from "rxjs/operators"
 })
 export class HedgerStateViewerComponent {
 	affiliateSnapshotsMaps = new Map<string, AffiliateSnapshot>()
-
 	hedger?: Hedger
 	hedgerSnapshot: Observable<HedgerSnapshot>
+	daysSinceLaunch?: number
 
 	constructor(readonly environmentService: EnvironmentService,
 				readonly snapshotService: SnapshotService,
@@ -32,7 +32,15 @@ export class HedgerStateViewerComponent {
 							return hedger
 					return env.hedgers![0] //Should never happen
 				}),
-				tap(value => this.hedger = value),
+				tap(value => {
+					this.hedger = value
+					let env = this.environmentService.selectedEnvironment.value!
+					const now = new Date()
+					const millisecondsPerDay = 1000 * 60 * 60 * 24
+					const differenceInMilliseconds = Math.abs(now.getTime() - env.startDate!.getTime())
+					const differenceInDays = differenceInMilliseconds / millisecondsPerDay
+					this.daysSinceLaunch = Math.round(differenceInDays)
+				}),
 				switchMap(value => {
 					let env = this.environmentService.selectedEnvironment.value!
 					return snapshotService.loadHedgerSnapshot(env!, value.name!)
@@ -50,6 +58,4 @@ export class HedgerStateViewerComponent {
 					this.affiliateSnapshotsMaps.set(affiliateSnapshot.name!, affiliateSnapshot)
 			})
 	}
-
-	protected readonly isNaN = isNaN
 }

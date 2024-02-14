@@ -18,7 +18,6 @@ def load_config(context: Context, name: str = "DefaultConfiguration"):
         )
         decimals = collateral_contract.functions.decimals().call()
         config = RuntimeConfiguration.create(
-            binanceDeposit=0,
             decimals=decimals,
             name=name,
             tenant=context.tenant,

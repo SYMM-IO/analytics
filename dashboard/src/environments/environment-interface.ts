@@ -7,6 +7,7 @@ export interface EnvironmentInterface {
     serverUrl?: string;
     subgraphUrl?: string;
     collateralDecimal?: number;
+    startDate?: Date;
     singleAffiliateAccountSource?: string;
     affiliates?: Affiliate[];
     hedgers?: Hedger[];

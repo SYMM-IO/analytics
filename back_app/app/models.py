@@ -243,7 +243,6 @@ class DailyHistory(BaseModel):
 
 class RuntimeConfiguration(BaseModel):
     name = CharField()
-    binanceDeposit = DecimalField(max_digits=40, decimal_places=0)
     decimals = IntegerField()
     migrationVersion = IntegerField(default=0)
     lastSnapshotTimestamp = DateTimeField(default=datetime.fromtimestamp(0))
@@ -294,14 +293,6 @@ class AffiliateSnapshot(BaseModel):
 
 
 class HedgerSnapshot(BaseModel):
-    @dataclass
-    class HedgerSnapshotCalculated:
-        binance_profit: int
-        contract_profit: int
-        total_state: int
-        earned_cva: int
-        loss_cva: int
-
     hedger_contract_balance = DecimalField(max_digits=40, decimal_places=0)
     hedger_contract_deposit = DecimalField(max_digits=40, decimal_places=0)
     hedger_contract_withdraw = DecimalField(max_digits=40, decimal_places=0)
@@ -325,70 +316,18 @@ class HedgerSnapshot(BaseModel):
     binance_trade_volume = DecimalField(max_digits=40, decimal_places=0, null=True)
     paid_funding_rate = DecimalField(max_digits=40, decimal_places=0, null=True)
     next_funding_rate = DecimalField(max_digits=40, decimal_places=0, null=True)
+    binance_profit = DecimalField(max_digits=40, decimal_places=0, null=True)
+    contract_profit = DecimalField(max_digits=40, decimal_places=0, null=True)
+    liquidators_profit = DecimalField(max_digits=40, decimal_places=0, null=True)
+    total_deposit = DecimalField(max_digits=40, decimal_places=0, null=True)
+    earned_cva = DecimalField(max_digits=40, decimal_places=0, null=True)
+    loss_cva = DecimalField(max_digits=40, decimal_places=0, null=True)
+    liquidators_balance = DecimalField(max_digits=40, decimal_places=0, null=True)
+    liquidators_withdraw = DecimalField(max_digits=40, decimal_places=0, null=True)
+    liquidators_allocated = DecimalField(max_digits=40, decimal_places=0, null=True)
     name = CharField(null=False)
     tenant = CharField(null=False)
     timestamp = DateTimeField(primary_key=True)
-    calculated: HedgerSnapshotCalculated
-
-    def get_last_related_affiliate_snapshots(self, context: Context):
-        affiliates_snapshots = []
-        for affiliate in context.affiliates:
-            snapshot = get_last_affiliate_snapshot_for(
-                context, affiliate.name, self.name
-            )
-            if snapshot:
-                affiliates_snapshots.append(snapshot)
-        return affiliates_snapshots
-
-    def fill_calculated_fields(
-        self, context: Context, affiliate_snapshots: List[AffiliateSnapshot] = None
-    ):
-        if not affiliate_snapshots or len(affiliate_snapshots) == 0:
-            affiliate_snapshots = self.get_last_related_affiliate_snapshots(context)
-
-        contract_profit = (
-            self.hedger_contract_balance
-            + sum(
-                [snapshot.hedger_contract_allocated for snapshot in affiliate_snapshots]
-            )
-            + sum([snapshot.hedger_upnl for snapshot in affiliate_snapshots])
-            - self.hedger_contract_deposit
-            + self.hedger_contract_withdraw
-        )
-        if self.binance_deposit:
-            binance_deposit = self.binance_deposit if self.binance_deposit else 0
-            binance_profit = self.binance_total_balance - binance_deposit
-            total_state = binance_profit + contract_profit
-        else:
-            binance_deposit = None
-            binance_profit = None
-            total_state = None
-
-        earned_cva = HedgerSnapshot._earned_cva(affiliate_snapshots)
-        loss_cva = HedgerSnapshot._loss_cva(affiliate_snapshots)
-
-        self.calculated = HedgerSnapshot.HedgerSnapshotCalculated(
-            binance_profit=binance_profit,
-            contract_profit=contract_profit,
-            total_state=total_state,
-            earned_cva=earned_cva,
-            loss_cva=loss_cva,
-        )
-
-    def to_dict(self):
-        output = {}
-        for key, value in self.__data__.items():
-            output[key] = value
-        output["calculated"] = self.calculated
-        return output
-
-    @staticmethod
-    def _earned_cva(affiliate_snapshots: List[AffiliateSnapshot]):
-        return sum([snapshot.earned_cva for snapshot in affiliate_snapshots])
-
-    @staticmethod
-    def _loss_cva(affiliate_snapshots: List[AffiliateSnapshot]):
-        return sum([snapshot.loss_cva for snapshot in affiliate_snapshots])
 
     @staticmethod
     def is_timeseries():

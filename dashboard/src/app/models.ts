@@ -177,45 +177,38 @@ export class AffiliateSnapshot {
 	}
 }
 
-export class HedgerSnapshotCalculated {
-	binance_profit?: BigNumber
-	contract_profit?: BigNumber
-	total_state?: BigNumber
-	earned_cva?: BigNumber
-	loss_cva?: BigNumber
-
-	static fromRawObject(raw: any): HedgerSnapshotCalculated {
-		const obj = new HedgerSnapshotCalculated()
-		obj.binance_profit = BigNumberOf(raw.binance_profit)
-		obj.contract_profit = BigNumber(raw.contract_profit)
-		obj.total_state = BigNumberOf(raw.total_state)
-		obj.earned_cva = BigNumber(raw.earned_cva)
-		obj.loss_cva = BigNumber(raw.loss_cva)
-		return obj
-	}
-}
 
 export class HedgerSnapshot {
 	hedger_contract_balance?: BigNumber
 	hedger_contract_deposit?: BigNumber
 	hedger_contract_withdraw?: BigNumber
-	max_open_interest?: BigNumber | undefined
-	binance_maintenance_margin?: BigNumber | undefined
-	binance_total_balance?: BigNumber | undefined
-	binance_account_health_ratio?: BigNumber | undefined
-	binance_cross_upnl?: BigNumber | undefined
-	binance_av_balance?: BigNumber | undefined
-	binance_total_initial_margin?: BigNumber | undefined
-	binance_max_withdraw_amount?: BigNumber | undefined
-	binance_deposit?: BigNumber | undefined
-	binance_trade_volume?: BigNumber | undefined
-	paid_funding_rate?: BigNumber | undefined
-	next_funding_rate?: BigNumber | undefined
+	max_open_interest?: BigNumber
+	binance_maintenance_margin?: BigNumber
+	binance_total_balance?: BigNumber
+	binance_account_health_ratio?: BigNumber
+	binance_cross_upnl?: BigNumber
+	binance_av_balance?: BigNumber
+	binance_total_initial_margin?: BigNumber
+	binance_max_withdraw_amount?: BigNumber
+	binance_deposit?: BigNumber
+	binance_trade_volume?: BigNumber
+	paid_funding_rate?: BigNumber
+	next_funding_rate?: BigNumber
+	binance_profit?: BigNumber
+	contract_profit?: BigNumber
+	earned_cva?: BigNumber
+	loss_cva?: BigNumber
+	liquidators_profit?: BigNumber
+	liquidators_balance?: BigNumber
+	liquidators_withdraw?: BigNumber
+	liquidators_allocated?: BigNumber
 	name?: string
 	tenant?: string
 	timestamp?: string
-	calculated?: HedgerSnapshotCalculated
 
+	total_state(): BigNumber {
+		return (this?.binance_profit || BigNumber(0)).plus(this!.contract_profit!)
+	}
 
 	static fromRawObject(raw: any): HedgerSnapshot {
 		const snapshot = new HedgerSnapshot()
@@ -234,10 +227,17 @@ export class HedgerSnapshot {
 		snapshot.binance_trade_volume = BigNumberOf(raw.binance_trade_volume)
 		snapshot.paid_funding_rate = BigNumberOf(raw.paid_funding_rate)
 		snapshot.next_funding_rate = BigNumberOf(raw.next_funding_rate)
+		snapshot.binance_profit = BigNumberOf(raw.binance_profit)
+		snapshot.contract_profit = BigNumberOf(raw.contract_profit)
+		snapshot.earned_cva = BigNumberOf(raw.earned_cva)
+		snapshot.loss_cva = BigNumberOf(raw.loss_cva)
+		snapshot.liquidators_profit = BigNumberOf(raw.liquidators_profit)
+		snapshot.liquidators_balance = BigNumberOf(raw.liquidators_balance)
+		snapshot.liquidators_withdraw = BigNumberOf(raw.liquidators_withdraw)
+		snapshot.liquidators_allocated = BigNumberOf(raw.liquidators_allocated)
 		snapshot.name = raw.name
 		snapshot.tenant = raw.tenant
 		snapshot.timestamp = raw.timestamp
-		snapshot.calculated = HedgerSnapshotCalculated.fromRawObject(raw.calculated)
 		return snapshot
 	}
 }

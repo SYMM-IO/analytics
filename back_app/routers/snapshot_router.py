@@ -41,12 +41,11 @@ async def get_hedger_snapshot(
         .where(HedgerSnapshot.tenant == tenant, HedgerSnapshot.name == hedger)
         .order_by(HedgerSnapshot.timestamp.desc())
         .limit(1)
+        .dicts()
     )
     try:
         snapshot: HedgerSnapshot = query.get()
-        context = get_context(tenant)
-        snapshot.fill_calculated_fields(context)
     except HedgerSnapshot.DoesNotExist:
         snapshot = None
 
-    return snapshot.to_dict() if snapshot else {}
+    return snapshot if snapshot else {}
