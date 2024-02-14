@@ -44,9 +44,7 @@ async def get_hedger_snapshot(
     )
     try:
         snapshot: HedgerSnapshot = query.get()
-        context = get_context(tenant)
-        snapshot.fill_calculated_fields(context)
     except HedgerSnapshot.DoesNotExist:
         snapshot = None
 
-    return snapshot.to_dict() if snapshot else {}
+    return snapshot if snapshot else {}

@@ -1,9 +1,6 @@
-import time
-from collections import defaultdict
 from datetime import datetime
 from decimal import Decimal
 
-import requests
 import web3
 from multicallable import Multicallable
 from peewee import fn
@@ -21,31 +18,9 @@ from config.settings import (
     IGNORE_BINANCE_TRADE_VOLUME,
 )
 from cronjobs.binance_trade_volume import calculate_binance_trade_volume
+from services.binance_service import real_time_funding_rate
+from services.snaphshot_service import get_last_affiliate_snapshot_for
 from utils.attr_dict import AttrDict
-
-
-# Cache dictionary to store the symbol, funding rate, and last update time
-cache = {}
-
-
-def real_time_funding_rate(symbol: str) -> Decimal:
-    current_time = time.time()
-
-    if symbol in cache and current_time - cache[symbol]["last_update"] < 300:
-        return cache[symbol]["funding_rate"]
-
-    url = f"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}"
-    response = requests.get(url)
-    funding_rate = Decimal(0)
-
-    if response.status_code == 200:
-        data = response.json()
-        funding_rate = Decimal(data["lastFundingRate"])
-        cache[symbol] = {"funding_rate": funding_rate, "last_update": current_time}
-    else:
-        print("An error occurred:", response.status_code)
-
-    return funding_rate
 
 
 def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerContext):
@@ -54,6 +29,36 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
 
     snapshot = AttrDict()
     if hedger_context.utils.binance_client:
+        total_transfers = (
+            BinanceIncome.select(fn.SUM(BinanceIncome.amount))
+            .where(
+                BinanceIncome.type == "TRANSFER",
+                BinanceIncome.tenant == context.tenant,
+                BinanceIncome.hedger == hedger_context.name,
+            )
+            .scalar()
+            or 0.0
+        ) + (
+            BinanceIncome.select(fn.SUM(BinanceIncome.amount))
+            .where(
+                BinanceIncome.type == "INTERNAL_TRANSFER",
+                BinanceIncome.tenant == context.tenant,
+                BinanceIncome.hedger == hedger_context.name,
+            )
+            .scalar()
+            or 0.0
+        )
+
+        is_negative = total_transfers < 0
+        snapshot.binance_deposit = (
+            Decimal(
+                -(abs(total_transfers) * 10**18)
+                if is_negative
+                else total_transfers * 10**18
+            )
+            + hedger_context.binance_deposit_diff
+        )
+
         binance_account = hedger_context.utils.binance_client.futures_account(version=2)
         snapshot.binance_maintenance_margin = Decimal(
             float(binance_account["totalMaintMargin"]) * 10**18
@@ -81,9 +86,6 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
         snapshot.max_open_interest = Decimal(
             hedger_context.hedger_max_open_interest_ratio
             * snapshot.binance_max_withdraw_amount
-        )
-        snapshot.binance_deposit = (
-            config.binanceDeposit + hedger_context.binance_deposit_diff
         )
         snapshot.binance_trade_volume = (
             0
@@ -128,28 +130,75 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
     contract_multicallable = Multicallable(
         w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, w3
     )
+
     snapshot.hedger_contract_balance = contract_multicallable.balanceOf(
         [w3.to_checksum_address(hedger_context.hedger_address)]
     ).call()[0]
+
     hedger_deposit = BalanceChange.select(fn.Sum(BalanceChange.amount)).where(
         BalanceChange.collateral == context.symmio_collateral_address,
         BalanceChange.type == BalanceChangeType.DEPOSIT,
         BalanceChange.account == hedger_context.hedger_address,
         BalanceChange.tenant == context.tenant,
     ).scalar() or Decimal(0)
+
     snapshot.hedger_contract_deposit = (
         hedger_deposit * 10 ** (18 - config.decimals)
         + hedger_context.contract_deposit_diff
     )
+
     hedger_withdraw = BalanceChange.select(fn.Sum(BalanceChange.amount)).where(
         BalanceChange.collateral == context.symmio_collateral_address,
         BalanceChange.type == BalanceChangeType.WITHDRAW,
         BalanceChange.account == hedger_context.hedger_address,
         BalanceChange.tenant == context.tenant,
     ).scalar() or Decimal(0)
+
     snapshot.hedger_contract_withdraw = hedger_withdraw * 10 ** (18 - config.decimals)
+
+    affiliates_snapshots = []
+    for affiliate in context.affiliates:
+        s = get_last_affiliate_snapshot_for(
+            context, affiliate.name, hedger_context.name
+        )
+        if s:
+            affiliates_snapshots.append(s)
+
+    snapshot.contract_profit = (
+        snapshot.hedger_contract_balance
+        + sum([snapshot.hedger_contract_allocated for snapshot in affiliates_snapshots])
+        + sum([snapshot.hedger_upnl for snapshot in affiliates_snapshots])
+        - snapshot.hedger_contract_deposit
+        + snapshot.hedger_contract_withdraw
+    )
+
+    if "binance_deposit" in snapshot:
+        snapshot.binance_profit = snapshot.binance_total_balance - (
+            snapshot.binance_deposit or Decimal(0)
+        )
+
+    snapshot.earned_cva = sum(
+        [snapshot.earned_cva for snapshot in affiliates_snapshots]
+    )
+    snapshot.loss_cva = sum([snapshot.loss_cva for snapshot in affiliates_snapshots])
+
+    snapshot.liquidators_balance = Decimal(0)
+    snapshot.liquidators_withdraw = Decimal(0)
+    snapshot.liquidators_allocated = Decimal(0)
+    checked_liquidators = set()
+    for affiliate_snapshot in affiliates_snapshots:
+        if affiliate_snapshot.liquidator_states:
+            for state in affiliate_snapshot.liquidator_states:
+                if state["address"] in checked_liquidators:
+                    continue
+                checked_liquidators.add(state["address"])
+                snapshot.liquidators_balance += Decimal(state["balance"])
+                snapshot.liquidators_withdraw += Decimal(state["withdraw"])
+                snapshot.liquidators_allocated += Decimal(state["allocated"])
+
     snapshot.timestamp = datetime.utcnow()
     snapshot.name = hedger_context.name
     snapshot.tenant = context.tenant
+    print(snapshot)
     hedger_snapshot = HedgerSnapshot.create(**snapshot)
     return hedger_snapshot

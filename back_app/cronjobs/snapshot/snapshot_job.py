@@ -15,7 +15,6 @@ from cronjobs.data_loaders import (
 from cronjobs.snapshot.affiliate_snapshot import prepare_affiliate_snapshot
 from cronjobs.snapshot.hedger_snapshot import prepare_hedger_snapshot
 from services.binance_service import (
-    update_binance_deposit,
     fetch_binance_income_histories,
 )
 from services.config_service import load_config
@@ -29,10 +28,9 @@ def fetch_snapshot(context: Context):
     )  # for subgraph sync time
     config.upsert()
 
-    for hedger_context in context.hedgers:
-        if hedger_context.utils.binance_client:
-            fetch_binance_income_histories(context, hedger_context)
-            update_binance_deposit(context, hedger_context)
+    # for hedger_context in context.hedgers:
+    #     if hedger_context.utils.binance_client:
+    #         fetch_binance_income_histories(context, hedger_context)
 
     load_users(config, context)
     load_symbols(config, context)

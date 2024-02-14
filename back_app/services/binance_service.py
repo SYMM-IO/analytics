@@ -1,6 +1,8 @@
 import time
 from datetime import datetime, timedelta
+from decimal import Decimal
 
+import requests
 from peewee import fn
 
 from app.models import (
@@ -8,6 +10,29 @@ from app.models import (
 )
 from config.settings import Context, HedgerContext
 from services.config_service import load_config
+
+# Cache dictionary to store the symbol, funding rate, and last update time
+cache = {}
+
+
+def real_time_funding_rate(symbol: str) -> Decimal:
+    current_time = time.time()
+
+    if symbol in cache and current_time - cache[symbol]["last_update"] < 600:
+        return cache[symbol]["funding_rate"]
+
+    url = f"https://fapi.binance.com/fapi/v1/premiumIndex?symbol={symbol}"
+    response = requests.get(url)
+    funding_rate = Decimal(0)
+
+    if response.status_code == 200:
+        data = response.json()
+        funding_rate = Decimal(data["lastFundingRate"])
+        cache[symbol] = {"funding_rate": funding_rate, "last_update": current_time}
+    else:
+        print("An error occurred:", response.status_code)
+
+    return funding_rate
 
 
 def fetch_binance_income_histories_of_type(
@@ -86,34 +111,3 @@ def fetch_binance_income_histories(context, hedger_context):
         hedger_context,
         "INTERNAL_TRANSFER",
     )
-
-
-def update_binance_deposit(context: Context, hedger_context: HedgerContext):
-    total_transfers = (
-        BinanceIncome.select(fn.SUM(BinanceIncome.amount))
-        .where(
-            BinanceIncome.type == "TRANSFER",
-            BinanceIncome.tenant == context.tenant,
-            BinanceIncome.hedger == hedger_context.name,
-        )
-        .scalar()
-        or 0.0
-    ) + (
-        BinanceIncome.select(fn.SUM(BinanceIncome.amount))
-        .where(
-            BinanceIncome.type == "INTERNAL_TRANSFER",
-            BinanceIncome.tenant == context.tenant,
-            BinanceIncome.hedger == hedger_context.name,
-        )
-        .scalar()
-        or 0.0
-    )
-
-    is_negative = total_transfers < 0
-    config = load_config(context)
-    config.binanceDeposit = (
-        -(abs(total_transfers) * 10**18)
-        if is_negative
-        else total_transfers * 10**18
-    )
-    config.save()
