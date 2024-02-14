@@ -2,10 +2,14 @@
     <tui-island *tuiLet="(hedgerSnapshot|async) as hedgerSnap">
         <span class="tui-island__title">State</span>
         <div class="flex flex-column gap-1 mt-2">
-            <span>Total State : {{ hedgerSnap?.calculated?.total_state | bigNumberFormat }}</span>
-            <span>Binance Profit: {{ hedgerSnap?.calculated?.binance_profit | bigNumberFormat }}</span>
-            <span>Contract Profit: {{ hedgerSnap?.calculated?.contract_profit | bigNumberFormat }}</span>
-            <span>Max Open Interest: {{ hedgerSnap?.max_open_interest | bigNumberFormat }}    </span>
+            <span>Total State : {{ hedgerSnap?.total_state() | bigNumberFormat }}</span>
+            <span>Binance Profit: {{ hedgerSnap?.binance_profit | bigNumberFormat }}</span>
+            <span>Contract Profit: {{ hedgerSnap?.contract_profit | bigNumberFormat }}</span>
+            <span>Liquidators Profit: {{ hedgerSnap?.liquidators_profit | bigNumberFormat }}</span>
+            <span>Liquidations Profit: {{ hedgerSnap?.earned_cva | bigNumberFormat }}</span>
+            <span>Max Open Interest: {{ hedgerSnap?.max_open_interest | bigNumberFormat }}</span>
+            <div class="separator"></div>
+            <span>Days since launch: {{ daysSinceLaunch }}</span>
         </div>
     </tui-island>
     <tui-accordion class="container" [closeOthers]="false" *tuiLet="(hedgerSnapshot|async) as hedgerSnap">
@@ -79,11 +83,18 @@
         <tui-accordion-item>
             CVA
             <ng-template tuiAccordionItemContent>
-                <div>Earned: {{ hedgerSnap?.calculated?.earned_cva | bigNumberFormat }}</div>
-                <div>Loss: {{ hedgerSnap?.calculated?.loss_cva | bigNumberFormat }}</div>
+                <div>Earned: {{ hedgerSnap?.earned_cva | bigNumberFormat }}</div>
+                <div>Loss: {{ hedgerSnap?.loss_cva | bigNumberFormat }}</div>
             </ng-template>
         </tui-accordion-item>
-
+        <tui-accordion-item>
+            Liquidators state
+            <ng-template tuiAccordionItemContent>
+                <div>Balance: {{ hedgerSnap?.liquidators_balance | bigNumberFormat }}</div>
+                <div>Withdraw: {{ hedgerSnap?.liquidators_withdraw | bigNumberFormat }}</div>
+                <div>Allocated: {{ hedgerSnap?.liquidators_allocated | bigNumberFormat }}</div>
+            </ng-template>
+        </tui-accordion-item>
         <tui-accordion-item (openChange)="onOpen($event)" *tuiLet="environmentService.selectedEnvironment.value as env">
             Affiliates
             <ng-template tuiAccordionItemContent>

@@ -25,6 +25,7 @@ export const environment: EnvironmentInterface = {
     serverUrl: "https://analytics-api.symm.io",
     subgraphUrl: "https://api.thegraph.com/subgraphs/name/symmiograph/symmioanalytics_base_8_2",
     collateralDecimal: 6,
+    startDate: new Date(1702466963000),
     affiliates: [
         based,
         intentx,
