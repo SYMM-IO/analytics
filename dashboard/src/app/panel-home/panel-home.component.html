@@ -1,8 +1,24 @@
-<div class="root flex flex-column gap-3">
-    <quote-loader></quote-loader>
-    <div class="w-full flex flex-row flex-wrap gap-3" *tuiLet="environmentService.selectedEnvironment.value! as env">
-        @for (hedger of env.hedgers; track hedger.name) {
-            <hedger-state-viewer [hedgerSnapshot]="hedgerSnapshotsMaps.get(hedger.name!)" [hedger]="hedger"></hedger-state-viewer>
-        }
+<div class="root flex flex-row gap-3 h-full w-full">
+    <div class="menu">
+        <tui-data-list role="menu">
+            @for (group of groups; track group.label) {
+                <tui-opt-group [label]="group.label">
+                    @for (item of group.items; track item.label) {
+                        <a #rla="routerLinkActive"
+                           role="menuitemradio"
+                           routerLinkActive
+                           tuiOption
+                           [attr.aria-checked]="rla.isActive"
+                           [routerLink]="item.routerLink">
+                            {{ item.label }}
+                            <tui-svg *ngIf="rla.isActive" src="tuiIconCheck"></tui-svg>
+                        </a>
+                    }
+                </tui-opt-group>
+            }
+        </tui-data-list>
+    </div>
+    <div class="root flex flex-column w-full h-full justify-content-start m-3">
+        <router-outlet></router-outlet>
     </div>
 </div>

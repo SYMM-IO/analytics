@@ -2,10 +2,8 @@ import {Component, Inject} from '@angular/core'
 import {EnvironmentService} from "../services/enviroment.service"
 import {TuiAlertService} from "@taiga-ui/core"
 import {LoadingService} from "../services/Loading.service"
-import {combineLatest} from "rxjs"
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop"
-import {SnapshotService} from "../services/snapshot.service"
-import {HedgerSnapshot} from "../models"
+import {Router} from "@angular/router"
 
 @Component({
 	selector: 'app-panel-home',
@@ -13,18 +11,35 @@ import {HedgerSnapshot} from "../models"
 	styleUrl: './panel-home.component.scss',
 })
 export class PanelHomeComponent {
-	hedgerSnapshotsMaps = new Map<string, HedgerSnapshot>()
+	groups = [
+		{
+			label: 'Hedger Stats',
+			items: [],
+		},
+		{
+			label: 'Tools',
+			items: [
+				{
+					label: 'Quote Loader',
+					routerLink: '/home/tools/quote_loader',
+				},
+			],
+		},
+	]
 
 	constructor(readonly environmentService: EnvironmentService,
 				readonly loadingService: LoadingService,
-				readonly snapshotService: SnapshotService,
+				readonly router: Router,
 				@Inject(TuiAlertService) protected readonly alert: TuiAlertService) {
 		this.environmentService.selectedEnvironment.pipe(takeUntilDestroyed()).subscribe(env => {
-			combineLatest(env!.hedgers!.map(value => snapshotService.loadHedgerSnapshot(env!, value.name!)))
-				.subscribe((value: HedgerSnapshot[]) => {
-					for (const hedgerSnapshot of value)
-						this.hedgerSnapshotsMaps.set(hedgerSnapshot.name!, hedgerSnapshot)
-				})
+			router.navigate(['home'])
+			this.groups[0]['items'].splice(0, this.groups[0]['items'].length)
+			this.groups[0]['items'].push(...env!.hedgers!.map(value => {
+				return {
+					label: value.name!,
+					routerLink: `/home/hedger_stat/${value.name}`,
+				}
+			}))
 		})
 	}
 }
