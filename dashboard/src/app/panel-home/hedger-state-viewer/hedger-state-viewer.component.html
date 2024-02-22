@@ -10,6 +10,7 @@
             <span>Max Open Interest: {{ hedgerSnap?.max_open_interest | bigNumberFormat }}</span>
             <div class="separator"></div>
             <span>Days since launch: {{ daysSinceLaunch }}</span>
+            <span>Last snapshot: {{ hedgerSnap?.timestamp | timeAgo }}</span>
         </div>
     </tui-island>
     <tui-accordion class="container" [closeOthers]="false" *tuiLet="(hedgerSnapshot|async) as hedgerSnap">
