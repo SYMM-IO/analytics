@@ -2,14 +2,14 @@ import {Affiliate, EnvironmentInterface, Hedger} from "./environment-interface"
 
 
 export const alpha_v1: Affiliate = {
-    name: "Alpha Thena",
+    name: "Thena",
     mainColor: "#ED00C9",
     accountSource: "0x058Ba7574d8bC66F1a1DCc44bb5B18894D4190e0",
     fromTimestamp: null,
 }
 
 export const alpha_v2: Affiliate = {
-    name: "Alpha Thena",
+    name: "Thena",
     mainColor: "#ED00C9",
     accountSource: "0x75c539eFB5300234e5DaA684502735Fc3886e8b4",
     fromTimestamp: null,

@@ -36,6 +36,7 @@ import {BigNumberFormatPipe} from "./big-number-format.pipe"
 import {QuoteLoaderComponent} from "./panel-home/quote-loader/quote-loader.component"
 import {HedgerStateViewerComponent} from "./panel-home/hedger-state-viewer/hedger-state-viewer.component"
 import {AffiliateStateViewerComponent} from "./panel-home/affiliate-state-viewer/affiliate-state-viewer.component"
+import {TimeAgoPipe} from "./panel-home/hedger-state-viewer/timeAgo.pipe"
 
 @NgModule({
     declarations: [
@@ -49,6 +50,7 @@ import {AffiliateStateViewerComponent} from "./panel-home/affiliate-state-viewer
 		QuoteLoaderComponent,
 		HedgerStateViewerComponent,
 		AffiliateStateViewerComponent,
+		TimeAgoPipe
     ],
 	imports: [
 		BrowserModule,
