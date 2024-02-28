@@ -193,6 +193,7 @@ export class HedgerSnapshot {
 	binance_deposit?: BigNumber
 	binance_trade_volume?: BigNumber
 	paid_funding_rate?: BigNumber
+	received_funding_rate?: BigNumber
 	next_funding_rate?: BigNumber
 	binance_profit?: BigNumber
 	contract_profit?: BigNumber
@@ -226,6 +227,7 @@ export class HedgerSnapshot {
 		snapshot.binance_deposit = BigNumberOf(raw.binance_deposit)
 		snapshot.binance_trade_volume = BigNumberOf(raw.binance_trade_volume)
 		snapshot.paid_funding_rate = BigNumberOf(raw.paid_funding_rate)
+		snapshot.received_funding_rate = BigNumberOf(raw.received_funding_rate)
 		snapshot.next_funding_rate = BigNumberOf(raw.next_funding_rate)
 		snapshot.binance_profit = BigNumberOf(raw.binance_profit)
 		snapshot.contract_profit = BigNumberOf(raw.contract_profit)

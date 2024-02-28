@@ -14,7 +14,7 @@ from services.telegram_service import send_alert, escape_markdown_v1
 scheduler: BackgroundScheduler
 
 
-async def listener(event):
+def listener(event):
     global scheduler
     send_alert(
         escape_markdown_v1(
