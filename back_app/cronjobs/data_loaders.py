@@ -62,6 +62,7 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
             "closedAmount",
             "blockNumber",
             "avgClosedPrice",
+            "fundingPaid",
             "account",
             "liquidatedSide",
         ],

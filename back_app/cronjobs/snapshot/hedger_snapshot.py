@@ -9,7 +9,7 @@ from app.models import (
     BalanceChange,
     BalanceChangeType,
     BinanceIncome,
-    HedgerSnapshot,
+    HedgerSnapshot, Quote,
 )
 from config.settings import (
     Context,
@@ -107,6 +107,16 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
             BinanceIncome.amount < 0,
             BinanceIncome.type == "FUNDING_FEE",
             BinanceIncome.tenant == context.tenant,
+        ).scalar() or Decimal(
+            0
+        )
+
+        snapshot.received_funding_rate = Quote.select(
+            fn.Sum(Quote.fundingPaid)
+        ).where(
+            Quote.timestamp > from_time,
+            Quote.partyB > hedger_context.hedger_address,
+            Quote.tenant == context.tenant,
         ).scalar() or Decimal(
             0
         )
