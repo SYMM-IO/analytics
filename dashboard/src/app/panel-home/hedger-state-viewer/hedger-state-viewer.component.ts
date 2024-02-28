@@ -7,6 +7,7 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop"
 import {Hedger} from "../../../environments/environment-interface"
 import {combineLatest, Observable, tap} from "rxjs"
 import {map, switchMap} from "rxjs/operators"
+import BigNumber from "bignumber.js"
 
 @Component({
 	selector: 'hedger-state-viewer',
@@ -17,7 +18,7 @@ export class HedgerStateViewerComponent {
 	affiliateSnapshotsMaps = new Map<string, AffiliateSnapshot>()
 	hedger?: Hedger
 	hedgerSnapshot: Observable<HedgerSnapshot>
-	daysSinceLaunch?: number
+	daysSinceLaunch?: BigNumber
 
 	constructor(readonly environmentService: EnvironmentService,
 				readonly snapshotService: SnapshotService,
@@ -39,7 +40,7 @@ export class HedgerStateViewerComponent {
 					const millisecondsPerDay = 1000 * 60 * 60 * 24
 					const differenceInMilliseconds = Math.abs(now.getTime() - env.startDate!.getTime())
 					const differenceInDays = differenceInMilliseconds / millisecondsPerDay
-					this.daysSinceLaunch = Math.round(differenceInDays)
+					this.daysSinceLaunch = BigNumber(Math.round(differenceInDays))
 				}),
 				switchMap(value => {
 					let env = this.environmentService.selectedEnvironment.value!
