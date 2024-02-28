@@ -115,7 +115,7 @@ def prepare_hedger_snapshot(config, context: Context, hedger_context: HedgerCont
             fn.Sum(Quote.fundingPaid)
         ).where(
             Quote.timestamp > from_time,
-            Quote.partyB > hedger_context.hedger_address,
+            Quote.partyB == hedger_context.hedger_address,
             Quote.tenant == context.tenant,
         ).scalar() or Decimal(
             0
