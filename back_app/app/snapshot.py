@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 
 from apscheduler.events import EVENT_JOB_ERROR
@@ -7,7 +6,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from config.local_settings import contexts
 from config.settings import FETCH_DATA_INTERVAL
-from context.migrations import create_tables
 from cronjobs.snapshot.snapshot_job import fetch_snapshot
 from services.telegram_service import send_alert, escape_markdown_v1
 
@@ -51,5 +49,4 @@ def get_context():
 
 
 if __name__ == "__main__":
-    create_tables()
     create_scheduler()

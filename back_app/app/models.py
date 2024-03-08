@@ -1,75 +1,118 @@
 import json
 from datetime import datetime
-from decimal import Decimal
-from typing import List
-from dataclasses import dataclass
 
-from peewee import *
-from playhouse.postgres_ext import JSONField
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Numeric, Boolean, Text, Float, inspect
+from sqlalchemy.dialects.postgresql import JSON, insert
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship, Session
 
-from app import pg_db
-from config.settings import Context
-from services.snaphshot_service import get_last_affiliate_snapshot_for
+from cronjobs.subgraph_synchronizer import SubgraphSynchronizerConfig
+from utils.time_utils import convert_timestamps
+
+Base = declarative_base()
 
 
-class BaseModel(Model):
-    class Meta:
-        database = pg_db
+class BaseModel(Base):
+    __abstract__ = True
 
-    def upsert(self):
-        fields = self._meta.fields
-        data = {}
-        for name, field in fields.items():
-            data[field] = getattr(self, name)
-        self.insert(**self.__data__).on_conflict(
-            conflict_target=[
-                fields["timestamp"] if self.is_timeseries() else fields["id"]
-            ],
-            update=data,
-        ).execute()
+    def to_dict(self):
+        return { c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs }
 
-    @staticmethod
-    def is_timeseries():
-        return False
+    def upsert(self, session):
+        conflict_less_dict = self.to_dict()
+        if not conflict_less_dict[self.__pk_name__]:
+            del conflict_less_dict[self.__pk_name__]
+
+        insert_stmt = insert(self.__table__).values(
+            **conflict_less_dict
+        )
+        update_dict = self.to_dict()
+        do_update_stmt = insert_stmt.on_conflict_do_update(
+            index_elements=[self.__pk_name__],
+            set_=update_dict
+        )
+        session.execute(do_update_stmt)
+
+    def save(self, session: Session):
+        session.add(self)
 
 
 class User(BaseModel):
-    id = CharField(primary_key=True)
-    timestamp = DateTimeField()
-    transaction = CharField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
+    __tablename__ = 'user'
+    __is_timeseries__ = False
+    __pk_name__ = "id"
+    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+        method_name="users",
+        pagination_field="timestamp",
+        catch_up_field="timestamp",
+        converter=convert_timestamps
+    )
+    id = Column(String, primary_key=True)
+    timestamp = Column(DateTime)
+    transaction = Column(String)
+    tenant = Column(String, nullable=False)
+    accounts = relationship("Account", back_populates="user")
 
 
 class AdminUser(BaseModel):
-    username = CharField(primary_key=True)
-    password = CharField()
-    createTimestamp = DateTimeField(default=datetime.now())
-
-    @staticmethod
-    def is_timeseries():
-        return False
+    __tablename__ = 'admin_user'
+    __is_timeseries__ = False
+    __pk_name__ = "username"
+    username = Column(String, primary_key=True)
+    password = Column(String)
+    createTimestamp = Column(DateTime, default=datetime.now)
 
 
 class Account(BaseModel):
-    id = CharField(primary_key=True)
-    user = ForeignKeyField(User, backref="accounts")
-    name = CharField(null=True)
-    accountSource = CharField(null=True)
-    quotesCount = IntegerField()
-    positionsCount = IntegerField()
-    transaction = CharField()
-    lastActivityTimestamp = DateTimeField()
-    timestamp = DateTimeField()
-    updateTimestamp = DateTimeField()
-    tenant = CharField(null=False)
+    __tablename__ = 'account'
+    __is_timeseries__ = False
+    __pk_name__ = "id"
+    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+        method_name="accounts",
+        pagination_field="timestamp",
+        catch_up_field="updateTimestamp",
+        name_maps={
+            "user_id": "user"
+        }
+    )
+    id = Column(String, primary_key=True)
+    user = relationship("User", back_populates="accounts")
+    user_id = Column(String, ForeignKey('user.id'))
+    name = Column(String)
+    accountSource = Column(String)
+    quotesCount = Column(Integer)
+    positionsCount = Column(Integer)
+    transaction = Column(String)
+    lastActivityTimestamp = Column(DateTime)
+    timestamp = Column(DateTime)
+    updateTimestamp = Column(DateTime)
+    tenant = Column(String, nullable=False)
+    balanceChanges = relationship("BalanceChange", back_populates="account")
+    quotes = relationship("Quote", back_populates="account")
+    trade_histories = relationship("TradeHistory", back_populates="account")
 
-    @staticmethod
-    def is_timeseries():
-        return False
+
+class BalanceChange(BaseModel):
+    __tablename__ = 'balance_change'
+    __is_timeseries__ = False
+    __pk_name__ = "id"
+    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+        method_name="balanceChanges",
+        pagination_field="timestamp",
+        catch_up_field="timestamp",
+        name_maps={
+            "account_id": "account"
+        }
+    )
+    id = Column(String, primary_key=True)
+    account_id = Column(String, ForeignKey('account.id'))
+    account = relationship("Account", back_populates="balanceChanges")
+    amount = Column(Numeric(40, 0), default=0)
+    collateral = Column(String)
+    type = Column(String)
+    timestamp = Column(DateTime)
+    transaction = Column(String)
+    tenant = Column(String, nullable=False)
 
 
 class BalanceChangeType:
@@ -77,359 +120,245 @@ class BalanceChangeType:
     WITHDRAW = "WITHDRAW"
     ALLOCATE_PARTY_A = "ALLOCATE_PARTY_A"
     DEALLOCATE_PARTY_A = "DEALLOCATE_PARTY_A"
-    tenant = CharField(null=False)
-
-
-class BalanceChange(BaseModel):
-    id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref="balances")
-    amount = DecimalField(max_digits=40, decimal_places=0, default=0)
-    collateral = CharField()
-    type = CharField()
-    timestamp = DateTimeField()
-    transaction = CharField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
-
-
-class DepositPartyA(BaseModel):
-    id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref="deposits")
-    amount = DecimalField(max_digits=40, decimal_places=0)
-    blockNumber = IntegerField()
-    transaction = CharField()
-    timestamp = DateTimeField()
-    updateTimestamp = DateTimeField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
-
-
-class WithdrawPartyA(BaseModel):
-    id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref="withdraws")
-    amount = DecimalField(max_digits=40, decimal_places=0)
-    blockNumber = IntegerField()
-    transaction = CharField()
-    timestamp = DateTimeField()
-    updateTimestamp = DateTimeField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
-
-
-class AllocatedPartyA(BaseModel):
-    id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref="allocations")
-    amount = DecimalField(max_digits=40, decimal_places=0)
-    blockNumber = IntegerField()
-    transaction = CharField()
-    timestamp = DateTimeField()
-    updateTimestamp = DateTimeField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
-
-
-class DeallocatePartyA(BaseModel):
-    id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref="deallocations")
-    amount = DecimalField(max_digits=40, decimal_places=0)
-    blockNumber = IntegerField()
-    transaction = CharField()
-    timestamp = DateTimeField()
-    updateTimestamp = DateTimeField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
 
 
 class Symbol(BaseModel):
-    id = CharField(primary_key=True)
-    name = CharField()
-    tradingFee = DecimalField(max_digits=40, decimal_places=0)
-    timestamp = DateTimeField()
-    main_market = BooleanField(default=False)
-    updateTimestamp = DateTimeField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
+    __tablename__ = 'symbol'
+    __is_timeseries__ = False
+    __pk_name__ = "id"
+    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+        method_name="symbols",
+        pagination_field="timestamp",
+        catch_up_field="updateTimestamp",
+        tenant_needed_fields=["id"],
+        ignore_columns=["tenant", "main_market"]
+    )
+    id = Column(String, primary_key=True)
+    name = Column(String)
+    tradingFee = Column(Numeric(40, 0))
+    timestamp = Column(DateTime)
+    main_market = Column(Boolean, default=False)
+    updateTimestamp = Column(DateTime)
+    tenant = Column(String, nullable=False)
+    quotes = relationship("Quote", back_populates="symbol")
 
 
 class Quote(BaseModel):
-    id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref="quotes")
-    symbolId = ForeignKeyField(Symbol, backref="quotes")
-    partyBsWhiteList = TextField()
-    partyB = CharField(null=True)
-    positionType = CharField()
-    orderType = CharField()
-    collateral = CharField()
-    price = DecimalField(max_digits=40, decimal_places=0)
-    marketPrice = DecimalField(max_digits=40, decimal_places=0)
-    deadline = DecimalField(max_digits=40, decimal_places=0)
-    quantity = DecimalField(max_digits=40, decimal_places=0)
-    closedAmount = DecimalField(max_digits=40, decimal_places=0)
-    cva = DecimalField(max_digits=40, decimal_places=0)
-    partyAmm = DecimalField(max_digits=40, decimal_places=0)
-    partyBmm = DecimalField(max_digits=40, decimal_places=0)
-    lf = DecimalField(max_digits=40, decimal_places=0)
-    quoteStatus = CharField()
-    blockNumber = DecimalField(max_digits=40, decimal_places=0)
-    avgClosedPrice = DecimalField(max_digits=40, decimal_places=0)
-    openPrice = DecimalField(max_digits=40, decimal_places=0, null=True)
-    fundingPaid = DecimalField(max_digits=40, decimal_places=0, null=True)
-    liquidatedSide = CharField(null=True)
-    transaction = CharField()
-    timestamp = DateTimeField()
-    updateTimestamp = DateTimeField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
+    __tablename__ = 'quote'
+    __is_timeseries__ = False
+    __pk_name__ = "id"
+    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+        method_name="quotes",
+        pagination_field="timestamp",
+        catch_up_field="updateTimestamp",
+        tenant_needed_fields=["id", "symbolId"],
+        name_maps={
+            "account_id": "account",
+            "symbol_id": "symbolId"
+        }
+    )
+    id = Column(String, primary_key=True)
+    account_id = Column(String, ForeignKey('account.id'))
+    account = relationship("Account", back_populates="quotes")
+    symbol_id = Column(String, ForeignKey('symbol.id'))
+    symbol = relationship("Symbol", back_populates="quotes")
+    partyBsWhiteList = Column(Text)
+    partyB = Column(String)
+    positionType = Column(String)
+    orderType = Column(String)
+    collateral = Column(String)
+    price = Column(Numeric(40, 0))
+    marketPrice = Column(Numeric(40, 0))
+    deadline = Column(Numeric(40, 0))
+    quantity = Column(Numeric(40, 0))
+    closedAmount = Column(Numeric(40, 0))
+    cva = Column(Numeric(40, 0))
+    partyAmm = Column(Numeric(40, 0))
+    partyBmm = Column(Numeric(40, 0))
+    lf = Column(Numeric(40, 0))
+    quoteStatus = Column(Integer)
+    blockNumber = Column(Numeric(40, 0))
+    avgClosedPrice = Column(Numeric(40, 0))
+    openPrice = Column(Numeric(40, 0), nullable=True)
+    fundingPaid = Column(Numeric(40, 0), nullable=True)
+    liquidatedSide = Column(Integer, nullable=True)
+    transaction = Column(String)
+    timestamp = Column(DateTime)
+    updateTimestamp = Column(DateTime)
+    tenant = Column(String, nullable=False)
+    trade_histories = relationship("TradeHistory", back_populates="quote")
 
 
 class TradeHistory(BaseModel):
-    id = CharField(primary_key=True)
-    account = ForeignKeyField(Account, backref="trade_histories")
-    quote = ForeignKeyField(Quote, backref="quote_trade_histories")
-    volume = DecimalField(max_digits=40, decimal_places=0)
-    blockNumber = IntegerField()
-    transaction = CharField()
-    quoteStatus = CharField()
-    timestamp = DateTimeField()
-    updateTimestamp = DateTimeField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
+    __tablename__ = 'trade_history'
+    __is_timeseries__ = False
+    __pk_name__ = "id"
+    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+        method_name="tradeHistories",
+        pagination_field="timestamp",
+        catch_up_field="updateTimestamp",
+        tenant_needed_fields=["quote"],
+        name_maps={
+            "account_id": "account",
+            "quote_id": "quote"
+        }
+    )
+    id = Column(String, primary_key=True)
+    account_id = Column(String, ForeignKey('account.id'))
+    account = relationship("Account", back_populates="trade_histories")
+    quote_id = Column(String, ForeignKey('quote.id'))
+    quote = relationship("Quote", back_populates="trade_histories")
+    volume = Column(Numeric(40, 0))
+    blockNumber = Column(Integer)
+    transaction = Column(String)
+    quoteStatus = Column(Integer)
+    timestamp = Column(DateTime)
+    updateTimestamp = Column(DateTime)
+    tenant = Column(String, nullable=False)
 
 
 class DailyHistory(BaseModel):
-    id = CharField()
-    quotesCount = IntegerField()
-    newUsers = IntegerField()
-    accountSource = CharField(null=True)
-    newAccounts = IntegerField()
-    tradeVolume = DecimalField(max_digits=40, decimal_places=0)
-    deposit = DecimalField(max_digits=40, decimal_places=0)
-    withdraw = DecimalField(max_digits=40, decimal_places=0)
-    allocate = DecimalField(max_digits=40, decimal_places=0)
-    deallocate = DecimalField(max_digits=40, decimal_places=0)
-    platformFee = DecimalField(max_digits=40, decimal_places=0)
-    openInterest = DecimalField(max_digits=40, decimal_places=0)
-    updateTimestamp = DateTimeField()
-    timestamp = DateTimeField(primary_key=True)
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return True
+    __tablename__ = 'daily_history'
+    __is_timeseries__ = True
+    __pk_name__ = "timestamp"
+    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+        method_name="dailyHistories",
+        pagination_field="timestamp",
+        catch_up_field="updateTimestamp"
+    )
+    id = Column(String)
+    quotesCount = Column(Integer)
+    newUsers = Column(Integer)
+    accountSource = Column(String)
+    newAccounts = Column(Integer)
+    tradeVolume = Column(Numeric(40, 0))
+    deposit = Column(Numeric(40, 0))
+    withdraw = Column(Numeric(40, 0))
+    allocate = Column(Numeric(40, 0))
+    deallocate = Column(Numeric(40, 0))
+    platformFee = Column(Numeric(40, 0))
+    openInterest = Column(Numeric(40, 0))
+    updateTimestamp = Column(DateTime)
+    timestamp = Column(DateTime, primary_key=True)
+    tenant = Column(String, nullable=False)
 
 
 class RuntimeConfiguration(BaseModel):
-    name = CharField()
-    decimals = IntegerField()
-    migrationVersion = IntegerField(default=0)
-    lastSnapshotTimestamp = DateTimeField(default=datetime.fromtimestamp(0))
-    nextSnapshotTimestamp = DateTimeField(default=datetime.fromtimestamp(0))
-    deployTimestamp = DateTimeField()
-    tenant = CharField(null=False)
+    __tablename__ = 'runtime_configuration'
+    __is_timeseries__ = False
+    __pk_name__ = "name"
+    name = Column(String, primary_key=True)
+    decimals = Column(Integer)
+    lastSnapshotTimestamp = Column(DateTime, default=datetime.fromtimestamp(0))
+    nextSnapshotTimestamp = Column(DateTime, default=datetime.fromtimestamp(0))
+    deployTimestamp = Column(DateTime)
+    tenant = Column(String, nullable=False)
 
-    @staticmethod
-    def is_timeseries():
-        return False
-
-
-class PaidFundingRate(BaseModel):
-    symbol = CharField()
-    timestamp = DateTimeField()
-    amount = DecimalField(max_digits=40, decimal_places=0)
-    tenant = CharField(null=False)
+    def __repr__(self):
+        return f"{self.name}, {self.tenant}"
 
 
 class AffiliateSnapshot(BaseModel):
-    status_quotes = TextField()
-    pnl_of_closed = DecimalField(max_digits=40, decimal_places=0)
-    pnl_of_liquidated = DecimalField(max_digits=40, decimal_places=0)
-    closed_notional_value = DecimalField(max_digits=40, decimal_places=0)
-    liquidated_notional_value = DecimalField(max_digits=40, decimal_places=0)
-    opened_notional_value = DecimalField(max_digits=40, decimal_places=0)
-    earned_cva = DecimalField(max_digits=40, decimal_places=0)
-    loss_cva = DecimalField(max_digits=40, decimal_places=0)
-    hedger_contract_allocated = DecimalField(max_digits=40, decimal_places=0)
-    hedger_upnl = DecimalField(max_digits=40, decimal_places=0)
-    all_contract_deposit = DecimalField(max_digits=40, decimal_places=0)
-    all_contract_withdraw = DecimalField(max_digits=40, decimal_places=0)
-    platform_fee = DecimalField(max_digits=40, decimal_places=0, null=True)
-    accounts_count = IntegerField()
-    active_accounts = IntegerField()
-    users_count = IntegerField()
-    active_users = IntegerField()
-    liquidator_states = JSONField()
-    trade_volume = DecimalField(max_digits=40, decimal_places=0)
-    timestamp = DateTimeField(primary_key=True)
-    account_source = CharField(null=False)
-    name = CharField(null=False)
-    hedger_name = CharField(null=False)
-    tenant = CharField(null=False)
+    __tablename__ = 'affiliate_snapshot'
+    __is_timeseries__ = True
+    __pk_name__ = "timestamp"
+    status_quotes = Column(Text)
+    pnl_of_closed = Column(Numeric(40, 0))
+    pnl_of_liquidated = Column(Numeric(40, 0))
+    closed_notional_value = Column(Numeric(40, 0))
+    liquidated_notional_value = Column(Numeric(40, 0))
+    opened_notional_value = Column(Numeric(40, 0))
+    earned_cva = Column(Numeric(40, 0))
+    loss_cva = Column(Numeric(40, 0))
+    hedger_contract_allocated = Column(Numeric(40, 0))
+    hedger_upnl = Column(Numeric(40, 0))
+    all_contract_deposit = Column(Numeric(40, 0))
+    all_contract_withdraw = Column(Numeric(40, 0))
+    platform_fee = Column(Numeric(40, 0), nullable=True)
+    accounts_count = Column(Integer)
+    active_accounts = Column(Integer)
+    users_count = Column(Integer)
+    active_users = Column(Integer)
+    liquidator_states = Column(JSON)
+    trade_volume = Column(Numeric(40, 0))
+    timestamp = Column(DateTime, primary_key=True)
+    account_source = Column(String, nullable=False)
+    name = Column(String, nullable=False)
+    hedger_name = Column(String, nullable=False)
+    tenant = Column(String, nullable=False)
 
     def get_status_quotes(self):
         return json.loads(self.status_quotes.replace("'", '"'))
 
 
 class HedgerSnapshot(BaseModel):
-    hedger_contract_balance = DecimalField(max_digits=40, decimal_places=0)
-    hedger_contract_deposit = DecimalField(max_digits=40, decimal_places=0)
-    hedger_contract_withdraw = DecimalField(max_digits=40, decimal_places=0)
-    max_open_interest = DecimalField(max_digits=40, decimal_places=0, null=True)
-    binance_maintenance_margin = DecimalField(
-        max_digits=40, decimal_places=0, null=True
-    )
-    binance_total_balance = DecimalField(max_digits=40, decimal_places=0, null=True)
-    binance_account_health_ratio = DecimalField(
-        max_digits=40, decimal_places=0, null=True
-    )
-    binance_cross_upnl = DecimalField(max_digits=40, decimal_places=0, null=True)
-    binance_av_balance = DecimalField(max_digits=40, decimal_places=0, null=True)
-    binance_total_initial_margin = DecimalField(
-        max_digits=40, decimal_places=0, null=True
-    )
-    binance_max_withdraw_amount = DecimalField(
-        max_digits=40, decimal_places=0, null=True
-    )
-    binance_deposit = DecimalField(max_digits=40, decimal_places=0, null=True)
-    binance_trade_volume = DecimalField(max_digits=40, decimal_places=0, null=True)
-    paid_funding_rate = DecimalField(max_digits=40, decimal_places=0, null=True)
-    received_funding_rate = DecimalField(max_digits=40, decimal_places=0, null=True)
-    next_funding_rate = DecimalField(max_digits=40, decimal_places=0, null=True)
-    binance_profit = DecimalField(max_digits=40, decimal_places=0, null=True)
-    contract_profit = DecimalField(max_digits=40, decimal_places=0, null=True)
-    liquidators_profit = DecimalField(max_digits=40, decimal_places=0, null=True)
-    total_deposit = DecimalField(max_digits=40, decimal_places=0, null=True)
-    earned_cva = DecimalField(max_digits=40, decimal_places=0, null=True)
-    loss_cva = DecimalField(max_digits=40, decimal_places=0, null=True)
-    liquidators_balance = DecimalField(max_digits=40, decimal_places=0, null=True)
-    liquidators_withdraw = DecimalField(max_digits=40, decimal_places=0, null=True)
-    liquidators_allocated = DecimalField(max_digits=40, decimal_places=0, null=True)
-    name = CharField(null=False)
-    tenant = CharField(null=False)
-    timestamp = DateTimeField(primary_key=True)
-
-    @staticmethod
-    def is_timeseries():
-        return True
-
-
-class BinanceDeposit(BaseModel):
-    asset = CharField()
-    amount = FloatField()
-    status = IntegerField()
-    timestamp = DateTimeField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
-
-
-class BinanceWithdraw(BaseModel):
-    asset = CharField()
-    amount = FloatField()
-    status = IntegerField()
-    timestamp = DateTimeField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
-
-
-class BinanceTransfer(BaseModel):
-    asset = CharField()
-    amount = FloatField()
-    status = CharField()
-    frm = CharField()
-    to = CharField()
-    timestamp = DateTimeField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
+    __tablename__ = 'hedger_snapshot'
+    __is_timeseries__ = True
+    __pk_name__ = "timestamp"
+    hedger_contract_balance = Column(Numeric(40, 0))
+    hedger_contract_deposit = Column(Numeric(40, 0))
+    hedger_contract_withdraw = Column(Numeric(40, 0))
+    max_open_interest = Column(Numeric(40, 0), nullable=True)
+    binance_maintenance_margin = Column(Numeric(40, 0), nullable=True)
+    binance_total_balance = Column(Numeric(40, 0), nullable=True)
+    binance_account_health_ratio = Column(Numeric(40, 0), nullable=True)
+    binance_cross_upnl = Column(Numeric(40, 0), nullable=True)
+    binance_av_balance = Column(Numeric(40, 0), nullable=True)
+    binance_total_initial_margin = Column(Numeric(40, 0), nullable=True)
+    binance_max_withdraw_amount = Column(Numeric(40, 0), nullable=True)
+    binance_deposit = Column(Numeric(40, 0), nullable=True)
+    binance_trade_volume = Column(Numeric(40, 0), nullable=True)
+    paid_funding_rate = Column(Numeric(40, 0), nullable=True)
+    received_funding_rate = Column(Numeric(40, 0), nullable=True)
+    next_funding_rate = Column(Numeric(40, 0), nullable=True)
+    binance_profit = Column(Numeric(40, 0), nullable=True)
+    contract_profit = Column(Numeric(40, 0), nullable=True)
+    liquidators_profit = Column(Numeric(40, 0), nullable=True)
+    total_deposit = Column(Numeric(40, 0), nullable=True)
+    earned_cva = Column(Numeric(40, 0), nullable=True)
+    loss_cva = Column(Numeric(40, 0), nullable=True)
+    liquidators_balance = Column(Numeric(40, 0), nullable=True)
+    liquidators_withdraw = Column(Numeric(40, 0), nullable=True)
+    liquidators_allocated = Column(Numeric(40, 0), nullable=True)
+    name = Column(String, nullable=False)
+    tenant = Column(String, nullable=False)
+    timestamp = Column(DateTime, primary_key=True)
 
 
 class BinanceIncome(BaseModel):
-    asset = CharField()
-    type = CharField()
-    amount = FloatField()
-    timestamp = DateTimeField()
-    tenant = CharField(null=False)
-    hedger = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
+    __tablename__ = 'binance_income'
+    __is_timeseries__ = False
+    __pk_name__ = "id"
+    id = Column(Integer, primary_key=True)
+    asset = Column(String)
+    type = Column(String)
+    amount = Column(Float)
+    timestamp = Column(DateTime)
+    tenant = Column(String, nullable=False)
+    hedger = Column(String, nullable=False)
 
 
 class BinanceTrade(BaseModel):
-    symbol = CharField()
-    id = CharField(primary_key=True)
-    order_id = CharField()
-    side = CharField()
-    position_side = CharField()
-    qty = DecimalField(max_digits=20, decimal_places=6)
-    price = DecimalField(max_digits=20, decimal_places=6)
-    timestamp = DateTimeField()
-    tenant = CharField(null=False)
-    hedger = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
-
-
-class SymbolPrice(BaseModel):
-    symbol = CharField()
-    price = DecimalField(max_digits=20, decimal_places=6)
-    timestamp = DateTimeField()
-
-    @staticmethod
-    def is_timeseries():
-        return False
-
-
-class FundingRate(BaseModel):
-    symbol = CharField()
-    rate = DecimalField(max_digits=20, decimal_places=10)
-    timestamp = DateTimeField()
-
-    @staticmethod
-    def is_timeseries():
-        return False
+    __tablename__ = 'binance_trade'
+    __is_timeseries__ = False
+    __pk_name__ = "id"
+    id = Column(String, primary_key=True)
+    symbol = Column(String)
+    order_id = Column(String)
+    side = Column(String)
+    position_side = Column(String)
+    qty = Column(Numeric(20, 6))
+    price = Column(Numeric(20, 6))
+    timestamp = Column(DateTime)
+    tenant = Column(String, nullable=False)
+    hedger = Column(String, nullable=False)
 
 
 class StatsBotMessage(BaseModel):
-    message_id = IntegerField(unique=True)
-    timestamp = DateTimeField()
-    content = TextField()
-    tenant = CharField(null=False)
-
-    @staticmethod
-    def is_timeseries():
-        return False
+    __tablename__ = 'stats_bot_message'
+    __is_timeseries__ = False
+    __pk_name__ = "message_id"
+    message_id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime)
+    content = Column(Text)
+    tenant = Column(String, nullable=False)

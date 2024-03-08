@@ -3,7 +3,6 @@ import datetime
 
 from pyrogram import Client
 
-from app.models import StatsBotMessage
 from config.local_settings import (
     telegram_client_api_id,
     telegram_client_api_hash,
@@ -13,6 +12,7 @@ from config.settings import Context
 
 
 def store_message(context: Context, msg):
+    from app.models import StatsBotMessage
     messages = (
         StatsBotMessage.select()
         .where(StatsBotMessage.tenant == context.tenant)
