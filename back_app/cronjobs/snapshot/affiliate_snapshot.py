@@ -280,7 +280,6 @@ def prepare_affiliate_snapshot(
     snapshot.hedger_name = hedger_context.name
     snapshot.account_source = affiliate_context.symmio_multi_account
     snapshot.tenant = context.tenant
-    print(snapshot)
     affiliate_snapshot = AffiliateSnapshot(**snapshot)
     affiliate_snapshot.save(session)
     return affiliate_snapshot

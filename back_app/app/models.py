@@ -247,7 +247,8 @@ class RuntimeConfiguration(BaseModel):
     __tablename__ = 'runtime_configuration'
     __is_timeseries__ = False
     __pk_name__ = "name"
-    name = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
     decimals = Column(Integer)
     lastSnapshotTimestamp = Column(DateTime, default=datetime.fromtimestamp(0))
     nextSnapshotTimestamp = Column(DateTime, default=datetime.fromtimestamp(0))

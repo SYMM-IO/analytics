@@ -126,13 +126,14 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('timestamp')
     )
     op.create_table('runtime_configuration',
-    sa.Column('name', sa.String(), primary_key=True),
+    sa.Column('id', sa.Integer(), primary_key=True, autoincrement=True),
+    sa.Column('name', sa.String()),
     sa.Column('decimals', sa.Integer(), nullable=True),
     sa.Column('lastSnapshotTimestamp', sa.DateTime(), nullable=True),
     sa.Column('nextSnapshotTimestamp', sa.DateTime(), nullable=True),
     sa.Column('deployTimestamp', sa.DateTime(), nullable=True),
     sa.Column('tenant', sa.String(), nullable=False),
-    sa.PrimaryKeyConstraint('name')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('stats_bot_message',
     sa.Column('message_id', sa.Integer(), nullable=False),

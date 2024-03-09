@@ -42,8 +42,6 @@ def fetch_snapshot(context: Context):
         print(f"{context.tenant}: Data loaded...\nPreparing snapshot data...")
         for affiliate_context in context.affiliates:
             for hedger_context in context.hedgers:
-                prepare_affiliate_snapshot(
-                    config, context, session, affiliate_context, hedger_context
-                )
+                prepare_affiliate_snapshot(config, context, session, affiliate_context, hedger_context)
         for hedger_context in context.hedgers:
             prepare_hedger_snapshot(config, context, session, hedger_context)
