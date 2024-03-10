@@ -8,10 +8,16 @@ export const core: Affiliate = {
     fromTimestamp: "0",
 }
 
-export const hedger: Hedger = {
-    name: "Core_Hedger",
+export const intentX: Affiliate = {
+    name: "IntentX",
+    mainColor: "#F20C27",
+    accountSource: "0x083267D20Dbe6C2b0A83Bd0E601dC2299eD99015",
+    fromTimestamp: "0",
 }
 
+export const hedger: Hedger = {
+    name: "Blast_Hedger",
+}
 
 export const environment: EnvironmentInterface = {
     name: "BLAST_8_2",
@@ -21,6 +27,7 @@ export const environment: EnvironmentInterface = {
     startDate: new Date(1709897970000),
     affiliates: [
         core,
+        intentX
     ],
     hedgers: [
         hedger,

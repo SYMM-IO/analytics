@@ -74,10 +74,10 @@
             Users Balances
             <ng-template tuiAccordionItemContent>
                 <div>
-                    Deposit: {{ affiliateSnapshot?.all_contract_deposit | bigNumberFormat:decimals }}
+                    Deposit: {{ affiliateSnapshot?.all_contract_deposit | bigNumberFormat:18 }}
                 </div>
                 <div>
-                    Withdraw: {{ affiliateSnapshot?.all_contract_withdraw | bigNumberFormat:decimals }}
+                    Withdraw: {{ affiliateSnapshot?.all_contract_withdraw | bigNumberFormat:18 }}
                 </div>
             </ng-template>
         </tui-accordion-item>

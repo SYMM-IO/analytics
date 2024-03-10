@@ -192,9 +192,11 @@ export class HedgerSnapshot {
 	binance_max_withdraw_amount?: BigNumber
 	binance_deposit?: BigNumber
 	binance_trade_volume?: BigNumber
-	paid_funding_rate?: BigNumber
-	received_funding_rate?: BigNumber
-	next_funding_rate?: BigNumber
+	binance_paid_funding_fee?: BigNumber
+	binance_received_funding_fee?: BigNumber
+	users_paid_funding_fee?: BigNumber
+	users_received_funding_fee?: BigNumber
+	binance_next_funding_fee?: BigNumber
 	binance_profit?: BigNumber
 	contract_profit?: BigNumber
 	earned_cva?: BigNumber
@@ -207,8 +209,15 @@ export class HedgerSnapshot {
 	tenant?: string
 	timestamp?: string
 
-	total_state(): BigNumber {
+	totalState(): BigNumber {
 		return (this?.binance_profit || BigNumber(0)).plus(this!.contract_profit!)
+	}
+
+	fundingFeeProfit(): BigNumber {
+		return this.binance_received_funding_fee!
+			.plus(this.binance_paid_funding_fee!)
+			.plus(this.users_received_funding_fee!.dividedBy(new BigNumber(10).pow(18)))
+			.plus(this.users_paid_funding_fee!.dividedBy(new BigNumber(10).pow(18)))
 	}
 
 	static fromRawObject(raw: any): HedgerSnapshot {
@@ -226,9 +235,11 @@ export class HedgerSnapshot {
 		snapshot.binance_max_withdraw_amount = BigNumberOf(raw.binance_max_withdraw_amount)
 		snapshot.binance_deposit = BigNumberOf(raw.binance_deposit)
 		snapshot.binance_trade_volume = BigNumberOf(raw.binance_trade_volume)
-		snapshot.paid_funding_rate = BigNumberOf(raw.paid_funding_rate)
-		snapshot.received_funding_rate = BigNumberOf(raw.received_funding_rate)
-		snapshot.next_funding_rate = BigNumberOf(raw.next_funding_rate)
+		snapshot.binance_paid_funding_fee = BigNumberOf(raw.binance_paid_funding_fee)
+		snapshot.binance_received_funding_fee = BigNumberOf(raw.binance_received_funding_fee)
+		snapshot.users_paid_funding_fee = BigNumberOf(raw.users_paid_funding_fee)
+		snapshot.users_received_funding_fee = BigNumberOf(raw.users_received_funding_fee)
+		snapshot.binance_next_funding_fee = BigNumberOf(raw.binance_next_funding_fee)
 		snapshot.binance_profit = BigNumberOf(raw.binance_profit)
 		snapshot.contract_profit = BigNumberOf(raw.contract_profit)
 		snapshot.earned_cva = BigNumberOf(raw.earned_cva)

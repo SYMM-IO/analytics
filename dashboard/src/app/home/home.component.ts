@@ -126,10 +126,11 @@ export class HomeComponent implements OnInit {
 				let out: AffiliateHistory[] = []
 				for (let i = 0; i < affiliatesHistories.length; i++) {
 					const affiliateHistory = affiliatesHistories[i]
-					out.push({
-						affiliate: flatAffiliates[i],
-						histories: affiliateHistory,
-					})
+					if (affiliateHistory.length > 0)
+						out.push({
+							affiliate: flatAffiliates[i],
+							histories: affiliateHistory,
+						})
 				}
 				return out
 			}),
