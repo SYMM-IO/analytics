@@ -103,10 +103,9 @@ def prepare_hedger_snapshot(config, context: Context, session: Session, hedger_c
         #     fn.Sum(PaidFundingRate.amount)
         # ).where(PaidFundingRate.timestamp > from_time, PaidFundingRate.amount < 0).scalar() or Decimal(0)
 
-        snapshot.paid_funding_rate = session.execute(
+        snapshot.binance_paid_funding_fee = session.execute(
             select(func.coalesce(func.sum(BinanceIncome.amount), Decimal(0))).where(
                 and_(
-                    BinanceIncome.timestamp > from_time,
                     BinanceIncome.amount < 0,
                     BinanceIncome.type == "FUNDING_FEE",
                     BinanceIncome.tenant == context.tenant,
@@ -114,10 +113,28 @@ def prepare_hedger_snapshot(config, context: Context, session: Session, hedger_c
             )
         ).scalar_one()
 
-        snapshot.received_funding_rate = session.execute(
+        snapshot.binance_received_funding_fee = session.execute(
+            select(func.coalesce(func.sum(BinanceIncome.amount), Decimal(0))).where(
+                and_(
+                    BinanceIncome.amount > 0,
+                    BinanceIncome.type == "FUNDING_FEE",
+                    BinanceIncome.tenant == context.tenant,
+                )
+            )
+        ).scalar_one()
+
+        snapshot.users_paid_funding_fee = session.execute(
+            select(func.coalesce(func.sum(Quote.fundingReceived), Decimal(0))).where(
+                and_(
+                    Quote.partyB == hedger_context.hedger_address,
+                    Quote.tenant == context.tenant,
+                )
+            )
+        ).scalar_one()
+
+        snapshot.users_received_funding_fee = session.execute(
             select(func.coalesce(func.sum(Quote.fundingPaid), Decimal(0))).where(
                 and_(
-                    Quote.timestamp > from_time,
                     Quote.partyB == hedger_context.hedger_address,
                     Quote.tenant == context.tenant,
                 )
@@ -126,7 +143,7 @@ def prepare_hedger_snapshot(config, context: Context, session: Session, hedger_c
 
         positions = hedger_context.utils.binance_client.futures_position_information()
         open_positions = [p for p in positions if Decimal(p["notional"]) != 0]
-        next_funding_rate = 0
+        binance_next_funding_fee = 0
         for pos in open_positions:
             notional, symbol, side = (
                 Decimal(pos["notional"]),
@@ -135,9 +152,9 @@ def prepare_hedger_snapshot(config, context: Context, session: Session, hedger_c
             )
             funding_rate = pos["fundingRate"] = real_time_funding_rate(symbol=symbol)
             funding_rate_fee = -1 * notional * funding_rate
-            next_funding_rate += funding_rate_fee * 10 ** 18
+            binance_next_funding_fee += funding_rate_fee * 10 ** 18
 
-        snapshot.next_funding_rate = next_funding_rate
+        snapshot.binance_next_funding_fee = binance_next_funding_fee
 
     w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
     contract_multicallable = Multicallable(
