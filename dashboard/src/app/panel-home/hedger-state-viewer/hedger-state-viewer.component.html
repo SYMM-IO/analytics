@@ -1,22 +1,26 @@
 <div class="flex flex-row gap-2 align-items-start">
     <tui-island *tuiLet="(hedgerSnapshot|async) as hedgerSnap">
         <span class="tui-island__title">State</span>
-        <div class="flex flex-column gap-1 mt-2">
-            <span>Days since launch: {{ daysSinceLaunch }}</span>
-            <span>Total State : {{ hedgerSnap?.total_state() | bigNumberFormat }}</span>
-            <span>Binance Profit: {{ hedgerSnap?.binance_profit | bigNumberFormat }}</span>
-            <span>Contract Profit: {{ hedgerSnap?.contract_profit | bigNumberFormat }}</span>
-            <span>Liquidators Profit: {{ hedgerSnap?.liquidators_profit | bigNumberFormat }}</span>
-            <span>Liquidations Profit: {{ hedgerSnap?.earned_cva | bigNumberFormat }}</span>
-            <span>Paid Funding Rate: {{ hedgerSnap?.paid_funding_rate | bigNumberFormat:1 }}</span>
-            <span>Received Funding Rate: {{ hedgerSnap?.received_funding_rate | bigNumberFormat }}</span>
-            <span>Max Open Interest: {{ hedgerSnap?.max_open_interest | bigNumberFormat }}</span>
-            <div class="separator"></div>
-            <span>Total profit per day: {{ (hedgerSnap?.total_state()!.div(daysSinceLaunch!)) | bigNumberFormat }}</span>
-            <span>Total profit per day (including liquidator): {{ ((hedgerSnap?.total_state()!.plus(hedgerSnap?.liquidators_profit!))!.div(daysSinceLaunch!)) | bigNumberFormat }}</span>
-            <div class="separator"></div>
-            <span>Last snapshot: {{ hedgerSnap?.timestamp | timeAgo }}</span>
-        </div>
+        @if (hedgerSnap) {
+            <div class="flex flex-column gap-1 mt-2">
+                <span>Days since launch: {{ daysSinceLaunch }}</span>
+                <span>Total State : {{ hedgerSnap.totalState() | bigNumberFormat }}</span>
+                <span>Total State Including Liquidators: {{ hedgerSnap.totalState()!.plus(hedgerSnap.liquidators_profit!) | bigNumberFormat }}</span>
+                <span>Binance Profit: {{ hedgerSnap.binance_profit | bigNumberFormat }}</span>
+                <span>Contract Profit: {{ hedgerSnap.contract_profit | bigNumberFormat }}</span>
+                <span>Liquidators Profit: {{ hedgerSnap.liquidators_profit | bigNumberFormat }}</span>
+                <span>Liquidations Profit: {{ hedgerSnap.earned_cva | bigNumberFormat }}</span>
+                <span>FundingFee Profit: {{ hedgerSnap.fundingFeeProfit() | bigNumberFormat:0}}</span>
+                <span>Max Open Interest: {{ hedgerSnap.max_open_interest | bigNumberFormat }}</span>
+                <div class="separator"></div>
+                <span>Total profit per day: {{ (hedgerSnap.totalState()!.div(daysSinceLaunch!)) | bigNumberFormat }}</span>
+                <span>Total profit per day (including liquidators): {{ ((hedgerSnap.totalState()!.plus(hedgerSnap.liquidators_profit!))!.div(daysSinceLaunch!)) | bigNumberFormat }}</span>
+                <div class="separator"></div>
+                <span>Last snapshot: {{ hedgerSnap.timestamp | timeAgo }}</span>
+            </div>
+        } @else {
+            <span>Not Available</span>
+        }
     </tui-island>
     <tui-accordion class="container" [closeOthers]="false" *tuiLet="(hedgerSnapshot|async) as hedgerSnap">
         <tui-accordion-item>
@@ -72,10 +76,14 @@
 
         </tui-accordion-item>
         <tui-accordion-item>
-            Funding Rate
+            Funding Fee
             @if (hedgerSnap?.binance_maintenance_margin) {
                 <ng-template tuiAccordionItemContent>
-                    <div>Next Funding Rate: {{ hedgerSnap?.next_funding_rate | bigNumberFormat }}</div>
+                    <div>Hedger Paid To Binance: {{ hedgerSnap?.binance_paid_funding_fee | bigNumberFormat:0 }}</div>
+                    <div>Hedger Received from Binance: {{ hedgerSnap?.binance_received_funding_fee | bigNumberFormat:0 }}</div>
+                    <div>Hedger Paid To Users: {{ hedgerSnap?.users_paid_funding_fee | bigNumberFormat }}</div>
+                    <div>Hedger Received From Users: {{ hedgerSnap?.users_received_funding_fee | bigNumberFormat }}</div>
+                    <div>Binance Next Funding Fee: {{ hedgerSnap?.binance_next_funding_fee | bigNumberFormat }}</div>
                 </ng-template>
             } @else {
                 <ng-template tuiAccordionItemContent>

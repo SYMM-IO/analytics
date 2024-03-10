@@ -5,8 +5,10 @@ from fastapi.security import OAuth2PasswordBearer
 import jwt
 from passlib.context import CryptContext
 from passlib.exc import InvalidTokenError
+from sqlalchemy import select
 from starlette import status
 
+from app import db_session
 from app.exception_handlers import ErrorCodeResponse, ErrorInfoContainer
 from app.models import AdminUser
 from config.settings import ACCESS_TOKEN_EXPIRE_TIME, JWT_SECRET_KEY, JWT_ALGORITHM
@@ -17,7 +19,7 @@ reusable_oauth = OAuth2PasswordBearer(
 )
 
 
-def get_now_epoch():
+def get_now_epoch( ):
     return int(time.time())
 
 
@@ -64,8 +66,10 @@ async def get_current_user(token: str = Depends(reusable_oauth)):
     payload = decode_jwt_token(token)
     username: str = payload.get("username")
     try:
-        admin_user = AdminUser.get_by_id(username)
-        return admin_user
+        with db_session() as session:
+            admin_user = session.scalar(select(AdminUser).where(AdminUser.username == username))
+            session.expunge(admin_user)
+            return admin_user
     except:
         raise ErrorCodeResponse(
             error=ErrorInfoContainer.invalid_token,

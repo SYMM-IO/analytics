@@ -2,7 +2,8 @@ import time
 from datetime import datetime
 from decimal import Decimal
 
-from peewee import fn
+from sqlalchemy import select, func
+from sqlalchemy.orm import Session
 
 from app.models import BinanceTrade
 from config.settings import Context, HedgerContext
@@ -61,13 +62,16 @@ def fetch_and_save_all_trades(
 
 def calculate_binance_trade_volume(
     context: Context,
+    session: Session,
     hedger_context: HedgerContext,
 ):
     last_bt = (
-        BinanceTrade.select(BinanceTrade.timestamp)
-        .where(BinanceTrade.tenant == context.tenant)
-        .order_by(BinanceTrade.timestamp.desc())
-        .first()
+        session.scalar(
+            select(BinanceTrade.timestamp)
+            .where(BinanceTrade.tenant == context.tenant)
+            .order_by(BinanceTrade.timestamp.desc())
+            .limit(1)
+        )
     )
     if last_bt:
         start_time = datetime.timestamp(last_bt.timestamp) * 1000 + 1000
@@ -75,8 +79,8 @@ def calculate_binance_trade_volume(
         start_time = context.from_unix_timestamp
     fetch_and_save_all_trades(context, hedger_context, start_time)
     return (
-        BinanceTrade.select(fn.SUM(BinanceTrade.price * BinanceTrade.qty))
-        .where(BinanceTrade.tenant == context.tenant)
-        .scalar()
-        or 0
+        session.scalar(
+            select(func.coalesce(func.sum(BinanceTrade.price * BinanceTrade.qty), 0))
+            .where(BinanceTrade.tenant == context.tenant)
+        )
     )

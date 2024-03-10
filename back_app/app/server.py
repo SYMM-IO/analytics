@@ -8,7 +8,6 @@ from app.exception_handlers import ExceptionHandlers, ErrorCodeResponse
 from config.settings import (
     SERVER_PORT,
 )
-from context.migrations import create_tables
 from routers.auth_router import router as auth_router
 from routers.snapshot_router import router as snapshot_router
 from security.security_utils import get_current_user
@@ -19,7 +18,6 @@ from security.security_utils import get_current_user
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    create_tables()
     # global telegram_user_client
     # telegram_user_client = await setup_telegram_client()
     # await telegram_user_client.start()
@@ -49,8 +47,8 @@ app.include_router(auth_router)
 
 
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
+def read_root( ):
+    return { "Hello": "World" }
 
 
 if __name__ == "__main__":

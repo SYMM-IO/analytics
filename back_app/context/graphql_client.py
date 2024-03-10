@@ -2,6 +2,8 @@ import datetime
 from typing import List
 
 import requests
+from sqlalchemy import select, delete
+from sqlalchemy.orm import Session
 
 
 def is_int(s):
@@ -29,7 +31,7 @@ class Where:
 
 
 def aggregate_wheres(wheres: List[Where]):
-    filtered_dict = {}
+    filtered_dict = { }
     for where in wheres:
         key = f"{where.field}-{where.operator}"
         if key in filtered_dict:
@@ -80,7 +82,7 @@ class GraphQlClient:
                     }
                 }
         """
-        subgraph_query = {"query": query}
+        subgraph_query = { "query": query }
         response = requests.post(
             self.endpoint, json=subgraph_query, proxies=self.proxies
         )
@@ -99,6 +101,7 @@ class GraphQlClient:
 
     def load_all(
         self,
+        session: Session,
         create_function,
         model: "BaseModel",
         method: str,
@@ -108,8 +111,7 @@ class GraphQlClient:
         pagination_value=None,
         additional_conditions: List[Where] = None,
         page_limit: int = None,
-        load_from_database=True,
-        save_to_database=True,
+        include_database_data=True,
         context=None,
     ):
         from app.models import BaseModel
@@ -121,25 +123,20 @@ class GraphQlClient:
 
         if not additional_conditions:
             additional_conditions = []
-        limit = 1000
 
+        limit = 1000
         org_pagination_value = pagination_value
 
-        pagination_field = model._meta.fields[pagination_field_name_std]
+        pagination_field = getattr(model, pagination_field_name_std)
 
-        if load_from_database:
-            found_items = list(
-                model.select(pagination_field)
-                .order_by(pagination_field.desc())
-                .limit(1)
-            )
-
+        if include_database_data:
+            found_items = session.scalar(select(model).order_by(pagination_field.desc()).limit(1))
             if found_items:
                 found_pagination_value = getattr(
                     found_items[0], pagination_field_name_std
                 )
                 if isinstance(found_pagination_value, int) or is_int(
-                    found_pagination_value
+                        found_pagination_value
                 ):
                     pagination_value = max(
                         int(found_pagination_value),
@@ -157,14 +154,12 @@ class GraphQlClient:
                 else:
                     raise Exception("Unsupported pagination field")
 
-                model.delete().where(pagination_field == pagination_value)
+                session.execute(delete(model).where(pagination_field == pagination_value))
 
             if org_pagination_value:
-                yield model.select().where(
-                    pagination_field > org_pagination_value
-                ).order_by(pagination_field.asc())
+                yield session.scalars(select(model).where(pagination_field > org_pagination_value).order_by(pagination_field.asc()))
             else:
-                yield model.select().order_by(pagination_field.asc())
+                yield session.scalars(select(model).order_by(pagination_field.asc()))
 
         result = set()
         while page_limit is None or page_limit > 0:
@@ -201,10 +196,3 @@ class GraphQlClient:
                         is_done = True
             if is_done or len(temp) < limit:
                 break
-
-        if save_to_database:
-            from app import pg_db
-
-            with pg_db.atomic():
-                for res in result:
-                    res.upsert()

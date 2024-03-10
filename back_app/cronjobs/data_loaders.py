@@ -79,7 +79,7 @@ def load_quotes(config: RuntimeConfiguration, context: Context):
                 str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
         ],
-        load_from_database=True,
+        include_database_data=True,
         save_to_database=True,
         context=context,
     )
@@ -119,7 +119,7 @@ def load_trade_histories(config: RuntimeConfiguration, context: Context):
                 str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
         ],
-        load_from_database=False,
+        include_database_data=False,
         save_to_database=True,
         context=context,
     )
@@ -159,7 +159,7 @@ def load_accounts(config: RuntimeConfiguration, context: Context):
                 str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
         ],
-        load_from_database=False,
+        include_database_data=False,
         save_to_database=True,
         context=context,
     )
@@ -184,7 +184,7 @@ def load_balance_changes(config: RuntimeConfiguration, context: Context):
             "account",
         ],
         pagination_field_name="timestamp",
-        load_from_database=True,
+        include_database_data=True,
         save_to_database=True,
         context=context,
         additional_conditions=[
@@ -215,7 +215,7 @@ def load_users(config: RuntimeConfiguration, context: Context):
             "id",
         ],
         pagination_field_name="timestamp",
-        load_from_database=True,
+        include_database_data=True,
         save_to_database=True,
         context=context,
         additional_conditions=[
@@ -257,7 +257,7 @@ def load_symbols(config: RuntimeConfiguration, context: Context):
                 str(int(config.lastSnapshotTimestamp.timestamp())),
             )
         ],
-        load_from_database=False,
+        include_database_data=False,
         save_to_database=True,
         context=context,
     )
@@ -302,7 +302,7 @@ def load_daily_histories(config: RuntimeConfiguration, context: Context):
                 str(int(config.nextSnapshotTimestamp.timestamp())),
             ),
         ],
-        load_from_database=False,
+        include_database_data=False,
         save_to_database=True,
         context=context,
     )

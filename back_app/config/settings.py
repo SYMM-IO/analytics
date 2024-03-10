@@ -33,6 +33,7 @@ class AffiliateContext:
 @dataclass
 class Context:
     tenant: str
+    deploy_timestamp: int
     subgraph_endpoint: str
     rpc: str
     symmio_address: str
@@ -58,7 +59,7 @@ class Context:
         raise RuntimeError("Invalid Configuration")
 
 
-PROXIES = {}
+PROXIES = { }
 SERVER_PORT = 7231
 
 # Intervals
@@ -69,28 +70,6 @@ FUNDING_FETCH_DATA_INTERVAL = 30 * 60
 # Alerting system
 FUNDING_RATE_ALERT_THRESHOLD = 100
 CLOSABLE_FUNDING_RATE_ALERT_THRESHOLD = 100
-MAIN_MARKET_SYMBOLS = [
-    "BTCUSDT",
-    "ETHUSDT",
-    "BCHUSDT",
-    "XRPUSDT",
-    "EOSUSDT",
-    "LTCUSDT",
-    "TRXUSDT",
-    "ETCUSDT",
-    "LINKUSDT",
-    "XLMUSDT",
-    "ADAUSDT",
-    "XMRUSDT",
-    "DASHUSDT",
-    "ZECUSDT",
-    "XTZUSDT",
-    "BNBUSDT",
-    "ATOMUSDT",
-    "ONTUSDT",
-    "IOTAUSDT",
-    "BATUSDT",
-]
 
 # DB
 DB_NAME = "postgres"

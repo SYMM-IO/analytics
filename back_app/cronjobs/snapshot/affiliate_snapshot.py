@@ -1,9 +1,11 @@
+import json
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from sqlalchemy import func, and_, or_, select
 import web3
 from multicallable import Multicallable
-from peewee import fn
+from sqlalchemy.orm import Session, load_only, joinedload
 
 from app.models import (
     Account,
@@ -27,6 +29,7 @@ from utils.attr_dict import AttrDict
 def prepare_affiliate_snapshot(
     config,
     context: Context,
+    session: Session,
     affiliate_context: AffiliateContext,
     hedger_context: HedgerContext,
 ):
@@ -36,68 +39,72 @@ def prepare_affiliate_snapshot(
     from_time = datetime.fromtimestamp(context.from_unix_timestamp / 1000)
     snapshot = AttrDict()
 
-    snapshot.status_quotes = count_quotes_per_status(
-        affiliate_context, hedger_context, context, from_time
-    )
+    snapshot.status_quotes = json.dumps(count_quotes_per_status(
+        session, affiliate_context, hedger_context, context, from_time
+    ))
     snapshot.pnl_of_closed = calculate_pnl_of_hedger(
-        context, affiliate_context, hedger_context, 7, from_time
+        context, session, affiliate_context, hedger_context, 7, from_time
     )
     snapshot.pnl_of_liquidated = calculate_pnl_of_hedger(
-        context, affiliate_context, hedger_context, 8, from_time
+        context, session, affiliate_context, hedger_context, 8, from_time
     )
     snapshot.hedger_upnl, subgraph_open_quotes = calculate_hedger_upnl(
-        context, affiliate_context, hedger_context, from_time
+        context, session, affiliate_context, hedger_context, from_time
     )
     snapshot.closed_notional_value = calculate_notional_value(
-        context, affiliate_context, hedger_context, 7, from_time
+        context, session, affiliate_context, hedger_context, 7, from_time
     )
     snapshot.liquidated_notional_value = calculate_notional_value(
-        context, affiliate_context, hedger_context, 8, from_time
+        context, session, affiliate_context, hedger_context, 8, from_time
     )
     snapshot.opened_notional_value = calculate_notional_value(
-        context, affiliate_context, hedger_context, 4, from_time
+        context, session, affiliate_context, hedger_context, 4, from_time
     )
     # ------------------------------------------
+    snapshot.earned_cva = Decimal(
+        session.scalar(
+            select(func.sum(Quote.cva)).join(Account).where(
+                and_(
+                    Account.accountSource == affiliate_context.symmio_multi_account,
+                    Quote.partyB == hedger_context.hedger_address,
+                    Quote.quoteStatus == 8,
+                    Quote.liquidatedSide == 1,
+                    Quote.timestamp > from_time,
+                    Quote.tenant == context.tenant
+                )
+            )
+        ) or 0
+    )
 
-    snapshot.earned_cva = (
-        Quote.select(fn.Sum(Quote.cva))
-        .join(Account)
-        .where(
-            Account.accountSource == affiliate_context.symmio_multi_account,
-            Quote.partyB == hedger_context.hedger_address,
-            Quote.quoteStatus == 8,
-            Quote.liquidatedSide == 1,
-            Quote.timestamp > from_time,
-            Quote.tenant == context.tenant,
-        )
-        .scalar()
-    ) or Decimal(0)
-
-    snapshot.loss_cva = (
-        Quote.select(fn.Sum(Quote.cva))
-        .join(Account)
-        .where(
-            Account.accountSource == affiliate_context.symmio_multi_account,
-            Quote.partyB == hedger_context.hedger_address,
-            Quote.quoteStatus == 8,
-            Quote.liquidatedSide == 0,
-            Quote.timestamp > from_time,
-            Quote.tenant == context.tenant,
-        )
-        .scalar()
-    ) or Decimal(0)
+    snapshot.loss_cva = Decimal(
+        session.scalar(
+            select(func.sum(Quote.cva)).join(Account).where(
+                and_(
+                    Account.accountSource == affiliate_context.symmio_multi_account,
+                    Quote.partyB == hedger_context.hedger_address,
+                    Quote.quoteStatus == 8,
+                    Quote.liquidatedSide == 0,
+                    Quote.timestamp > from_time,
+                    Quote.tenant == context.tenant
+                )
+            )
+        ) or 0
+    )
 
     # ------------------------------------------
     w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
     contract_multicallable = Multicallable(
         w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, w3
     )
-    all_accounts = list(
-        Account.select(Account.id).where(
-            Account.accountSource == affiliate_context.symmio_multi_account,
-            Account.tenant == context.tenant,
+    all_accounts = session.execute(
+        select(Account.id).where(
+            and_(
+                Account.accountSource == affiliate_context.symmio_multi_account,
+                Account.tenant == context.tenant
+            )
         )
-    )
+    ).all()
+
     pages_count = len(all_accounts) // 100 if len(all_accounts) > 100 else 1
     hedger_addr = w3.to_checksum_address(hedger_context.hedger_address)
     snapshot.hedger_contract_allocated = Decimal(
@@ -108,31 +115,37 @@ def prepare_affiliate_snapshot(
         )
     )
 
-    all_accounts_deposit = BalanceChange.select(fn.Sum(BalanceChange.amount)).join(
-        Account
-    ).where(
-        Account.accountSource == affiliate_context.symmio_multi_account,
-        BalanceChange.type == BalanceChangeType.DEPOSIT,
-        BalanceChange.collateral == context.symmio_collateral_address,
-        BalanceChange.tenant == context.tenant,
-    ).scalar() or Decimal(
-        0
+    all_accounts_deposit = Decimal(
+        session.scalar(
+            select(func.sum(BalanceChange.amount))
+            .join(Account)
+            .where(
+                and_(
+                    Account.accountSource == affiliate_context.symmio_multi_account,
+                    BalanceChange.type == BalanceChangeType.DEPOSIT,
+                    BalanceChange.collateral == context.symmio_collateral_address,
+                    BalanceChange.tenant == context.tenant,
+                )
+            )
+        ) or 0
     )
     snapshot.all_contract_deposit = all_accounts_deposit * 10 ** (18 - config.decimals)
 
-    all_accounts_withdraw = BalanceChange.select(fn.Sum(BalanceChange.amount)).join(
-        Account
-    ).where(
-        Account.accountSource == affiliate_context.symmio_multi_account,
-        BalanceChange.type == BalanceChangeType.WITHDRAW,
-        BalanceChange.collateral == context.symmio_collateral_address,
-        BalanceChange.tenant == context.tenant,
-    ).scalar() or Decimal(
-        0
+    all_accounts_withdraw = Decimal(
+        session.scalar(
+            select(func.sum(BalanceChange.amount))
+            .join(Account)
+            .where(
+                and_(
+                    Account.accountSource == affiliate_context.symmio_multi_account,
+                    BalanceChange.type == BalanceChangeType.WITHDRAW,
+                    BalanceChange.collateral == context.symmio_collateral_address,
+                    BalanceChange.tenant == context.tenant,
+                )
+            )
+        ) or 0
     )
-    snapshot.all_contract_withdraw = all_accounts_withdraw * 10 ** (
-        18 - config.decimals
-    )
+    snapshot.all_contract_withdraw = all_accounts_withdraw * 10 ** (18 - config.decimals)
 
     ppp = contract_multicallable.getPartyAOpenPositions(
         [(w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]
@@ -145,8 +158,14 @@ def prepare_affiliate_snapshot(
             key = f"{context.tenant}_{quote[0]}-{quote[5]}-{quote[10]}-{quote[9]}"
             quote_id = f"{context.tenant}_{quote[0]}"
             if key not in subgraph_open_quotes:
-                db_quote = Quote.get_or_none(
-                    Quote.id == quote_id, Quote.tenant == context.tenant
+                db_quote = session.scalar(
+                    select(Quote)
+                    .where(
+                        and_(
+                            Quote.id == quote_id,
+                            Quote.tenant == context.tenant
+                        )
+                    )
                 )
                 if db_quote and db_quote.partyB != hedger_context.hedger_address:
                     continue
@@ -161,55 +180,64 @@ def prepare_affiliate_snapshot(
 
     # ------------------------------------------
 
-    snapshot.accounts_count = (
-        Account.select(fn.count(Account.id))
+    snapshot.accounts_count = session.scalar(
+        select(func.count(Account.id))
         .where(
-            Account.timestamp > from_time,
-            Account.accountSource == affiliate_context.symmio_multi_account,
-            Account.tenant == context.tenant,
+            and_(
+                Account.timestamp > from_time,
+                Account.accountSource == affiliate_context.symmio_multi_account,
+                Account.tenant == context.tenant,
+            )
         )
-        .scalar()
     ) or 0
     active_timestamp = datetime.utcnow() - timedelta(hours=48)
-    snapshot.active_accounts = (
-        Account.select(fn.count(Account.id))
+    snapshot.active_accounts = session.scalar(
+        select(func.count(Account.id))
         .where(
-            Account.accountSource == affiliate_context.symmio_multi_account,
-            Account.lastActivityTimestamp > active_timestamp,
-            Account.timestamp > from_time,
-            Account.tenant == context.tenant,
+            and_(
+                Account.accountSource == affiliate_context.symmio_multi_account,
+                Account.lastActivityTimestamp > active_timestamp,
+                Account.timestamp > from_time,
+                Account.tenant == context.tenant,
+            )
         )
-        .scalar()
     ) or 0
-    snapshot.users_count = (
-        Account.select(fn.COUNT(fn.DISTINCT(Account.user)))
+    snapshot.users_count = session.scalar(
+        select(func.count(func.distinct(Account.user_id)))
         .where(
-            Account.accountSource == affiliate_context.symmio_multi_account,
-            Account.timestamp > from_time,
-            Account.tenant == context.tenant,
+            and_(
+                Account.accountSource == affiliate_context.symmio_multi_account,
+                Account.timestamp > from_time,
+                Account.tenant == context.tenant,
+            )
         )
-        .scalar()
     ) or 0
-    snapshot.active_users = (
-        Account.select(fn.COUNT(fn.DISTINCT(Account.user)))
+    snapshot.active_users = session.scalar(
+        select(func.count(func.distinct(Account.user_id)))
         .where(
-            Account.accountSource == affiliate_context.symmio_multi_account,
-            Account.lastActivityTimestamp > active_timestamp,
-            Account.timestamp > from_time,
-            Account.tenant == context.tenant,
+            and_(
+                Account.accountSource == affiliate_context.symmio_multi_account,
+                Account.lastActivityTimestamp > active_timestamp,
+                Account.timestamp > from_time,
+                Account.tenant == context.tenant,
+            )
         )
-        .scalar()
     ) or 0
 
     # ------------------------------------------
 
     for liquidator in affiliate_context.symmio_liquidators:
-        account_withdraw = BalanceChange.select(fn.Sum(BalanceChange.amount)).where(
-            BalanceChange.collateral == context.symmio_collateral_address,
-            BalanceChange.type == BalanceChangeType.WITHDRAW,
-            BalanceChange.account == liquidator,
-            BalanceChange.tenant == context.tenant,
-        ).scalar() or Decimal(0)
+        account_withdraw = session.scalar(
+            select(func.sum(BalanceChange.amount))
+            .where(
+                and_(
+                    BalanceChange.collateral == context.symmio_collateral_address,
+                    BalanceChange.type == BalanceChangeType.WITHDRAW,
+                    BalanceChange.account_id == liquidator,
+                    BalanceChange.tenant == context.tenant,
+                )
+            )
+        ) or Decimal(0)
         liquidator_state = {
             "address": liquidator,
             "withdraw": int(account_withdraw) * 10 ** (18 - config.decimals),
@@ -225,24 +253,26 @@ def prepare_affiliate_snapshot(
         snapshot.liquidator_states.append(liquidator_state)
 
     # ------------------------------------------
-    snapshot.platform_fee = (
-        DailyHistory.select(fn.Sum(DailyHistory.platformFee))
+    snapshot.platform_fee = session.scalar(
+        select(func.sum(DailyHistory.platformFee))
         .where(
-            DailyHistory.timestamp > from_time,
-            DailyHistory.accountSource == affiliate_context.symmio_multi_account,
-            DailyHistory.tenant == context.tenant,
+            and_(
+                DailyHistory.timestamp > from_time,
+                DailyHistory.accountSource == affiliate_context.symmio_multi_account,
+                DailyHistory.tenant == context.tenant,
+            )
         )
-        .scalar()
     ) or 0
 
-    snapshot.trade_volume = (
-        DailyHistory.select(fn.Sum(DailyHistory.tradeVolume))
+    snapshot.trade_volume = session.scalar(
+        select(func.sum(DailyHistory.tradeVolume))
         .where(
-            DailyHistory.timestamp > from_time,
-            DailyHistory.accountSource == affiliate_context.symmio_multi_account,
-            DailyHistory.tenant == context.tenant,
+            and_(
+                DailyHistory.timestamp > from_time,
+                DailyHistory.accountSource == affiliate_context.symmio_multi_account,
+                DailyHistory.tenant == context.tenant,
+            )
         )
-        .scalar()
     ) or 0
 
     snapshot.timestamp = datetime.utcnow()
@@ -250,34 +280,38 @@ def prepare_affiliate_snapshot(
     snapshot.hedger_name = hedger_context.name
     snapshot.account_source = affiliate_context.symmio_multi_account
     snapshot.tenant = context.tenant
-    affiliate_snapshot = AffiliateSnapshot.create(**snapshot)
+    affiliate_snapshot = AffiliateSnapshot(**snapshot)
+    affiliate_snapshot.save(session)
     return affiliate_snapshot
 
 
 def calculate_notional_value(
     context,
+    session: Session,
     affiliate_context: AffiliateContext,
     hedger_context: HedgerContext,
     quote_status,
     from_time,
 ):
     return (
-        TradeHistory.select(fn.Sum(TradeHistory.volume))
-        .join(Account)
-        .join(Quote)
-        .where(
-            Account.accountSource == affiliate_context.symmio_multi_account,
-            TradeHistory.quoteStatus == quote_status,
-            Quote.partyB == hedger_context.hedger_address,
-            TradeHistory.timestamp > from_time,
-            TradeHistory.tenant == context.tenant,
-        )
-        .scalar()
-        or 0
+            session.scalar(
+                select(func.sum(TradeHistory.volume))
+                .join(Account)  # Implicitly joins TradeHistory to Account
+                .join(TradeHistory.quote)  # Assumes there's a relationship set on TradeHistory named 'quote' to join with Quote
+                .where(
+                    and_(
+                        Account.accountSource == affiliate_context.symmio_multi_account,
+                        TradeHistory.quoteStatus == quote_status,
+                        Quote.partyB == hedger_context.hedger_address,
+                        TradeHistory.timestamp > from_time,
+                        TradeHistory.tenant == context.tenant,
+                    )
+                )
+            ) or 0
     )
 
 
-def calculate_hedger_upnl(context, affiliate_context, hedger_context, from_time):
+def calculate_hedger_upnl(context, session: Session, affiliate_context, hedger_context, from_time):
     if hedger_context.utils.binance_client:
         prices = hedger_context.utils.binance_client.futures_mark_price()
     else:
@@ -285,64 +319,81 @@ def calculate_hedger_upnl(context, affiliate_context, hedger_context, from_time)
             0
         ].utils.binance_client.futures_mark_price()  # FIXME: Find a better way later
 
-    prices_map = {}
+    prices_map = { }
     for p in prices:
         prices_map[p["symbol"]] = p["markPrice"]
 
-    party_b_opened_quotes = (
-        Quote.select(
-            Quote.id,
-            Quote.quantity,
-            Quote.closedAmount,
-            Quote.openPrice,
-            Quote.positionType,
-            Symbol.name,
+    party_b_opened_quotes = session.scalars(
+        select(
+            Quote,
+        ).options(
+            joinedload(
+                Quote.symbol
+            ).load_only(Symbol.name),
+            load_only(
+                Quote.id,
+                Quote.quantity,
+                Quote.closedAmount,
+                Quote.openPrice,
+                Quote.positionType
+            )
         )
         .join(Symbol)
-        .switch(Quote)
         .join(Account)
         .where(
-            Account.accountSource == affiliate_context.symmio_multi_account,
-            Quote.timestamp > from_time,
-            Quote.partyB == hedger_context.hedger_address,
-            (
-                (Quote.quoteStatus == 4)
-                | (Quote.quoteStatus == 5)
-                | (Quote.quoteStatus == 6)
-            ),
-            Quote.tenant == context.tenant,
+            and_(
+                Account.accountSource == affiliate_context.symmio_multi_account,
+                Quote.timestamp > from_time,
+                Quote.partyB == hedger_context.hedger_address,
+                or_(
+                    Quote.quoteStatus == 4,
+                    Quote.quoteStatus == 5,
+                    Quote.quoteStatus == 6
+                ),
+                Quote.tenant == context.tenant,
+            )
         )
     )
+
     subgraph_open_quotes = []
     hedger_upnl = Decimal(0)
     for quote in party_b_opened_quotes:
         key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}"
         subgraph_open_quotes.append(key)
         side_sign = 1 if quote.positionType == "0" else -1
-        current_price = Decimal(prices_map[quote.symbolId.name]) * 10**18
+        current_price = Decimal(prices_map[quote.symbol.name]) * 10 ** 18
         hedger_upnl += (
-            side_sign
-            * (quote.openPrice - current_price)
-            * (quote.quantity - quote.closedAmount)
-            // 10**18
+                side_sign
+                * (quote.openPrice - current_price)
+                * (quote.quantity - quote.closedAmount)
+                // 10 ** 18
         )
     return hedger_upnl, subgraph_open_quotes
 
 
 def calculate_pnl_of_hedger(
-    context, affiliate_context, hedger_context, quote_status, from_time
+    context, session: Session, affiliate_context, hedger_context, quote_status, from_time
 ):
-    party_b_quotes = (
-        Quote.select(
-            Quote.quantity, Quote.avgClosedPrice, Quote.openPrice, Quote.positionType
+    party_b_quotes = session.scalars(
+        select(
+            Quote
+        ).options(
+            load_only(
+                Quote.quantity,
+                Quote.avgClosedPrice,
+                Quote.openPrice,
+                Quote.positionType
+            )
         )
         .join(Account)
         .where(
-            Account.accountSource == affiliate_context.symmio_multi_account,
-            Quote.partyB == hedger_context.hedger_address,
-            Quote.quoteStatus == quote_status,
-            Quote.timestamp > from_time,
-            Quote.tenant == context.tenant,
+            and_(
+                Account.accountSource == affiliate_context.symmio_multi_account,
+                Quote.partyB == hedger_context.hedger_address,
+                Quote.quoteStatus == quote_status,
+                Quote.timestamp > from_time,
+                Quote.tenant == context.tenant,
+            )
         )
     )
     pnl = Decimal(0)
@@ -351,32 +402,37 @@ def calculate_pnl_of_hedger(
             pnl -= Decimal(
                 int(quote.quantity)
                 * (int(quote.avgClosedPrice) - int(quote.openPrice))
-                / 10**18
+                / 10 ** 18
             )
         else:
             pnl -= Decimal(
                 int(quote.quantity)
                 * (int(quote.openPrice) - int(quote.avgClosedPrice))
-                / 10**18
+                / 10 ** 18
             )
     return pnl
 
 
 def count_quotes_per_status(
-    affiliate_context, hedger_context: HedgerContext, context, from_time
+    session: Session, affiliate_context, hedger_context: HedgerContext, context, from_time
 ):
-    q_counts = (
-        Quote.select(Quote.quoteStatus, fn.Count(Quote.id).alias("count"))
+    q_counts = session.execute(
+        select(
+            Quote.quoteStatus,
+            func.count(Quote.id).label("count")
+        )
         .join(Account)
         .where(
-            Quote.timestamp > from_time,
-            Account.accountSource == affiliate_context.symmio_multi_account,
-            Quote.tenant == context.tenant,
-            Quote.partyB == hedger_context.hedger_address,
+            and_(
+                Quote.timestamp > from_time,
+                Account.accountSource == affiliate_context.symmio_multi_account,
+                Quote.tenant == context.tenant,
+                Quote.partyB == hedger_context.hedger_address,
+            )
         )
         .group_by(Quote.quoteStatus)
-    )
-    status_quotes = {}
+    ).all()
+    status_quotes = { }
     for item in q_counts:
-        status_quotes[item.quoteStatus] = item.count
+        status_quotes[item[0]] = item[1]
     return status_quotes

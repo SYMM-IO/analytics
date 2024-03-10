@@ -1,9 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter
-from fastapi import Depends, status
+from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
+from app import get_db_session
 from app.exception_handlers import ErrorCodeResponse, ErrorInfoContainer
 from app.models import AdminUser
 from security.security_utils import (
@@ -16,14 +18,14 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = AdminUser.get_or_none(AdminUser.username == form_data.username)
+async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_db_session)):
+    user = session.scalar(select(AdminUser).where(AdminUser.username == form_data.username))
     if not user or not verify_password(form_data.password, user.password):
         raise ErrorCodeResponse(
             error=ErrorInfoContainer.incorrect_username_password,
             status_code=status.HTTP_400_BAD_REQUEST,
         )
-    return {"access_token": get_jwt_token(user.username)}
+    return { "access_token": get_jwt_token(user.username) }
 
 
 @router.get("/me")
