@@ -94,30 +94,6 @@ export class TotalHistory {
 		dailyHistory.accountSource = raw.accountSource
 		return dailyHistory
 	}
-
-	static emtpyOne(timestamp: string, accountSource = ""): TotalHistory {
-		const dailyHistory = new TotalHistory()
-		dailyHistory.id = timestamp + "_"
-		dailyHistory.quotesCount = BigNumber(0)
-		dailyHistory.tradeVolume = BigNumber(0)
-		dailyHistory.deposit = BigNumber(0)
-		dailyHistory.withdraw = BigNumber(0)
-		dailyHistory.allocate = BigNumber(0)
-		dailyHistory.deallocate = BigNumber(0)
-		dailyHistory.users = BigNumber(0)
-		dailyHistory.activeUsers = BigNumber(0)
-		dailyHistory.accounts = BigNumber(0)
-		dailyHistory.platformFee = BigNumber(0)
-		dailyHistory.openInterest = BigNumber(0)
-		dailyHistory.accountSource = accountSource
-		return dailyHistory
-	}
-
-	public static getTime(dh: DailyHistory): number | null {
-		if (dh.id != null)
-			return Number(dh.id?.split("_")[0])
-		return null
-	}
 }
 
 
@@ -213,11 +189,27 @@ export class HedgerSnapshot {
 		return (this?.binance_profit || BigNumber(0)).plus(this!.contract_profit!)
 	}
 
+	totalStateWithLiquidator(): BigNumber {
+		return this.totalState().plus(this.liquidators_profit!)
+	}
+
 	fundingFeeProfit(): BigNumber {
-		return this.binance_received_funding_fee!
-			.plus(this.binance_paid_funding_fee!)
-			.plus(this.users_received_funding_fee!.dividedBy(new BigNumber(10).pow(18)))
-			.plus(this.users_paid_funding_fee!.dividedBy(new BigNumber(10).pow(18)))
+		return (this.binance_received_funding_fee || BigNumber(0))
+			.plus(this.binance_paid_funding_fee || BigNumber(0))
+			.plus((this.users_received_funding_fee || BigNumber(0)).dividedBy(new BigNumber(10).pow(18)))
+			.plus((this.users_paid_funding_fee || BigNumber(0)).dividedBy(new BigNumber(10).pow(18)))
+	}
+
+	returnOnInvestment(): BigNumber {
+		return this.totalState()
+			.div((this.binance_deposit || BigNumber(0)).plus(this.hedger_contract_deposit!))
+			.multipliedBy(100)
+	}
+
+	returnOnInvestmentWithLiquidator(): BigNumber {
+		return this.totalStateWithLiquidator()
+			.div((this.binance_deposit || BigNumber(0)).plus(this.hedger_contract_deposit!))
+			.multipliedBy(100)
 	}
 
 	static fromRawObject(raw: any): HedgerSnapshot {

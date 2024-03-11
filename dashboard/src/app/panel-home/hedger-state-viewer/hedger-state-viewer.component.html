@@ -4,22 +4,27 @@
         @if (hedgerSnap) {
             <div class="flex flex-column gap-1 mt-2">
                 <span>Days since launch: {{ daysSinceLaunch }}</span>
-                <span>Total State : {{ hedgerSnap.totalState() | bigNumberFormat }}</span>
+                <span>Total State: {{ hedgerSnap.totalState() | bigNumberFormat }}</span>
                 <span>Total State Including Liquidators: {{ hedgerSnap.totalState()!.plus(hedgerSnap.liquidators_profit!) | bigNumberFormat }}</span>
                 <span>Binance Profit: {{ hedgerSnap.binance_profit | bigNumberFormat }}</span>
                 <span>Contract Profit: {{ hedgerSnap.contract_profit | bigNumberFormat }}</span>
                 <span>Liquidators Profit: {{ hedgerSnap.liquidators_profit | bigNumberFormat }}</span>
                 <span>Liquidations Profit: {{ hedgerSnap.earned_cva | bigNumberFormat }}</span>
-                <span>FundingFee Profit: {{ hedgerSnap.fundingFeeProfit() | bigNumberFormat:0}}</span>
+                <span>FundingFee Profit: {{ hedgerSnap.fundingFeeProfit() | bigNumberFormat:0 }}</span>
                 <span>Max Open Interest: {{ hedgerSnap.max_open_interest | bigNumberFormat }}</span>
-                <div class="separator"></div>
-                <span>Total profit per day: {{ (hedgerSnap.totalState()!.div(daysSinceLaunch!)) | bigNumberFormat }}</span>
-                <span>Total profit per day (including liquidators): {{ ((hedgerSnap.totalState()!.plus(hedgerSnap.liquidators_profit!))!.div(daysSinceLaunch!)) | bigNumberFormat }}</span>
+                @if (hedgerSnap.binance_deposit) {
+                    <div class="separator"></div>
+                    <span>Total profit per day: {{ (hedgerSnap.totalState()!.div(daysSinceLaunch!)) | bigNumberFormat }}</span>
+                    <span>Total profit per day (including liquidators): {{ ((hedgerSnap.totalState()!.plus(hedgerSnap.liquidators_profit!))!.div(daysSinceLaunch!)) | bigNumberFormat }}</span>
+                    <div class="separator"></div>
+                    <span>Return on Investment: {{ hedgerSnap.returnOnInvestment() | bigNumberFormat:0 }}%</span>
+                    <span>Return on Investment (including liquidators): {{ hedgerSnap.returnOnInvestmentWithLiquidator() | bigNumberFormat:0 }}%</span>
+                }
                 <div class="separator"></div>
                 <span>Last snapshot: {{ hedgerSnap.timestamp | timeAgo }}</span>
             </div>
         } @else {
-            <span>Not Available</span>
+            <div>Not Available</div>
         }
     </tui-island>
     <tui-accordion class="container" [closeOthers]="false" *tuiLet="(hedgerSnapshot|async) as hedgerSnap">
