@@ -26,10 +26,10 @@ from utils.attr_dict import AttrDict
 
 def prepare_hedger_snapshot(config, context: Context, session: Session, hedger_context: HedgerContext):
     print(f"----------------Prepare Hedger Snapshot Of {hedger_context.name}")
-    from_time = datetime.fromtimestamp(context.from_unix_timestamp / 1000)
+    has_binance_data = hedger_context.utils.binance_client is not None
 
     snapshot = AttrDict()
-    if hedger_context.utils.binance_client:
+    if has_binance_data:
         transfer_sum = session.execute(
             select(func.coalesce(func.sum(BinanceIncome.amount), 0)).where(
                 and_(
@@ -123,24 +123,6 @@ def prepare_hedger_snapshot(config, context: Context, session: Session, hedger_c
             )
         ).scalar_one()
 
-        snapshot.users_paid_funding_fee = session.execute(
-            select(func.coalesce(func.sum(Quote.fundingReceived), Decimal(0))).where(
-                and_(
-                    Quote.partyB == hedger_context.hedger_address,
-                    Quote.tenant == context.tenant,
-                )
-            )
-        ).scalar_one()
-
-        snapshot.users_received_funding_fee = session.execute(
-            select(func.coalesce(func.sum(Quote.fundingPaid), Decimal(0))).where(
-                and_(
-                    Quote.partyB == hedger_context.hedger_address,
-                    Quote.tenant == context.tenant,
-                )
-            )
-        ).scalar_one()
-
         positions = hedger_context.utils.binance_client.futures_position_information()
         open_positions = [p for p in positions if Decimal(p["notional"]) != 0]
         binance_next_funding_fee = 0
@@ -156,10 +138,26 @@ def prepare_hedger_snapshot(config, context: Context, session: Session, hedger_c
 
         snapshot.binance_next_funding_fee = binance_next_funding_fee
 
+    snapshot.users_paid_funding_fee = session.execute(
+        select(func.coalesce(func.sum(Quote.fundingReceived), Decimal(0))).where(
+            and_(
+                Quote.partyB == hedger_context.hedger_address,
+                Quote.tenant == context.tenant,
+            )
+        )
+    ).scalar_one()
+
+    snapshot.users_received_funding_fee = session.execute(
+        select(func.coalesce(func.sum(Quote.fundingPaid), Decimal(0))).where(
+            and_(
+                Quote.partyB == hedger_context.hedger_address,
+                Quote.tenant == context.tenant,
+            )
+        )
+    ).scalar_one()
+
     w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
-    contract_multicallable = Multicallable(
-        w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, w3
-    )
+    contract_multicallable = Multicallable(w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, w3)
 
     snapshot.hedger_contract_balance = contract_multicallable.balanceOf(
         [w3.to_checksum_address(hedger_context.hedger_address)]
@@ -176,10 +174,7 @@ def prepare_hedger_snapshot(config, context: Context, session: Session, hedger_c
         )
     ).scalar_one()
 
-    snapshot.hedger_contract_deposit = (
-            hedger_deposit * 10 ** (18 - config.decimals)
-            + hedger_context.contract_deposit_diff
-    )
+    snapshot.hedger_contract_deposit = hedger_deposit * 10 ** (18 - config.decimals) + hedger_context.contract_deposit_diff
 
     hedger_withdraw = session.execute(
         select(func.coalesce(func.sum(BalanceChange.amount), Decimal(0))).where(
@@ -196,9 +191,7 @@ def prepare_hedger_snapshot(config, context: Context, session: Session, hedger_c
 
     affiliates_snapshots = []
     for affiliate in context.affiliates:
-        s = get_last_affiliate_snapshot_for(
-            context, session, affiliate.name, hedger_context.name
-        )
+        s = get_last_affiliate_snapshot_for(context, session, affiliate.name, hedger_context.name)
         if s:
             affiliates_snapshots.append(s)
 
@@ -210,14 +203,10 @@ def prepare_hedger_snapshot(config, context: Context, session: Session, hedger_c
             + snapshot.hedger_contract_withdraw
     )
 
-    if "binance_deposit" in snapshot:
-        snapshot.binance_profit = snapshot.binance_total_balance - (
-                snapshot.binance_deposit or Decimal(0)
-        )
+    if has_binance_data:
+        snapshot.binance_profit = snapshot.binance_total_balance - (snapshot.binance_deposit or Decimal(0))
 
-    snapshot.earned_cva = sum(
-        [snapshot.earned_cva for snapshot in affiliates_snapshots]
-    )
+    snapshot.earned_cva = sum([snapshot.earned_cva for snapshot in affiliates_snapshots])
     snapshot.loss_cva = sum([snapshot.loss_cva for snapshot in affiliates_snapshots])
 
     snapshot.liquidators_balance = Decimal(0)
