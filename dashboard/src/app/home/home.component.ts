@@ -148,11 +148,17 @@ export class HomeComponent implements OnInit {
 				for (const affiliateHistory of affiliateHistories) {
 					const affiliate = affiliateHistory.affiliate.name!
 					if (map.has(affiliate)) {
+						let aggregated_source = `${affiliateHistory.histories[0]}-${map.get(affiliate)!.histories[0]}`
 						for (let i = 0; i < affiliateHistory.histories.length; i++) {
 							map.get(affiliate)!.histories[i] = aggregateDailyHistories([
 								affiliateHistory.histories[i], map.get(affiliate)!.histories[i],
 							], this.decimalsMap)
 						}
+						this.decimalsMap.set(aggregated_source, 18)
+						map.get(affiliate)!.histories = map.get(affiliate)!.histories.map(value => {
+							value.accountSource = aggregated_source
+							return value
+						})
 					} else {
 						map.set(affiliate, affiliateHistory)
 					}
