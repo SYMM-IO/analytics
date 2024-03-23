@@ -31,7 +31,7 @@ class Where:
 
 
 def aggregate_wheres(wheres: List[Where]):
-    filtered_dict = { }
+    filtered_dict = {}
     for where in wheres:
         key = f"{where.field}-{where.operator}"
         if key in filtered_dict:
@@ -62,7 +62,7 @@ class GraphQlClient:
         wheres = aggregate_wheres([w for w in wheres if not w.is_empty()])
         where_str = ""
         if len(wheres) > 0:
-            where_str += f"where: "
+            where_str += "where: "
             where_str += f"{{ {', '.join([str(w) for w in wheres])}  }}"
 
         log_prefix = f"{context.tenant}: " if context else ""
@@ -82,20 +82,15 @@ class GraphQlClient:
                     }
                 }
         """
-        subgraph_query = { "query": query }
-        response = requests.post(
-            self.endpoint, json=subgraph_query, proxies=self.proxies
-        )
+        subgraph_query = {"query": query}
+        response = requests.post(self.endpoint, json=subgraph_query, proxies=self.proxies)
         items = []
         if response:
             if "data" in response.json():
                 for data in response.json()["data"][method]:
                     items.append(create_function(data))
             elif "errors" in response.json():
-                raise Exception(
-                    f"{log_prefix}Failed to load data from subgraph "
-                    + str(response.json())
-                )
+                raise Exception(f"{log_prefix}Failed to load data from subgraph " + str(response.json()))
 
         return items
 
@@ -103,7 +98,7 @@ class GraphQlClient:
         self,
         session: Session,
         create_function,
-        model: "BaseModel",
+        model,
         method: str,
         fields: List[str],
         pagination_field_name: str,
@@ -132,12 +127,8 @@ class GraphQlClient:
         if include_database_data:
             found_items = session.scalar(select(model).order_by(pagination_field.desc()).limit(1))
             if found_items:
-                found_pagination_value = getattr(
-                    found_items[0], pagination_field_name_std
-                )
-                if isinstance(found_pagination_value, int) or is_int(
-                        found_pagination_value
-                ):
+                found_pagination_value = getattr(found_items[0], pagination_field_name_std)
+                if isinstance(found_pagination_value, int) or is_int(found_pagination_value):
                     pagination_value = max(
                         int(found_pagination_value),
                         int(pagination_value) if pagination_value else 0,
@@ -146,11 +137,7 @@ class GraphQlClient:
                     if pagination_value:
                         if not isinstance(pagination_value, datetime.datetime):
                             raise Exception("Invalid last where value")
-                        pagination_value = (
-                            found_pagination_value
-                            if found_pagination_value > pagination_value
-                            else pagination_value
-                        )
+                        pagination_value = found_pagination_value if found_pagination_value > pagination_value else pagination_value
                 else:
                     raise Exception("Unsupported pagination field")
 
@@ -175,12 +162,7 @@ class GraphQlClient:
                 method,
                 fields,
                 limit,
-                (
-                    [Where(pagination_field_name, "gte", formatted_pv)]
-                    if formatted_pv
-                    else []
-                )
-                + additional_conditions,
+                ([Where(pagination_field_name, "gte", formatted_pv)] if formatted_pv else []) + additional_conditions,
                 pagination_field_name,
                 context=context,
             )

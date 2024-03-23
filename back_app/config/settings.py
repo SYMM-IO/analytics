@@ -59,12 +59,12 @@ class Context:
         raise RuntimeError("Invalid Configuration")
 
 
-PROXIES = { }
+PROXIES = {}
 SERVER_PORT = 7231
 
 # Intervals
-FETCH_STAT_DATA_INTERVAL = 2 * 59
-FETCH_DATA_INTERVAL = 2 * 60
+FETCH_STAT_DATA_INTERVAL = 2 * 9
+FETCH_DATA_INTERVAL = 2 * 10
 FUNDING_FETCH_DATA_INTERVAL = 30 * 60
 
 # Alerting system

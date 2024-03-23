@@ -16,7 +16,7 @@ def create_admin_user(username, password):
         print("An admin user with this username already exists.")
 
 
-def main( ):
+def main():
     print("Create a new admin user")
     username = input("Username: ")
     password = getpass("Password: ")

@@ -1,7 +1,18 @@
 import json
 from datetime import datetime
 
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, Numeric, Boolean, Text, Float, inspect
+from sqlalchemy import (
+    Column,
+    ForeignKey,
+    Integer,
+    String,
+    DateTime,
+    Numeric,
+    Boolean,
+    Text,
+    Float,
+    inspect,
+)
 from sqlalchemy.dialects.postgresql import JSON, insert
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, Session
@@ -16,21 +27,16 @@ class BaseModel(Base):
     __abstract__ = True
 
     def to_dict(self):
-        return { c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs }
+        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
 
     def upsert(self, session):
         conflict_less_dict = self.to_dict()
         if not conflict_less_dict[self.__pk_name__]:
             del conflict_less_dict[self.__pk_name__]
 
-        insert_stmt = insert(self.__table__).values(
-            **conflict_less_dict
-        )
+        insert_stmt = insert(self.__table__).values(**conflict_less_dict)
         update_dict = self.to_dict()
-        do_update_stmt = insert_stmt.on_conflict_do_update(
-            index_elements=[self.__pk_name__],
-            set_=update_dict
-        )
+        do_update_stmt = insert_stmt.on_conflict_do_update(index_elements=[self.__pk_name__], set_=update_dict)
         session.execute(do_update_stmt)
 
     def save(self, session: Session):
@@ -38,14 +44,14 @@ class BaseModel(Base):
 
 
 class User(BaseModel):
-    __tablename__ = 'user'
+    __tablename__ = "user"
     __is_timeseries__ = False
     __pk_name__ = "id"
     __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
         method_name="users",
         pagination_field="timestamp",
         catch_up_field="timestamp",
-        converter=convert_timestamps
+        converter=convert_timestamps,
     )
     id = Column(String, primary_key=True)
     timestamp = Column(DateTime)
@@ -55,7 +61,7 @@ class User(BaseModel):
 
 
 class AdminUser(BaseModel):
-    __tablename__ = 'admin_user'
+    __tablename__ = "admin_user"
     __is_timeseries__ = False
     __pk_name__ = "username"
     username = Column(String, primary_key=True)
@@ -64,20 +70,18 @@ class AdminUser(BaseModel):
 
 
 class Account(BaseModel):
-    __tablename__ = 'account'
+    __tablename__ = "account"
     __is_timeseries__ = False
     __pk_name__ = "id"
     __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
         method_name="accounts",
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
-        name_maps={
-            "user_id": "user"
-        }
+        name_maps={"user_id": "user"},
     )
     id = Column(String, primary_key=True)
     user = relationship("User", back_populates="accounts")
-    user_id = Column(String, ForeignKey('user.id'))
+    user_id = Column(String, ForeignKey("user.id"))
     name = Column(String)
     accountSource = Column(String)
     quotesCount = Column(Integer)
@@ -85,6 +89,7 @@ class Account(BaseModel):
     transaction = Column(String)
     lastActivityTimestamp = Column(DateTime)
     timestamp = Column(DateTime)
+    blockNumber = Column(Numeric(40, 0))
     updateTimestamp = Column(DateTime)
     tenant = Column(String, nullable=False)
     balanceChanges = relationship("BalanceChange", back_populates="account")
@@ -93,24 +98,23 @@ class Account(BaseModel):
 
 
 class BalanceChange(BaseModel):
-    __tablename__ = 'balance_change'
+    __tablename__ = "balance_change"
     __is_timeseries__ = False
     __pk_name__ = "id"
     __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
         method_name="balanceChanges",
         pagination_field="timestamp",
         catch_up_field="timestamp",
-        name_maps={
-            "account_id": "account"
-        }
+        name_maps={"account_id": "account"},
     )
     id = Column(String, primary_key=True)
-    account_id = Column(String, ForeignKey('account.id'))
+    account_id = Column(String, ForeignKey("account.id"))
     account = relationship("Account", back_populates="balanceChanges")
     amount = Column(Numeric(40, 0), default=0)
     collateral = Column(String)
     type = Column(String)
     timestamp = Column(DateTime)
+    blockNumber = Column(Numeric(40, 0))
     transaction = Column(String)
     tenant = Column(String, nullable=False)
 
@@ -123,7 +127,7 @@ class BalanceChangeType:
 
 
 class Symbol(BaseModel):
-    __tablename__ = 'symbol'
+    __tablename__ = "symbol"
     __is_timeseries__ = False
     __pk_name__ = "id"
     __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
@@ -131,7 +135,7 @@ class Symbol(BaseModel):
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
         tenant_needed_fields=["id"],
-        ignore_columns=["tenant", "main_market"]
+        ignore_columns=["tenant", "main_market"],
     )
     id = Column(String, primary_key=True)
     name = Column(String)
@@ -144,7 +148,7 @@ class Symbol(BaseModel):
 
 
 class Quote(BaseModel):
-    __tablename__ = 'quote'
+    __tablename__ = "quote"
     __is_timeseries__ = False
     __pk_name__ = "id"
     __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
@@ -152,15 +156,12 @@ class Quote(BaseModel):
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
         tenant_needed_fields=["id", "symbolId"],
-        name_maps={
-            "account_id": "account",
-            "symbol_id": "symbolId"
-        }
+        name_maps={"account_id": "account", "symbol_id": "symbolId"},
     )
     id = Column(String, primary_key=True)
-    account_id = Column(String, ForeignKey('account.id'))
+    account_id = Column(String, ForeignKey("account.id"))
     account = relationship("Account", back_populates="quotes")
-    symbol_id = Column(String, ForeignKey('symbol.id'))
+    symbol_id = Column(String, ForeignKey("symbol.id"))
     symbol = relationship("Symbol", back_populates="quotes")
     partyBsWhiteList = Column(Text)
     partyB = Column(String)
@@ -191,7 +192,7 @@ class Quote(BaseModel):
 
 
 class TradeHistory(BaseModel):
-    __tablename__ = 'trade_history'
+    __tablename__ = "trade_history"
     __is_timeseries__ = False
     __pk_name__ = "id"
     __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
@@ -199,15 +200,12 @@ class TradeHistory(BaseModel):
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
         tenant_needed_fields=["quote"],
-        name_maps={
-            "account_id": "account",
-            "quote_id": "quote"
-        }
+        name_maps={"account_id": "account", "quote_id": "quote"},
     )
     id = Column(String, primary_key=True)
-    account_id = Column(String, ForeignKey('account.id'))
+    account_id = Column(String, ForeignKey("account.id"))
     account = relationship("Account", back_populates="trade_histories")
-    quote_id = Column(String, ForeignKey('quote.id'))
+    quote_id = Column(String, ForeignKey("quote.id"))
     quote = relationship("Quote", back_populates="trade_histories")
     volume = Column(Numeric(40, 0))
     blockNumber = Column(Integer)
@@ -219,13 +217,13 @@ class TradeHistory(BaseModel):
 
 
 class DailyHistory(BaseModel):
-    __tablename__ = 'daily_history'
+    __tablename__ = "daily_history"
     __is_timeseries__ = True
     __pk_name__ = "timestamp"
     __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
         method_name="dailyHistories",
         pagination_field="timestamp",
-        catch_up_field="updateTimestamp"
+        catch_up_field="updateTimestamp",
     )
     id = Column(String)
     quotesCount = Column(Integer)
@@ -245,7 +243,7 @@ class DailyHistory(BaseModel):
 
 
 class RuntimeConfiguration(BaseModel):
-    __tablename__ = 'runtime_configuration'
+    __tablename__ = "runtime_configuration"
     __is_timeseries__ = False
     __pk_name__ = "id"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -261,7 +259,7 @@ class RuntimeConfiguration(BaseModel):
 
 
 class AffiliateSnapshot(BaseModel):
-    __tablename__ = 'affiliate_snapshot'
+    __tablename__ = "affiliate_snapshot"
     __is_timeseries__ = True
     __pk_name__ = "timestamp"
     status_quotes = Column(Text)
@@ -284,17 +282,18 @@ class AffiliateSnapshot(BaseModel):
     liquidator_states = Column(JSON)
     trade_volume = Column(Numeric(40, 0))
     timestamp = Column(DateTime, primary_key=True)
+    blockNumber = Column(Numeric(40, 0))
     account_source = Column(String, nullable=False)
-    name = Column(String, nullable=False)
-    hedger_name = Column(String, nullable=False)
-    tenant = Column(String, nullable=False)
+    name = Column(String, nullable=False, primary_key=True)
+    hedger_name = Column(String, nullable=False, primary_key=True)
+    tenant = Column(String, nullable=False, primary_key=True)
 
     def get_status_quotes(self):
         return json.loads(self.status_quotes.replace("'", '"'))
 
 
 class HedgerSnapshot(BaseModel):
-    __tablename__ = 'hedger_snapshot'
+    __tablename__ = "hedger_snapshot"
     __is_timeseries__ = True
     __pk_name__ = "timestamp"
     hedger_contract_balance = Column(Numeric(40, 0))
@@ -324,13 +323,14 @@ class HedgerSnapshot(BaseModel):
     liquidators_balance = Column(Numeric(40, 0), nullable=True)
     liquidators_withdraw = Column(Numeric(40, 0), nullable=True)
     liquidators_allocated = Column(Numeric(40, 0), nullable=True)
-    name = Column(String, nullable=False)
-    tenant = Column(String, nullable=False)
+    blockNumber = Column(Numeric(40, 0))
+    name = Column(String, nullable=False, primary_key=True)
+    tenant = Column(String, nullable=False, primary_key=True)
     timestamp = Column(DateTime, primary_key=True)
 
 
 class BinanceIncome(BaseModel):
-    __tablename__ = 'binance_income'
+    __tablename__ = "binance_income"
     __is_timeseries__ = False
     __pk_name__ = "id"
     id = Column(Integer, primary_key=True)
@@ -343,7 +343,7 @@ class BinanceIncome(BaseModel):
 
 
 class BinanceTrade(BaseModel):
-    __tablename__ = 'binance_trade'
+    __tablename__ = "binance_trade"
     __is_timeseries__ = False
     __pk_name__ = "id"
     id = Column(String, primary_key=True)
@@ -359,7 +359,7 @@ class BinanceTrade(BaseModel):
 
 
 class StatsBotMessage(BaseModel):
-    __tablename__ = 'stats_bot_message'
+    __tablename__ = "stats_bot_message"
     __is_timeseries__ = False
     __pk_name__ = "message_id"
     message_id = Column(Integer, primary_key=True)

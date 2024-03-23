@@ -16,7 +16,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @contextmanager
-def db_session( ):
+def db_session():
     """Provide a transactional scope around a series of operations."""
     session = SessionLocal()
     try:
@@ -29,7 +29,7 @@ def db_session( ):
         session.close()
 
 
-def get_db_session( ):
+def get_db_session():
     """Provide a transactional scope around a series of operations."""
     session = SessionLocal()
     try:

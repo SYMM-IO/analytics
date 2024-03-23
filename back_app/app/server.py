@@ -47,8 +47,8 @@ app.include_router(auth_router)
 
 
 @app.get("/")
-def read_root( ):
-    return { "Hello": "World" }
+def read_root():
+    return {"Hello": "World"}
 
 
 if __name__ == "__main__":
