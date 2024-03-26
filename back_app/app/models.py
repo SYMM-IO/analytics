@@ -249,6 +249,7 @@ class RuntimeConfiguration(BaseModel):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     decimals = Column(Integer)
+    last_historical_snapshot_block = Column(Integer)
     lastSnapshotTimestamp = Column(DateTime, default=datetime.fromtimestamp(0))
     nextSnapshotTimestamp = Column(DateTime, default=datetime.fromtimestamp(0))
     deployTimestamp = Column(DateTime)
@@ -364,5 +365,5 @@ class StatsBotMessage(BaseModel):
     __pk_name__ = "message_id"
     message_id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime)
-    content = Column(Text)
-    tenant = Column(String, nullable=False)
+    content = Column(JSON)
+    tenant = Column(String, nullable=False, primary_key=True)

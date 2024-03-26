@@ -13,16 +13,9 @@ from routers.snapshot_router import router as snapshot_router
 from security.security_utils import get_current_user
 
 
-# telegram_user_client: Client
-
-
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    # global telegram_user_client
-    # telegram_user_client = await setup_telegram_client()
-    # await telegram_user_client.start()
+async def lifespan(_: FastAPI):
     yield
-    # await telegram_user_client.stop()
 
 
 app = FastAPI(

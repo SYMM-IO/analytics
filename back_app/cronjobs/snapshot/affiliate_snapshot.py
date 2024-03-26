@@ -302,6 +302,7 @@ def calculate_notional_value(
             .join(TradeHistory.quote)  # Assumes there's a relationship set on TradeHistory named 'quote' to join with Quote
             .where(
                 and_(
+                    TradeHistory.blockNumber <= block.number,
                     Account.accountSource == affiliate_context.symmio_multi_account,
                     TradeHistory.quoteStatus == quote_status,
                     Quote.partyB == hedger_context.hedger_address,
@@ -349,6 +350,7 @@ def calculate_hedger_upnl(
         .join(Account)
         .where(
             and_(
+                Quote.blockNumber <= block.number,
                 Account.accountSource == affiliate_context.symmio_multi_account,
                 Quote.timestamp > from_time,
                 Quote.partyB == hedger_context.hedger_address,

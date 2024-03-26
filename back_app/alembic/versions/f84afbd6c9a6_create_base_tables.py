@@ -173,6 +173,7 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("name", sa.String()),
         sa.Column("decimals", sa.Integer(), nullable=True),
+        sa.Column("last_historical_snapshot_block", sa.Integer(), nullable=True),
         sa.Column("lastSnapshotTimestamp", sa.DateTime(), nullable=True),
         sa.Column("nextSnapshotTimestamp", sa.DateTime(), nullable=True),
         sa.Column("deployTimestamp", sa.DateTime(), nullable=True),
@@ -183,9 +184,9 @@ def upgrade() -> None:
         "stats_bot_message",
         sa.Column("message_id", sa.Integer(), nullable=False),
         sa.Column("timestamp", sa.DateTime(), nullable=True),
-        sa.Column("content", sa.Text(), nullable=True),
+        sa.Column("content", sa.JSON(), nullable=True),
         sa.Column("tenant", sa.String(), nullable=False),
-        sa.PrimaryKeyConstraint("message_id"),
+        sa.PrimaryKeyConstraint("message_id", "tenant"),
     )
     op.create_table(
         "symbol",
