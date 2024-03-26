@@ -10,7 +10,7 @@ module.exports = {
             out_file: "/dev/stdout",
         },
         {
-            name: "BNB_8_2",
+            name: "Snapshot BNB_8_2",
             script: 'app/snapshot.py',
             watch: [],
             env: {
@@ -20,7 +20,7 @@ module.exports = {
             out_file: "/dev/stdout",
         },
         {
-            name: "BASE_8_2",
+            name: "Snapshot BASE_8_2",
             script: 'app/snapshot.py',
             watch: [],
             env: {
@@ -28,6 +28,15 @@ module.exports = {
                 TENANT: "BASE_8_2"
             },
             out_file: "/dev/stdout",
-        }
+        },
+        {
+            name: "Load stats messages",
+            script: 'app/stat_bots_loader.py',
+            watch: [],
+            env: {
+                PYTHONPATH: ".",
+            },
+            out_file: "/dev/stdout",
+        },
     ],
 };

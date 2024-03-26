@@ -7,9 +7,7 @@ from config.settings import Context
 from services.config_service import load_config
 
 
-def write_balance_changes(
-    context: Context, writer, _balance_changes: List[BalanceChange], account_type: str
-):
+def write_balance_changes(context: Context, writer, _balance_changes: List[BalanceChange], account_type: str):
     conf = load_config(context)
     for item in _balance_changes:
         item: BalanceChange
@@ -43,7 +41,7 @@ def write_incomes(context: Context, writer, _incomes: List[BinanceIncome]):
 
 
 def get_rebalance_report():
-    with open(f"rebalance.csv", "w", newline="") as file:
+    with open("rebalance.csv", "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(
             [
@@ -74,16 +72,13 @@ def get_rebalance_report():
                     balance_changes = (
                         BalanceChange.select()
                         .where(
-                            BalanceChange.collateral
-                            == context.symmio_collateral_address,
+                            BalanceChange.collateral == context.symmio_collateral_address,
                             BalanceChange.account == liq,
                             BalanceChange.tenant == context.tenant,
                         )
                         .order_by(BalanceChange.timestamp)
                     )
-                    write_balance_changes(
-                        context, writer, balance_changes, "Liquidator"
-                    )
+                    write_balance_changes(context, writer, balance_changes, "Liquidator")
                 incomes = (
                     BinanceIncome.select()
                     .where(

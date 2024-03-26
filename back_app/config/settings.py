@@ -33,7 +33,6 @@ class AffiliateContext:
 @dataclass
 class Context:
     tenant: str
-    deploy_timestamp: int
     subgraph_endpoint: str
     rpc: str
     symmio_address: str
@@ -51,6 +50,7 @@ class Context:
     mention_cooldown: int
 
     utils: ContextUtils | None
+    historical_snapshot_step = 100
 
     def hedger_with_name(self, hedger_name: str):
         for hedger in self.hedgers:
@@ -59,13 +59,12 @@ class Context:
         raise RuntimeError("Invalid Configuration")
 
 
-PROXIES = { }
+PROXIES = {}
 SERVER_PORT = 7231
 
 # Intervals
-FETCH_STAT_DATA_INTERVAL = 2 * 59
+FETCH_STAT_DATA_INTERVAL = 30 * 60
 FETCH_DATA_INTERVAL = 2 * 60
-FUNDING_FETCH_DATA_INTERVAL = 30 * 60
 
 # Alerting system
 FUNDING_RATE_ALERT_THRESHOLD = 100

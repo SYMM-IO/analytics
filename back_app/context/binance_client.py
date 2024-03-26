@@ -7,8 +7,8 @@ from binance.client import Client
 def handle_rec_window(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        kwargs['timestamp'] = int(time.time() * 1000)
-        kwargs['recvWindow'] = 60000
+        kwargs["timestamp"] = int(time.time() * 1000)
+        kwargs["recvWindow"] = 60000
         return func(*args, **kwargs)
 
     return wrapper

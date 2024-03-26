@@ -13,7 +13,7 @@ from config.settings import Context, HedgerContext
 from services.config_service import load_config
 
 # Cache dictionary to store the symbol, funding rate, and last update time
-cache = { }
+cache = {}
 
 
 def real_time_funding_rate(symbol: str) -> Decimal:
@@ -29,7 +29,7 @@ def real_time_funding_rate(symbol: str) -> Decimal:
     if response.status_code == 200:
         data = response.json()
         funding_rate = Decimal(data["lastFundingRate"])
-        cache[symbol] = { "funding_rate": funding_rate, "last_update": current_time }
+        cache[symbol] = {"funding_rate": funding_rate, "last_update": current_time}
     else:
         print("An error occurred:", response.status_code)
 
@@ -45,15 +45,16 @@ def fetch_binance_income_histories_of_type(
     asset_field="asset",
 ):
     # Get the latest timestamp from the database for the respective model
-    latest_record = (
-        session.scalar(
-            select(BinanceIncome)
-            .where(
-                and_(BinanceIncome.tenant == context.tenant, BinanceIncome.type == income_type)
+    latest_record = session.scalar(
+        select(BinanceIncome)
+        .where(
+            and_(
+                BinanceIncome.tenant == context.tenant,
+                BinanceIncome.type == income_type,
             )
-            .order_by(BinanceIncome.timestamp.desc())
-            .limit(1)
         )
+        .order_by(BinanceIncome.timestamp.desc())
+        .limit(1)
     )
 
     # If there's a record in the database, use its timestamp as the starting point
@@ -66,10 +67,8 @@ def fetch_binance_income_histories_of_type(
     current_time = datetime.utcnow()
 
     while start_time < current_time:
-        print(
-            f"{context.tenant}: Fetching binance {income_type} income histories between {start_time} and {end_time}"
-        )
-        time.sleep(5)
+        print(f"{context.tenant}: Fetching binance {income_type} income histories between {start_time} and {end_time}")
+        time.sleep(7)
         data = hedger_context.utils.binance_client.futures_income_history(
             startTime=int(start_time.timestamp() * 1000),
             endTime=int(end_time.timestamp() * 1000),
@@ -88,9 +87,7 @@ def fetch_binance_income_histories_of_type(
                 amount=item["income"],
                 type=item["incomeType"],
                 hedger=hedger_context.name,
-                timestamp=datetime.fromtimestamp(
-                    item["time"] / 1000
-                ),  # Convert from milliseconds
+                timestamp=datetime.fromtimestamp(item["time"] / 1000),  # Convert from milliseconds
             ).save(session)
         if len(data) == 1000:
             start_time = datetime.fromtimestamp(data[-1]["time"] / 1000)

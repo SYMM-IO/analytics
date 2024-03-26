@@ -23,18 +23,14 @@ class ErrorInfoContainer:
     unhandled_error = ErrorInfoModel(code=1, message="Internal server error")
     model_validation_error = ErrorInfoModel(code=3, message="Model validation error")
     not_found_error = ErrorInfoModel(code=4, message="Not found")
-    incorrect_username_password = ErrorInfoModel(
-        code=8, message="Incorrect username or password"
-    )
+    incorrect_username_password = ErrorInfoModel(code=8, message="Incorrect username or password")
     token_expired = ErrorInfoModel(
         code=9,
-        message="token_expired set Authorization in the header "
-        "with value 'Bearer valid_token' ",
+        message="token_expired set Authorization in the header " "with value 'Bearer valid_token' ",
     )
     invalid_token = ErrorInfoModel(
         code=10,
-        message="Invalid token set Authorization in the header with"
-        " value 'Bearer valid_token' ",
+        message="Invalid token set Authorization in the header with" " value 'Bearer valid_token' ",
     )
     error_code_not_found = ErrorInfoModel(code=202, message="Error code not found.")
 
@@ -80,9 +76,7 @@ class ExceptionHandlers:
         return JSONResponse(
             status_code=exc.status_code,
             content=ExceptionHandlers.__get_error_content(
-                error_info=status_code_responses.get(
-                    exc.status_code, ErrorInfoContainer.unhandled_error
-                ),
+                error_info=status_code_responses.get(exc.status_code, ErrorInfoContainer.unhandled_error),
                 error_detail=[exc.detail],
             ),
         )
@@ -101,9 +95,7 @@ class ExceptionHandlers:
     def error_code_response(request, exc: ErrorCodeResponse):  # noqa
         return JSONResponse(
             status_code=exc.status,
-            content=ExceptionHandlers.__get_error_content(
-                error_info=exc.error, error_detail=None
-            ),
+            content=ExceptionHandlers.__get_error_content(error_info=exc.error, error_detail=None),
         )
 
     @staticmethod

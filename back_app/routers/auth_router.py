@@ -18,14 +18,17 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_db_session)):
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_db_session),
+):
     user = session.scalar(select(AdminUser).where(AdminUser.username == form_data.username))
     if not user or not verify_password(form_data.password, user.password):
         raise ErrorCodeResponse(
             error=ErrorInfoContainer.incorrect_username_password,
             status_code=status.HTTP_400_BAD_REQUEST,
         )
-    return { "access_token": get_jwt_token(user.username) }
+    return {"access_token": get_jwt_token(user.username)}
 
 
 @router.get("/me")

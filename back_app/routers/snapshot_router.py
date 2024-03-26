@@ -13,7 +13,7 @@ async def get_affiliate_snapshot(
     tenant: str = Path(..., description="The tenant of this affiliate"),
     affiliate: str = Path(..., description="Name of the affiliate"),
     hedger: str = Path(..., description="Name of the hedger"),
-    session: Session = Depends(get_db_session)
+    session: Session = Depends(get_db_session),
 ):
     query = (
         select(AffiliateSnapshot)
@@ -30,14 +30,14 @@ async def get_affiliate_snapshot(
     except AffiliateSnapshot.DoesNotExist:
         snapshot = None
 
-    return snapshot if snapshot else { }
+    return snapshot if snapshot else {}
 
 
 @router.get("/hedger/{tenant}/{hedger}")
 async def get_hedger_snapshot(
     tenant: str = Path(..., description="The tenant of this hedger"),
     hedger: str = Path(..., description="Name of the hedger"),
-    session: Session = Depends(get_db_session)
+    session: Session = Depends(get_db_session),
 ):
     query = (
         select(HedgerSnapshot)
@@ -50,4 +50,4 @@ async def get_hedger_snapshot(
     except AffiliateSnapshot.DoesNotExist:
         snapshot = None
 
-    return snapshot if snapshot else { }
+    return snapshot if snapshot else {}
