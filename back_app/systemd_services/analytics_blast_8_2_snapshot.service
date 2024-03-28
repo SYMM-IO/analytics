@@ -6,7 +6,7 @@ PartOf=analytics.target
 
 [Service]
 User=analytics_user
-Environment=PYTHONPATH=ANALYTICS_PATH
+Environment=PYTHONPATH=ANALYTICS_PATH/
 Environment=TENANT=BLAST_8_2
 ExecStart=python ANALYTICS_PATH/app/snapshot.py
 RestartSec=1

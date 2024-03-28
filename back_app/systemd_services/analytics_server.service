@@ -6,7 +6,7 @@ PartOf=analytics.target
 
 [Service]
 User=analytics_user
-Environment=PYTHONPATH=ANALYTICS_PATH
+Environment=PYTHONPATH=ANALYTICS_PATH/
 ExecStart=python ANALYTICS_PATH/app/server.py
 RestartSec=1
 Restart=always
