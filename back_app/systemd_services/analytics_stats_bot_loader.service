@@ -6,8 +6,7 @@ PartOf=analytics.target
 
 [Service]
 User=analytics_user
-Environment=PYTHONPATH=ANALYTICS_PATH/
-ExecStart=python ANALYTICS_PATH/app/stat_bots_loader.py
+ExecStart=runner ANALYTICS_PATH/app/stat_bots_loader.py
 RestartSec=1
 Restart=always
 TimeoutStartSec=60

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# SCRIPT: runner
+
+set -e
+#set -n # Uncomment to check syntax without any execution
+#set -x # Uncomment to debug this shell script
+
+cd ANALYTICS_PATH
+source ANALYTICS_PATH/.venv/bin/activate
+export PYTHONPATH=ANALYTICS_PATH
+echo "Setup complete"
+python "${@}"
+RESULT=$?
+
+exit ${RESULT}

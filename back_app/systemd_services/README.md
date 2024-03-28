@@ -1,13 +1,7 @@
-### Install Unit files
+### Setup
 
 ```
-sudo cp *.service *.target /etc/systemd/system/
-
-sudo sed -i 's/User=analytics_user/User=yourusername/' /etc/systemd/system/analytics*.service
-
-sed -i 's|ANALYTICS_PATH|path to the back_app folder|g' /etc/systemd/system/analytics*.service
-
-sudo systemctl daemon-reload
+sudo ./set_services user
 ```
 
 ### Restart all services
