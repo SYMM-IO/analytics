@@ -58,7 +58,7 @@ def upgrade() -> None:
         sa.Column("liquidator_states", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column("trade_volume", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("timestamp", sa.DateTime(), nullable=False),
-        sa.Column("blockNumber", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("block_number", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("account_source", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("hedger_name", sa.String(), nullable=False),
@@ -165,7 +165,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("tenant", sa.String(), nullable=False),
         sa.Column("timestamp", sa.DateTime(), nullable=False),
-        sa.Column("blockNumber", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("block_number", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.PrimaryKeyConstraint("timestamp", "tenant", "name"),
     )
     op.create_table(

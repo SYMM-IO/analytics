@@ -50,7 +50,6 @@ def prepare_hedger_snapshot(
                 )
             )
         ).scalar_one()
-        print(transfer_sum)
 
         internal_transfer_sum = session.execute(
             select(func.coalesce(func.sum(BinanceIncome.amount), 0)).where(
@@ -62,7 +61,6 @@ def prepare_hedger_snapshot(
                 )
             )
         ).scalar_one()
-        print(internal_transfer_sum)
 
         total_transfers = transfer_sum + internal_transfer_sum
 
@@ -240,6 +238,7 @@ def prepare_hedger_snapshot(
     snapshot.timestamp = block.datetime()
     snapshot.name = hedger_context.name
     snapshot.tenant = context.tenant
+    snapshot.block_number = block.number
     print(snapshot)
     hedger_snapshot = HedgerSnapshot(**snapshot)
     hedger_snapshot.save(session)

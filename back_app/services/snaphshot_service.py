@@ -15,7 +15,7 @@ def get_last_affiliate_snapshot_for(context: Context, session: Session, affiliat
                 AffiliateSnapshot.tenant == context.tenant,
                 AffiliateSnapshot.name == affiliate,
                 AffiliateSnapshot.hedger_name == hedger,
-                AffiliateSnapshot.blockNumber <= block.number,
+                AffiliateSnapshot.block_number <= block.number,
             )
         )
         .order_by(AffiliateSnapshot.timestamp.desc())

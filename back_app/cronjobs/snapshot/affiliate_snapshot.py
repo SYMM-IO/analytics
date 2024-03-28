@@ -224,7 +224,6 @@ def prepare_affiliate_snapshot(
     )
 
     # ------------------------------------------
-
     for liquidator in affiliate_context.symmio_liquidators:
         account_withdraw = session.scalar(
             select(func.sum(BalanceChange.amount)).where(
@@ -281,6 +280,7 @@ def prepare_affiliate_snapshot(
     snapshot.hedger_name = hedger_context.name
     snapshot.account_source = affiliate_context.symmio_multi_account
     snapshot.tenant = context.tenant
+    snapshot.block_number = block.number
     affiliate_snapshot = AffiliateSnapshot(**snapshot)
     affiliate_snapshot.save(session)
     return affiliate_snapshot

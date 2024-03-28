@@ -70,5 +70,6 @@ def fetch_snapshot(context: Context):
                     hedger_context,
                     latest_block,
                 )
+                session.commit()
         for hedger_context in context.hedgers:
             prepare_hedger_snapshot(config, context, session, hedger_context, latest_block)
