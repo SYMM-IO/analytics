@@ -6,7 +6,7 @@ PartOf=analytics.target
 
 [Service]
 User=analytics_user
-ExecStart=PYTHONPATH=. TENANT=BNB_8_2 python app/snapshot.py
+ExecStart=PYTHONPATH=ANALYTICS_PATH TENANT=BNB_8_2 python ANALYTICS_PATH/app/snapshot.py
 RestartSec=1
 Restart=always
 TimeoutStartSec=60
