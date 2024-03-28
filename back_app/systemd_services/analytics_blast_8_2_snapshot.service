@@ -6,7 +6,9 @@ PartOf=analytics.target
 
 [Service]
 User=analytics_user
-ExecStart=PYTHONPATH=ANALYTICS_PATH TENANT=BLAST_8_2 python ANALYTICS_PATH/app/snapshot.py
+Environment=PYTHONPATH=ANALYTICS_PATH
+Environment=TENANT=BLAST_8_2
+ExecStart=python ANALYTICS_PATH/app/snapshot.py
 RestartSec=1
 Restart=always
 TimeoutStartSec=60
