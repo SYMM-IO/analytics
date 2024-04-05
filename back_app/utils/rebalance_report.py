@@ -20,7 +20,7 @@ def write_balance_changes(session: Session, context: Context, writer, _balance_c
             [
                 item.transaction,
                 human_readable_timestamp,
-                int(item.amount) / (10**conf.decimals),
+                int(item.amount) / (10 ** conf.decimals),
                 item.type,
                 f"Contract {context.tenant}",
                 account_type,
@@ -44,7 +44,7 @@ def write_incomes(context: Context, writer, _incomes: List[BinanceIncome]):
         )
 
 
-def get_rebalance_report():
+def get_rebalance_report( ):
     with open("rebalance.csv", "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(
@@ -73,7 +73,7 @@ def get_rebalance_report():
                         .order_by(BalanceChange.timestamp)
                     ).all()
                     print(f"Found {len(balance_changes)} hedger balance changes")
-                    write_balance_changes(context, writer, balance_changes, "Hedger")
+                    write_balance_changes(session, context, writer, balance_changes, "Hedger")
                 for affiliate in context.affiliates:
                     for liq in affiliate.symmio_liquidators:
                         balance_changes = (
@@ -92,7 +92,7 @@ def get_rebalance_report():
                             .all()
                         )
 
-                        write_balance_changes(context, writer, balance_changes, "Liquidator")
+                        write_balance_changes(session, context, writer, balance_changes, "Liquidator")
                     incomes = (
                         session.execute(
                             select(BinanceIncome)
