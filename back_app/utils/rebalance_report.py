@@ -73,7 +73,7 @@ def get_rebalance_report( ):
                         .order_by(BalanceChange.timestamp)
                     ).all()
                     print(f"Found {len(balance_changes)} hedger balance changes")
-                    write_balance_changes(session, context, writer, balance_changes, "Hedger")
+                    write_balance_changes(session, context, writer, balance_changes, hedger.name)
                 for affiliate in context.affiliates:
                     for liq in affiliate.symmio_liquidators:
                         balance_changes = (
