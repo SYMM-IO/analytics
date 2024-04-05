@@ -2,9 +2,8 @@ import json
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import func, and_, or_, select
-import web3
 from multicallable import Multicallable
+from sqlalchemy import func, and_, or_, select
 from sqlalchemy.orm import Session, load_only, joinedload
 
 from app.models import (
@@ -16,26 +15,30 @@ from app.models import (
     TradeHistory,
     BalanceChange,
     BalanceChangeType,
+    RuntimeConfiguration,
 )
 from config.settings import (
-    Context,
     SYMMIO_ABI,
     AffiliateContext,
     HedgerContext,
+    Context,
 )
+from cronjobs.snapshot.snapshot_context import SnapshotContext
 from utils.attr_dict import AttrDict
 from utils.block import Block
 
 
 def prepare_affiliate_snapshot(
-    config,
-    context: Context,
-    session: Session,
+    snapshot_context: SnapshotContext,
     affiliate_context: AffiliateContext,
     hedger_context: HedgerContext,
     block: Block,
 ):
     print(f"----------------Prepare Affiliate Snapshot Of {hedger_context.name} -> {affiliate_context.name}")
+    context: Context = snapshot_context.context
+    session: Session = snapshot_context.session
+    config: RuntimeConfiguration = snapshot_context.config
+
     from_time = datetime.fromtimestamp(context.from_unix_timestamp / 1000)
     snapshot = AttrDict()
 
@@ -86,8 +89,7 @@ def prepare_affiliate_snapshot(
     )
 
     # ------------------------------------------
-    w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
-    contract_multicallable = Multicallable(w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, w3)
+    contract_multicallable = Multicallable(snapshot_context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, snapshot_context.w3)
     all_accounts = session.execute(
         select(Account.id).where(
             and_(
@@ -99,12 +101,12 @@ def prepare_affiliate_snapshot(
     ).all()
 
     pages_count = len(all_accounts) // 100 if len(all_accounts) > 100 else 1
-    hedger_addr = w3.to_checksum_address(hedger_context.hedger_address)
+    hedger_addr = snapshot_context.w3.to_checksum_address(hedger_context.hedger_address)
     snapshot.hedger_contract_allocated = Decimal(
         sum(
-            contract_multicallable.allocatedBalanceOfPartyB([(hedger_addr, w3.to_checksum_address(a.id)) for a in all_accounts]).call(
-                n=pages_count, block_identifier=block.number
-            )
+            contract_multicallable.allocatedBalanceOfPartyB(
+                [(hedger_addr, snapshot_context.w3.to_checksum_address(a.id)) for a in all_accounts]
+            ).call(n=pages_count, block_identifier=block.number)
         )
     )
 
@@ -144,7 +146,7 @@ def prepare_affiliate_snapshot(
     )
     snapshot.all_contract_withdraw = all_accounts_withdraw * 10 ** (18 - config.decimals)
 
-    ppp = contract_multicallable.getPartyAOpenPositions([(w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]).call(
+    ppp = contract_multicallable.getPartyAOpenPositions([(snapshot_context.w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]).call(
         n=pages_count, block_identifier=block.number
     )
 
@@ -239,8 +241,10 @@ def prepare_affiliate_snapshot(
         liquidator_state = {
             "address": liquidator,
             "withdraw": int(account_withdraw) * 10 ** (18 - config.decimals),
-            "balance": contract_multicallable.balanceOf([w3.to_checksum_address(liquidator)]).call(block_identifier=block.number)[0],
-            "allocated": contract_multicallable.balanceInfoOfPartyA([w3.to_checksum_address(liquidator)]).call(block_identifier=block.number)[0][0],
+            "balance": contract_multicallable.balanceOf([snapshot_context.w3.to_checksum_address(liquidator)]).call(block_identifier=block.number)[0],
+            "allocated": contract_multicallable.balanceInfoOfPartyA([snapshot_context.w3.to_checksum_address(liquidator)]).call(
+                block_identifier=block.number
+            )[0][0],
         }
         if "liquidator_states" not in snapshot:
             snapshot.liquidator_states = []

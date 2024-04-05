@@ -19,6 +19,7 @@ from config.settings import (
 )
 from cronjobs.snapshot.affiliate_snapshot import prepare_affiliate_snapshot
 from cronjobs.snapshot.hedger_snapshot import prepare_hedger_snapshot
+from cronjobs.snapshot.snapshot_context import SnapshotContext
 from cronjobs.subgraph_synchronizer import SubgraphSynchronizer
 from services.binance_service import (
     fetch_binance_income_histories,
@@ -34,9 +35,13 @@ def fetch_snapshot(context: Context):
         config.nextSnapshotTimestamp = datetime.now(timezone.utc) - timedelta(minutes=5)  # for subgraph sync time
         config.upsert(session)
 
+        w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
+        w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        snapshot_context = SnapshotContext(context, session, config, w3)
+
         for hedger_context in context.hedgers:
             if hedger_context.utils.binance_client:
-                fetch_binance_income_histories(session, context, hedger_context)
+                fetch_binance_income_histories(snapshot_context, hedger_context)
 
         session.commit()
 
@@ -56,20 +61,16 @@ def fetch_snapshot(context: Context):
 
         print(f"{context.tenant}: Data loaded...\nPreparing snapshot data...")
 
-        w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
-        w3.middleware_onion.inject(geth_poa_middleware, layer=0)
         latest_block = Block.latest(w3)
 
         for affiliate_context in context.affiliates:
             for hedger_context in context.hedgers:
                 prepare_affiliate_snapshot(
-                    config,
-                    context,
-                    session,
+                    snapshot_context,
                     affiliate_context,
                     hedger_context,
                     latest_block,
                 )
                 session.commit()
         for hedger_context in context.hedgers:
-            prepare_hedger_snapshot(config, context, session, hedger_context, latest_block)
+            prepare_hedger_snapshot(snapshot_context, hedger_context, latest_block)

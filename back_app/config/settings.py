@@ -10,6 +10,7 @@ class HedgerContext:
     name: str  # Should be unique
     binance_deposit_diff: int
     contract_deposit_diff: int
+    wallets: List[str]
 
     hedger_address: str
     hedger_max_open_interest_ratio: int
@@ -35,6 +36,9 @@ class Context:
     tenant: str
     subgraph_endpoint: str
     rpc: str
+    explorer: str
+    explorer_api_key: str
+    native_coin: str
     symmio_address: str
     symmio_collateral_address: str
     from_unix_timestamp: int
