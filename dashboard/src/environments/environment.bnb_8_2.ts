@@ -13,14 +13,14 @@ export const hedger: Hedger = {
 }
 
 export const hedger2: Hedger = {
-	name: "Dragos_Hedger",
+	name: "Orbs_Hedger",
 }
 
 export const environment: EnvironmentInterface = {
 	name: "BNB_8_2",
 	serverUrl: "https://analytics-api.symm.io",
 	assetsFolder: "thena",
-	subgraphUrl: "https://api.thegraph.com/subgraphs/name/symmiograph/symmioanalytics_bnb_8_2",
+	subgraphUrl: "https://api.studio.thegraph.com/query/62454/analytics_bnb_8_2/version/latest",
 	collateralDecimal: 18,
 	startDate: new Date(1702058147000),
 	affiliates: [

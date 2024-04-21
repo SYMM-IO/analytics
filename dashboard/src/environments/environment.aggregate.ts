@@ -6,6 +6,7 @@ import {environment as base82Env} from "./environment.base_8_2"
 import {environment as ftmEnv} from "./environment.ftm_8"
 import {environment as baseEnv} from "./environment.base_8"
 import {environment as blast82Env} from "./environment.blast_8_2"
+import {environment as mantle82Env} from "./environment.mantle_8_2"
 
 export const environment: EnvironmentInterface = {
     name: "aggregate",
@@ -18,5 +19,6 @@ export const environment: EnvironmentInterface = {
         baseEnv,
         base82Env,
         blast82Env,
+        mantle82Env,
     ],
 }
