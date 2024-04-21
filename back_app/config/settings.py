@@ -10,6 +10,7 @@ class HedgerContext:
     name: str  # Should be unique
     binance_deposit_diff: int
     contract_deposit_diff: int
+    wallets: List[str]
 
     hedger_address: str
     hedger_max_open_interest_ratio: int
@@ -33,9 +34,11 @@ class AffiliateContext:
 @dataclass
 class Context:
     tenant: str
-    deploy_timestamp: int
     subgraph_endpoint: str
     rpc: str
+    explorer: str
+    explorer_api_key: str
+    native_coin: str
     symmio_address: str
     symmio_collateral_address: str
     from_unix_timestamp: int
@@ -51,6 +54,7 @@ class Context:
     mention_cooldown: int
 
     utils: ContextUtils | None
+    historical_snapshot_step = 100
 
     def hedger_with_name(self, hedger_name: str):
         for hedger in self.hedgers:
@@ -59,13 +63,12 @@ class Context:
         raise RuntimeError("Invalid Configuration")
 
 
-PROXIES = { }
+PROXIES = {}
 SERVER_PORT = 7231
 
 # Intervals
-FETCH_STAT_DATA_INTERVAL = 2 * 59
-FETCH_DATA_INTERVAL = 2 * 60
-FUNDING_FETCH_DATA_INTERVAL = 30 * 60
+FETCH_STAT_DATA_INTERVAL = 5 * 60
+FETCH_DATA_INTERVAL = 2 * 10
 
 # Alerting system
 FUNDING_RATE_ALERT_THRESHOLD = 100

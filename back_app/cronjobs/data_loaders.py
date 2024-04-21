@@ -31,9 +31,7 @@ def tag_tenant_symbol_id(data, context: Context):
 def load_quotes(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
         lambda data, ctx=context: Quote(
-            **convert_timestamps(
-                tag_tenant_to_id(tag_tenant_symbol_id(data, ctx), ctx)
-            ),
+            **convert_timestamps(tag_tenant_to_id(tag_tenant_symbol_id(data, ctx), ctx)),
             tenant=ctx.tenant,
         ),
         Quote,
@@ -129,9 +127,7 @@ def load_trade_histories(config: RuntimeConfiguration, context: Context):
 
 def load_accounts(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data, ctx=context: Account(
-            **convert_timestamps(data), tenant=ctx.tenant
-        ),
+        lambda data, ctx=context: Account(**convert_timestamps(data), tenant=ctx.tenant),
         Account,
         method="accounts",
         fields=[
@@ -169,9 +165,7 @@ def load_accounts(config: RuntimeConfiguration, context: Context):
 
 def load_balance_changes(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data, ctx=context: BalanceChange(
-            **convert_timestamps(data), tenant=ctx.tenant
-        ),
+        lambda data, ctx=context: BalanceChange(**convert_timestamps(data), tenant=ctx.tenant),
         BalanceChange,
         method="balanceChanges",
         fields=[
@@ -237,9 +231,7 @@ def load_users(config: RuntimeConfiguration, context: Context):
 
 def load_symbols(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data, ctx=context: Symbol(
-            **convert_timestamps(tag_tenant_to_id(data, ctx)), tenant=ctx.tenant
-        ),
+        lambda data, ctx=context: Symbol(**convert_timestamps(tag_tenant_to_id(data, ctx)), tenant=ctx.tenant),
         Symbol,
         method="symbols",
         fields=[
@@ -267,9 +259,7 @@ def load_symbols(config: RuntimeConfiguration, context: Context):
 
 def load_daily_histories(config: RuntimeConfiguration, context: Context):
     out = context.utils.gc.load_all(
-        lambda data, ctx=context: DailyHistory(
-            **convert_timestamps(data), tenant=ctx.tenant
-        ),
+        lambda data, ctx=context: DailyHistory(**convert_timestamps(data), tenant=ctx.tenant),
         DailyHistory,
         method="dailyHistories",
         fields=[

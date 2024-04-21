@@ -4,16 +4,16 @@ from decimal import Decimal
 
 import requests
 from sqlalchemy import select, and_
-from sqlalchemy.orm import Session
 
 from app.models import (
     BinanceIncome,
 )
-from config.settings import Context, HedgerContext
+from config.settings import HedgerContext
+from cronjobs.snapshot.snapshot_context import SnapshotContext
 from services.config_service import load_config
 
 # Cache dictionary to store the symbol, funding rate, and last update time
-cache = { }
+cache = {}
 
 
 def real_time_funding_rate(symbol: str) -> Decimal:
@@ -29,7 +29,7 @@ def real_time_funding_rate(symbol: str) -> Decimal:
     if response.status_code == 200:
         data = response.json()
         funding_rate = Decimal(data["lastFundingRate"])
-        cache[symbol] = { "funding_rate": funding_rate, "last_update": current_time }
+        cache[symbol] = {"funding_rate": funding_rate, "last_update": current_time}
     else:
         print("An error occurred:", response.status_code)
 
@@ -37,39 +37,37 @@ def real_time_funding_rate(symbol: str) -> Decimal:
 
 
 def fetch_binance_income_histories_of_type(
-    session: Session,
-    context: Context,
+    snapshot_context: SnapshotContext,
     hedger_context: HedgerContext,
     income_type,
     limit_days=7,
     asset_field="asset",
 ):
     # Get the latest timestamp from the database for the respective model
-    latest_record = (
-        session.scalar(
-            select(BinanceIncome)
-            .where(
-                and_(BinanceIncome.tenant == context.tenant, BinanceIncome.type == income_type)
+    latest_record = snapshot_context.session.scalar(
+        select(BinanceIncome)
+        .where(
+            and_(
+                BinanceIncome.tenant == snapshot_context.context.tenant,
+                BinanceIncome.type == income_type,
             )
-            .order_by(BinanceIncome.timestamp.desc())
-            .limit(1)
         )
+        .order_by(BinanceIncome.timestamp.desc())
+        .limit(1)
     )
 
     # If there's a record in the database, use its timestamp as the starting point
     if latest_record:
         start_time = latest_record.timestamp + timedelta(minutes=1)
     else:
-        start_time = load_config(session, context).deployTimestamp
+        start_time = load_config(snapshot_context.session, snapshot_context.context).deployTimestamp
 
     end_time = start_time + timedelta(days=limit_days)
     current_time = datetime.utcnow()
 
     while start_time < current_time:
-        print(
-            f"{context.tenant}: Fetching binance {income_type} income histories between {start_time} and {end_time}"
-        )
-        time.sleep(5)
+        print(f"{snapshot_context.context.tenant}: Fetching binance {income_type} income histories between {start_time} and {end_time}")
+        time.sleep(7)
         data = hedger_context.utils.binance_client.futures_income_history(
             startTime=int(start_time.timestamp() * 1000),
             endTime=int(end_time.timestamp() * 1000),
@@ -83,15 +81,13 @@ def fetch_binance_income_histories_of_type(
 
         for item in data:
             BinanceIncome(
-                tenant=context.tenant,
+                tenant=snapshot_context.context.tenant,
                 asset=item[asset_field],
                 amount=item["income"],
                 type=item["incomeType"],
                 hedger=hedger_context.name,
-                timestamp=datetime.fromtimestamp(
-                    item["time"] / 1000
-                ),  # Convert from milliseconds
-            ).save(session)
+                timestamp=datetime.fromtimestamp(item["time"] / 1000),  # Convert from milliseconds
+            ).save(snapshot_context.session)
         if len(data) == 1000:
             start_time = datetime.fromtimestamp(data[-1]["time"] / 1000)
         else:
@@ -99,22 +95,19 @@ def fetch_binance_income_histories_of_type(
         end_time = start_time + timedelta(days=limit_days)
 
 
-def fetch_binance_income_histories(session: Session, context, hedger_context):
+def fetch_binance_income_histories(snapshot_context: SnapshotContext, hedger_context):
     fetch_binance_income_histories_of_type(
-        session,
-        context,
+        snapshot_context,
         hedger_context,
         "FUNDING_FEE",
     )
     fetch_binance_income_histories_of_type(
-        session,
-        context,
+        snapshot_context,
         hedger_context,
         "TRANSFER",
     )
     fetch_binance_income_histories_of_type(
-        session,
-        context,
+        snapshot_context,
         hedger_context,
         "INTERNAL_TRANSFER",
     )

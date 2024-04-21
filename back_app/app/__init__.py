@@ -1,8 +1,9 @@
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, text, bindparam, String
+from sqlalchemy.orm import sessionmaker, Session
 
+from app.models import BaseModel
 from config.settings import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 
 # Define the database connection URL
@@ -16,7 +17,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 @contextmanager
-def db_session( ):
+def db_session():
     """Provide a transactional scope around a series of operations."""
     session = SessionLocal()
     try:
@@ -29,7 +30,7 @@ def db_session( ):
         session.close()
 
 
-def get_db_session( ):
+def get_db_session():
     """Provide a transactional scope around a series of operations."""
     session = SessionLocal()
     try:
@@ -40,3 +41,23 @@ def get_db_session( ):
         raise e
     finally:
         session.close()
+
+
+def is_hyper_table(session: Session, table_name):
+    query = f"""
+        SELECT * FROM timescaledb_information.hypertable
+        WHERE table_name = '{table_name}';
+        """
+    result = session.execute(query)
+    hypertable_info = result.fetchall()
+    return hypertable_info is not None
+
+
+def create_hyper_tables_read_write_permissions():
+    with db_session() as session:
+        for model in BaseModel.__subclasses__():
+            if model.__is_timeseries__:
+                if not is_hyper_table(model.__tablename__):
+                    hypertable_query = text("SELECT create_hypertable(:table_name, 'timestamp')")
+                    hypertable_query = hypertable_query.bindparams(bindparam("table_name", type_=String))
+                    session.execute(hypertable_query, {"table_name": model.__tablename__})

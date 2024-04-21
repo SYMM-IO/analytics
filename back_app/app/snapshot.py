@@ -14,11 +14,7 @@ scheduler: BackgroundScheduler
 
 def listener(event):
     global scheduler
-    send_alert(
-        escape_markdown_v1(
-            f"BackgroundJob {event.job_id} raised {event.exception.__class__.__name__}\n {event.exception}"
-        )
-    )
+    send_alert(escape_markdown_v1(f"BackgroundJob {event.job_id} raised {event.exception.__class__.__name__}\n {event.exception}"))
     scheduler.shutdown(wait=False)
     create_scheduler()
 

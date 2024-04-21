@@ -29,7 +29,7 @@ export const hedger: Hedger = {
 export const environment: EnvironmentInterface = {
     name: "BNB_8",
     serverUrl: "https://analytics-api.symm.io",
-    subgraphUrl: "https://api.thegraph.com/subgraphs/name/symmiograph/symmioanalytics_bnb_8",
+    subgraphUrl: "https://api.studio.thegraph.com/query/62454/symmioanalytics_bnb_8/version/latest",
     collateralDecimal: 18,
     affiliates: [
         cloverfield,

@@ -14,12 +14,10 @@ from app.models import AdminUser
 from config.settings import ACCESS_TOKEN_EXPIRE_TIME, JWT_SECRET_KEY, JWT_ALGORITHM
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-reusable_oauth = OAuth2PasswordBearer(
-    tokenUrl="/auth/login", scheme_name="JWT", auto_error=True
-)
+reusable_oauth = OAuth2PasswordBearer(tokenUrl="/auth/login", scheme_name="JWT", auto_error=True)
 
 
-def get_now_epoch( ):
+def get_now_epoch():
     return int(time.time())
 
 
@@ -70,7 +68,7 @@ async def get_current_user(token: str = Depends(reusable_oauth)):
             admin_user = session.scalar(select(AdminUser).where(AdminUser.username == username))
             session.expunge(admin_user)
             return admin_user
-    except:
+    except Exception:
         raise ErrorCodeResponse(
             error=ErrorInfoContainer.invalid_token,
             status_code=status.HTTP_403_FORBIDDEN,

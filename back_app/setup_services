@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# First, ensure that a username has been provided
+if [ -z "$1" ]; then
+  echo "Please provide a username as an argument."
+  exit 1
+fi
+
+# Use the provided argument for the username
+USERNAME=$1
+
+ln -s `pwd`/runner /usr/local/bin/
+
+sudo cp systemd_services/*.service systemd_services/*.target /etc/systemd/system/
+
+# Replace 'your username' with the username provided in the command-line argument
+sudo sed -i "s/User=analytics_user/User=$USERNAME/" /etc/systemd/system/analytics*.service
+
+sed -i "s|ANALYTICS_PATH|$(pwd)|g" /etc/systemd/system/analytics*.service
+
+sed -i "s|ANALYTICS_PATH|$(pwd)|g" /usr/local/bin/runner
+
+sudo systemctl daemon-reload
+
+echo "Setup complete"

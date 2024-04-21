@@ -2,4 +2,5 @@ config/local_settings.py
 config/local_settings.old.py
 poetry.lock
 app/user_client.session
-cache/
+app/user_client.session-journal
+cache
