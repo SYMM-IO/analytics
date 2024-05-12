@@ -44,9 +44,9 @@ def prepare_hedger_snapshot(
 
     snapshot = AttrDict()
 
-    snapshot.gas, snapshot.gas_dollar = gas_used_by_hedger_wallets(snapshot_context, hedger_context)
+    # snapshot.gas, snapshot.gas_dollar = gas_used_by_hedger_wallets(snapshot_context, hedger_context)
 
-    print(f"Total gas spent by all wallets of {hedger_context.name}: {snapshot.gas} (${snapshot.gas_dollar})")
+    # print(f"Total gas spent by all wallets of {hedger_context.name}: {snapshot.gas} (${snapshot.gas_dollar})")
 
     if has_binance_data:
         transfer_sum = session.execute(
