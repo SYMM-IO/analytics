@@ -84,6 +84,7 @@ def get_rebalance_report( ):
                                     or_(
                                         BinanceIncome.type == "TRANSFER",
                                         BinanceIncome.type == "INTERNAL_TRANSFER",
+                                        BinanceIncome.asset == "USDT",
                                         BinanceIncome.hedger == hedger.name,
                                     ),
                                 )

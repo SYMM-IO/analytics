@@ -40,7 +40,7 @@ def fetch_binance_income_histories_of_type(
     snapshot_context: SnapshotContext,
     hedger_context: HedgerContext,
     income_type,
-    limit_days=7,
+    limit_days=30,
     asset_field="asset",
 ):
     # Get the latest timestamp from the database for the respective model
@@ -66,14 +66,15 @@ def fetch_binance_income_histories_of_type(
     current_time = datetime.utcnow()
 
     while start_time < current_time:
-        print(f"{snapshot_context.context.tenant}: Fetching binance {income_type} income histories between {start_time} and {end_time}")
-        time.sleep(7)
+        print(f"{snapshot_context.context.tenant}: Fetching binance {income_type} income histories between {start_time} and {end_time}: ", end="")
+        time.sleep(7) # Prevents binance rate limit
         data = hedger_context.utils.binance_client.futures_income_history(
             startTime=int(start_time.timestamp() * 1000),
             endTime=int(end_time.timestamp() * 1000),
             limit=1000,
             incomeType=income_type,
         )
+        print(f"Loaded {len(data)} histories")
         if not data:
             start_time = end_time
             end_time = start_time + timedelta(days=limit_days)
