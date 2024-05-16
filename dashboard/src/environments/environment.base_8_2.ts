@@ -15,6 +15,20 @@ export const intentx: Affiliate = {
     fromTimestamp: "0",
 }
 
+export const morphex: Affiliate = {
+    name: "Morphex",
+    mainColor: "#1F61B5",
+    accountSource: "0x6D63921D8203044f6AbaD8F346d3AEa9A2719dDD",
+    fromTimestamp: "0",
+}
+
+export const beFi: Affiliate = {
+    name: "BeFi",
+    mainColor: "#FE9E0F",
+    accountSource: "0xc6Ecf3AB3D09ba6f1565Ad6E139B5D3ba30bB774",
+    fromTimestamp: "0",
+}
+
 export const hedger: Hedger = {
     name: "Based_IntentX_Hedger",
 }
@@ -29,6 +43,8 @@ export const environment: EnvironmentInterface = {
     affiliates: [
         based,
         intentx,
+        morphex,
+        beFi
     ],
     hedgers: [
         hedger,

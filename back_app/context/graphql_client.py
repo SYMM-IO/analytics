@@ -91,7 +91,10 @@ class GraphQlClient:
                     items.append(create_function(data))
             elif "errors" in response.json():
                 raise Exception(f"{log_prefix}Failed to load data from subgraph " + str(response.json()))
-
+            else:
+                print(response.json())
+        else:
+            print(response.json())
         return items
 
     def load_all(

@@ -20,7 +20,7 @@ def write_balance_changes(session: Session, context: Context, writer, _balance_c
             [
                 item.transaction,
                 human_readable_timestamp,
-                int(item.amount) / (10**conf.decimals),
+                int(item.amount) / (10 ** conf.decimals),
                 item.type,
                 f"Contract {context.tenant}",
                 account_type,
@@ -28,7 +28,7 @@ def write_balance_changes(session: Session, context: Context, writer, _balance_c
         )
 
 
-def write_incomes(context: Context, writer, _incomes: List[BinanceIncome]):
+def write_incomes(context: Context, writer, _incomes: List[BinanceIncome], account_type: str):
     for item in _incomes:
         item: BinanceIncome
         human_readable_timestamp = item.timestamp.strftime("%m-%d-%Y %H:%M")
@@ -39,12 +39,12 @@ def write_incomes(context: Context, writer, _incomes: List[BinanceIncome]):
                 int(item.amount),
                 item.type,
                 f"Binance {context.tenant}",
-                "",
+                account_type,
             ]
         )
 
 
-def get_rebalance_report():
+def get_rebalance_report( ):
     with open("rebalance.csv", "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(
@@ -74,25 +74,7 @@ def get_rebalance_report():
                     ).all()
                     print(f"Found {len(balance_changes)} hedger balance changes")
                     write_balance_changes(session, context, writer, balance_changes, hedger.name)
-                for affiliate in context.affiliates:
-                    for liq in affiliate.symmio_liquidators:
-                        balance_changes = (
-                            session.execute(
-                                select(BalanceChange)
-                                .where(
-                                    and_(
-                                        BalanceChange.collateral == context.symmio_collateral_address,
-                                        BalanceChange.account_id == liq,
-                                        BalanceChange.tenant == context.tenant,
-                                    )
-                                )
-                                .order_by(BalanceChange.timestamp)
-                            )
-                            .scalars()
-                            .all()
-                        )
 
-                        write_balance_changes(session, context, writer, balance_changes, "Liquidator")
                     incomes = (
                         session.execute(
                             select(BinanceIncome)
@@ -103,6 +85,8 @@ def get_rebalance_report():
                                         BinanceIncome.type == "TRANSFER",
                                         BinanceIncome.type == "INTERNAL_TRANSFER",
                                     ),
+                                    BinanceIncome.asset == "USDT",
+                                    BinanceIncome.hedger == hedger.name,
                                 )
                             )
                             .order_by(BinanceIncome.timestamp)
@@ -110,8 +94,28 @@ def get_rebalance_report():
                         .scalars()
                         .all()
                     )
+                    write_incomes(context, writer, incomes, hedger.name)
 
-                    write_incomes(context, writer, incomes)
+                liquidators = set()
+                for affiliate in context.affiliates:
+                    liquidators.update(affiliate.symmio_liquidators)
+                for liq in liquidators:
+                    balance_changes = (
+                        session.execute(
+                            select(BalanceChange)
+                            .where(
+                                and_(
+                                    BalanceChange.collateral == context.symmio_collateral_address,
+                                    BalanceChange.account_id == liq,
+                                    BalanceChange.tenant == context.tenant,
+                                )
+                            )
+                            .order_by(BalanceChange.timestamp)
+                        )
+                        .scalars()
+                        .all()
+                    )
+                    write_balance_changes(session, context, writer, balance_changes, "Liquidator")
 
 
 get_rebalance_report()
