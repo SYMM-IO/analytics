@@ -8,3 +8,11 @@
 .selected-button {
   background-color: var(--tui-clear-inverse-hover);
 }
+
+.intervalSelector {
+  width: 6.5em;
+}
+
+.intervalRangePicker {
+  min-width: 13em;
+}

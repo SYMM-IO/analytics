@@ -1,4 +1,5 @@
-<div class="chart-container w-full h-full p-2" style="position: relative" *tuiLet="stateService.nightMode | async as night">
+<div class="chart-container w-full h-full p-2" style="position: relative"
+     *tuiLet="stateService.nightMode | async as night">
     <div class="flex flex-row align-items-center gap-2">
         <span class="w-full tui-island__title">{{ chartTitle }}</span>
         <div class="flex flex-row justify-content-end align-items-center gap-2 pr-4">
@@ -6,10 +7,40 @@
                     [ngClass]="{'selected-button': groupedByMonth}" tuiHint="Group By Month">
                 M
             </button>
-            <button tuiIconButton type="button" icon="tuiIconChevronLeft" size="s" appearance="outline" (click)="goBack()" [disabled]="startTime < minTime" tuiHint="Back">
+            <button tuiIconButton type="button" icon="tuiIconChevronLeft" size="s" appearance="outline"
+                    (click)="goBack()" [disabled]="startTime < minTime" tuiHint="Back">
             </button>
-            <span>6M</span>
-            <button tuiIconButton type="button" icon="tuiIconChevronRight" size="s" appearance="outline" (click)="goForward()" [disabled]="endTime > maxTime" tuiHint="Forward">
+            <tui-select
+                    class="intervalSelector"
+                    tuiTextfieldSize="s"
+                    [formControl]="intervalForm"
+                    [stringify]="intervalOptionsStringify"
+            >
+                <tui-data-list-wrapper
+                        *tuiDataList
+                        [items]="intervalOptions"
+                        [itemContent]="intervalItemView"
+                ></tui-data-list-wrapper>
+
+                <ng-template #intervalItemView let-item>
+                    {{ item.name }}
+                </ng-template>
+            </tui-select>
+
+            <tui-input-date-range
+                    *ngIf="intervalForm.value.days == 0"
+                    class="intervalRangePicker"
+                    tuiTextfieldSize="s"
+                    [formControl]="intervalRangeForm"
+                    tuiUnfinishedValidator="Finish filling the field"
+                    [max]="intervalRangeMax"
+                    [min]="intervalRangeMin"
+            >
+                Choose dates
+                <input placeholder="From - To" tuiTextfield/>
+            </tui-input-date-range>
+            <button tuiIconButton type="button" icon="tuiIconChevronRight" size="s" appearance="outline"
+                    (click)="goForward()" [disabled]="endTime > maxTime" tuiHint="Forward">
             </button>
         </div>
     </div>

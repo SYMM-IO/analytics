@@ -1,15 +1,18 @@
 import {NgDompurifySanitizer} from "@tinkoff/ng-dompurify"
 import {
-	TUI_SANITIZER,
-	TuiAlertModule,
-	TuiButtonModule, TuiDataListModule,
-	TuiDialogModule, TuiDropdownModule,
-	TuiGroupModule,
-	TuiHintModule,
-	TuiModeModule,
-	TuiRootModule, TuiSvgModule,
-	TuiTextfieldControllerModule,
-	TuiThemeNightModule,
+    TUI_SANITIZER,
+    TuiAlertModule,
+    TuiButtonModule,
+    TuiDataListModule,
+    TuiDialogModule,
+    TuiDropdownModule,
+    TuiGroupModule,
+    TuiHintModule,
+    TuiModeModule,
+    TuiRootModule,
+    TuiSvgModule,
+    TuiTextfieldControllerModule,
+    TuiThemeNightModule,
 } from "@taiga-ui/core"
 import {NgModule} from "@angular/core"
 import {BrowserModule} from "@angular/platform-browser"
@@ -27,7 +30,13 @@ import {ChartComponent} from './chart/chart.component'
 import {HomeComponent} from './home/home.component'
 import {TuiLetModule} from "@taiga-ui/cdk"
 import {ResizeObserverDirective} from './resize-observer.directive'
-import {TuiAccordionModule, TuiInputNumberModule, TuiIslandModule, TuiRadioBlockModule} from "@taiga-ui/kit"
+import {
+    TuiAccordionModule, TuiComboBoxModule, TuiDataListWrapperModule, TuiInputDateRangeModule,
+    TuiInputNumberModule,
+    TuiIslandModule,
+    TuiRadioBlockModule,
+    TuiSelectModule
+} from "@taiga-ui/kit"
 import {PanelHomeComponent} from "./panel-home/panel-home.component"
 import {ReactiveFormsModule} from "@angular/forms"
 import {NgxJsonViewerModule} from "ngx-json-viewer"
@@ -47,38 +56,42 @@ import {TimeAgoPipe} from "./panel-home/hedger-state-viewer/timeAgo.pipe"
         ResizeObserverDirective,
         PanelHomeComponent,
         BigNumberFormatPipe,
-		QuoteLoaderComponent,
-		HedgerStateViewerComponent,
-		AffiliateStateViewerComponent,
-		TimeAgoPipe
+        QuoteLoaderComponent,
+        HedgerStateViewerComponent,
+        AffiliateStateViewerComponent,
+        TimeAgoPipe
     ],
-	imports: [
-		BrowserModule,
-		BrowserAnimationsModule,
-		AppRoutingModule,
-		NgxEchartsModule.forRoot({
-			echarts: () => import("echarts"),
-		}),
-		TuiRootModule,
-		TuiDialogModule,
-		TuiAlertModule,
-		TuiThemeNightModule,
-		TuiModeModule,
-		TuiLetModule,
-		TuiIslandModule,
-		TuiInputNumberModule,
-		ReactiveFormsModule,
-		TuiTextfieldControllerModule,
-		TuiButtonModule,
-		TuiGroupModule,
-		TuiRadioBlockModule,
-		NgxJsonViewerModule,
-		TuiHintModule,
-		TuiAccordionModule,
-		TuiDropdownModule,
-		TuiDataListModule,
-		TuiSvgModule,
-	],
+    imports: [
+        BrowserModule,
+        BrowserAnimationsModule,
+        AppRoutingModule,
+        NgxEchartsModule.forRoot({
+            echarts: () => import("echarts"),
+        }),
+        TuiRootModule,
+        TuiDialogModule,
+        TuiAlertModule,
+        TuiThemeNightModule,
+        TuiModeModule,
+        TuiLetModule,
+        TuiIslandModule,
+        TuiInputNumberModule,
+        ReactiveFormsModule,
+        TuiTextfieldControllerModule,
+        TuiButtonModule,
+        TuiGroupModule,
+        TuiRadioBlockModule,
+        NgxJsonViewerModule,
+        TuiHintModule,
+        TuiAccordionModule,
+        TuiDropdownModule,
+        TuiDataListModule,
+        TuiSvgModule,
+        TuiSelectModule,
+        TuiDataListWrapperModule,
+        TuiComboBoxModule,
+        TuiInputDateRangeModule,
+    ],
     providers: [
         provideHttpClient(
             withInterceptors([httpInterceptor]),

@@ -4,3 +4,4 @@ poetry.lock
 app/user_client.session
 app/user_client.session-journal
 cache
+config/contexts
