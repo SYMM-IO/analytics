@@ -10,7 +10,6 @@
             <button tuiIconButton type="button" icon="tuiIconChevronLeft" size="s" appearance="outline"
                     (click)="goBack()" [disabled]="startTime < minTime" tuiHint="Back">
             </button>
-
             <tui-select
                     class="intervalSelector"
                     tuiTextfieldSize="s"
@@ -40,7 +39,6 @@
                 Choose dates
                 <input placeholder="From - To" tuiTextfield/>
             </tui-input-date-range>
-
             <button tuiIconButton type="button" icon="tuiIconChevronRight" size="s" appearance="outline"
                     (click)="goForward()" [disabled]="endTime > maxTime" tuiHint="Forward">
             </button>
