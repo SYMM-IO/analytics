@@ -17,7 +17,7 @@ import {
 import {NgModule} from "@angular/core"
 import {BrowserModule} from "@angular/platform-browser"
 
-import {provideHttpClient, withInterceptors} from "@angular/common/http"
+import { provideHttpClient, withInterceptors } from "@angular/common/http"
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations"
 import {Apollo} from "apollo-angular"
 import {NgxEchartsModule} from "ngx-echarts"

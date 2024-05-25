@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core'
-import {HttpClient} from "@angular/common/http"
+import { HttpClient } from "@angular/common/http"
 import {EnvironmentInterface} from "../../environments/environment-interface"
 import {map} from "rxjs/operators"
 import {AffiliateSnapshot, HedgerSnapshot} from "../models"
