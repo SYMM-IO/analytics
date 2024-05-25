@@ -42,6 +42,7 @@ class Context:
     symmio_address: str
     symmio_collateral_address: str
     from_unix_timestamp: int
+    deploy_timestamp: int
 
     hedgers: List[HedgerContext]
     affiliates: List[AffiliateContext]
@@ -67,8 +68,8 @@ PROXIES = {}
 SERVER_PORT = 7231
 
 # Intervals
-FETCH_STAT_DATA_INTERVAL = 5 * 60
-FETCH_DATA_INTERVAL = 2 * 10
+FETCH_STAT_DATA_INTERVAL = 5 * 5
+FETCH_DATA_INTERVAL = 2 * 5
 
 # Alerting system
 FUNDING_RATE_ALERT_THRESHOLD = 100
