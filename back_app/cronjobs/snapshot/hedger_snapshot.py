@@ -27,7 +27,6 @@ from services.binance_service import real_time_funding_rate
 from services.snaphshot_service import get_last_affiliate_snapshot_for
 from utils.attr_dict import AttrDict
 from utils.block import Block
-from utils.gas_checker import gas_used_by_hedger_wallets
 
 
 def prepare_hedger_snapshot(
@@ -45,7 +44,6 @@ def prepare_hedger_snapshot(
     snapshot = AttrDict()
 
     # snapshot.gas, snapshot.gas_dollar = gas_used_by_hedger_wallets(snapshot_context, hedger_context)
-
     # print(f"Total gas spent by all wallets of {hedger_context.name}: {snapshot.gas} (${snapshot.gas_dollar})")
 
     if has_binance_data:

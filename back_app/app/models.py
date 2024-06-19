@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import (
     Column,
@@ -17,7 +18,7 @@ from sqlalchemy.dialects.postgresql import JSON, insert
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, Session
 
-from cronjobs.subgraph_synchronizer import SubgraphSynchronizerConfig
+from utils.subgraph.subgraph_client_config import SubgraphClientConfig
 from utils.time_utils import convert_timestamps
 
 Base = declarative_base()
@@ -25,6 +26,10 @@ Base = declarative_base()
 
 class BaseModel(Base):
     __abstract__ = True
+
+    def __init__(self, **kw: Any):
+        super().__init__(kw)
+        self.__subgraph_client_config__ = None
 
     def to_dict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
@@ -47,7 +52,7 @@ class User(BaseModel):
     __tablename__ = "user"
     __is_timeseries__ = False
     __pk_name__ = "id"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="users",
         pagination_field="timestamp",
         catch_up_field="timestamp",
@@ -73,7 +78,7 @@ class Account(BaseModel):
     __tablename__ = "account"
     __is_timeseries__ = False
     __pk_name__ = "id"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="accounts",
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
@@ -101,7 +106,7 @@ class BalanceChange(BaseModel):
     __tablename__ = "balance_change"
     __is_timeseries__ = False
     __pk_name__ = "id"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="balanceChanges",
         pagination_field="timestamp",
         catch_up_field="timestamp",
@@ -130,7 +135,7 @@ class Symbol(BaseModel):
     __tablename__ = "symbol"
     __is_timeseries__ = False
     __pk_name__ = "id"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="symbols",
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
@@ -151,7 +156,7 @@ class Quote(BaseModel):
     __tablename__ = "quote"
     __is_timeseries__ = False
     __pk_name__ = "id"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="quotes",
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
@@ -195,7 +200,7 @@ class TradeHistory(BaseModel):
     __tablename__ = "trade_history"
     __is_timeseries__ = False
     __pk_name__ = "id"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="tradeHistories",
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
@@ -220,7 +225,7 @@ class DailyHistory(BaseModel):
     __tablename__ = "daily_history"
     __is_timeseries__ = True
     __pk_name__ = "timestamp"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="dailyHistories",
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
@@ -249,10 +254,8 @@ class RuntimeConfiguration(BaseModel):
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     decimals = Column(Integer)
-    last_historical_snapshot_block = Column(Integer)
-    last_gas_check_block = Column(Integer)
-    lastSnapshotTimestamp = Column(DateTime, default=datetime.fromtimestamp(0))
-    nextSnapshotTimestamp = Column(DateTime, default=datetime.fromtimestamp(0))
+    lastHistoricalSnapshotBlock = Column(Integer)
+    lastSnapshotBlock = Column(Integer)
     deployTimestamp = Column(DateTime)
     tenant = Column(String, nullable=False)
 

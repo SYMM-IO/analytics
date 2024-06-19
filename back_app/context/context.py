@@ -1,19 +1,6 @@
 from dataclasses import dataclass
 
 from context.binance_client import BinanceClient
-from context.graphql_client import GraphQlClient
-
-
-@dataclass
-class ContextUtils:
-    gc: GraphQlClient
-
-    @staticmethod
-    def from_context(context):
-        context = ContextUtils(
-            gc=GraphQlClient(endpoint=context.subgraph_endpoint),
-        )
-        return context
 
 
 @dataclass

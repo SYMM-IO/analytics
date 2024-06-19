@@ -22,6 +22,7 @@ from config.settings import (
     AffiliateContext,
     HedgerContext,
     Context,
+    DEBUG_MODE,
 )
 from cronjobs.snapshot.snapshot_context import SnapshotContext
 from utils.attr_dict import AttrDict
@@ -146,26 +147,27 @@ def prepare_affiliate_snapshot(
     )
     snapshot.all_contract_withdraw = all_accounts_withdraw * 10 ** (18 - config.decimals)
 
-    ppp = contract_multicallable.getPartyAOpenPositions([(snapshot_context.w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]).call(
-        n=pages_count, block_identifier=block.number
-    )
+    if DEBUG_MODE:
+        ppp = contract_multicallable.getPartyAOpenPositions([(snapshot_context.w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]).call(
+            n=pages_count, block_identifier=block.number
+        )
 
-    print(f"{context.tenant}: Checking diff of open quotes with subgraph")
-    for pp in ppp:
-        for quote in pp:
-            # key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}"
-            key = f"{context.tenant}_{quote[0]}-{quote[5]}-{quote[10]}-{quote[9]}"
-            quote_id = f"{context.tenant}_{quote[0]}"
-            if key not in subgraph_open_quotes:
-                db_quote = session.scalar(select(Quote).where(and_(Quote.id == quote_id, Quote.tenant == context.tenant)))
-                if db_quote and db_quote.partyB != hedger_context.hedger_address:
-                    continue
-                if db_quote:
-                    print(
-                        f"{context.tenant} => Contract: {key} Local DB: {db_quote.id}-{db_quote.openPrice}-{db_quote.closedAmount}-{db_quote.quantity}"
-                    )
-                else:
-                    print(f"{context.tenant} => Contract opened quote not found in the subgraph: {key}")
+        print(f"{context.tenant}: Checking diff of open quotes with subgraph")
+        for pp in ppp:
+            for quote in pp:
+                # key = f"{quote.id}-{9uiui8iuu jm  quote.openPrice}-{quote.closedAmount}-{quote.quantity}"
+                key = f"{context.tenant}_{quote[0]}-{quote[5]}-{quote[10]}-{quote[9]}"
+                quote_id = f"{context.tenant}_{quote[0]}"
+                if key not in subgraph_open_quotes:
+                    db_quote = session.scalar(select(Quote).where(and_(Quote.id == quote_id, Quote.tenant == context.tenant)))
+                    if db_quote and db_quote.partyB != hedger_context.hedger_address:
+                        continue
+                    if db_quote:
+                        print(
+                            f"{context.tenant} => Contract: {key} Local DB: {db_quote.id}-{db_quote.openPrice}-{db_quote.closedAmount}-{db_quote.quantity}"
+                        )
+                    else:
+                        print(f"{context.tenant} => Contract opened quote not found in the subgraph: {key}")
 
     # ------------------------------------------
 

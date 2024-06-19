@@ -1,39 +1,20 @@
+import asyncio
 import os
-import time
 
-from apscheduler.events import EVENT_JOB_ERROR
-from apscheduler.schedulers.background import BackgroundScheduler
+from aioclock import AioClock, OnStartUp, OnShutDown, Every
+from aioclock.group import Group
 
 from config.local_settings import contexts
-from config.settings import FETCH_DATA_INTERVAL
+from config.settings import SNAPSHOT_INTERVAL
 from cronjobs.snapshot.snapshot_job import fetch_snapshot
 from services.telegram_service import send_alert, escape_markdown_v1
 
-scheduler: BackgroundScheduler
+# groups.py
+group = Group()
 
-
-def listener(event):
-    global scheduler
-    send_alert(escape_markdown_v1(f"BackgroundJob {event.job_id} raised {event.exception.__class__.__name__}\n {event.exception}"))
-    scheduler.shutdown(wait=False)
-    create_scheduler()
-
-
-def create_scheduler():
-    global scheduler
-    context = get_context()
-    scheduler = BackgroundScheduler()
-    scheduler.add_listener(listener, EVENT_JOB_ERROR)
-    scheduler.add_job(
-        func=fetch_snapshot,
-        args=[context],
-        trigger="interval",
-        seconds=FETCH_DATA_INTERVAL,
-        id=context.tenant + "_fetch_snapshot",
-    )
-    scheduler.start()
-    while True:
-        time.sleep(10)
+# app.py
+app = AioClock()
+app.include_group(group)
 
 
 def get_context():
@@ -44,5 +25,23 @@ def get_context():
     raise Exception("Invalid context")
 
 
+@group.task(trigger=Every(seconds=SNAPSHOT_INTERVAL))
+async def run_snapshot():
+    try:
+        await fetch_snapshot(get_context())
+    except Exception as e:
+        send_alert(escape_markdown_v1(f"Snapshot task of {get_context().tenant} raised {e.__class__.__name__}\n {e}"))
+
+
+@app.task(trigger=OnStartUp())
+async def startup():
+    print(f"Starting up snapshot task for {get_context().tenant}")
+
+
+@app.task(trigger=OnShutDown())
+async def shutdown():
+    print(f"Shutting down snapshot task for {get_context().tenant}")
+
+
 if __name__ == "__main__":
-    create_scheduler()
+    asyncio.run(app.serve())

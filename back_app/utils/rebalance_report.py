@@ -20,7 +20,7 @@ def write_balance_changes(session: Session, context: Context, writer, _balance_c
             [
                 item.transaction,
                 human_readable_timestamp,
-                int(item.amount) / (10 ** conf.decimals),
+                int(item.amount) / (10**conf.decimals),
                 item.type,
                 f"Contract {context.tenant}",
                 account_type,
@@ -44,7 +44,7 @@ def write_incomes(context: Context, writer, _incomes: List[BinanceIncome], accou
         )
 
 
-def get_rebalance_report( ):
+def get_rebalance_report():
     with open("rebalance.csv", "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerow(

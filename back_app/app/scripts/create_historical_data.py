@@ -30,8 +30,8 @@ def prepare_historical_snapshots():
     while block.timestamp() > context.from_unix_timestamp:
         with db_session() as session:
             config: RuntimeConfiguration = load_config(session, context)
-            if config.last_historical_snapshot_block:
-                block = Block(w3, config.last_historical_snapshot_block)
+            if config.lastHistoricalSnapshotBlock:
+                block = Block(w3, config.lastHistoricalSnapshotBlock)
             block.backward(context.historical_snapshot_step)
 
             print(f"{context.tenant}: Historical snapshot for block {block.number} - {block.datetime()}")
@@ -47,5 +47,5 @@ def prepare_historical_snapshots():
                     )
             for hedger_context in context.hedgers:
                 prepare_hedger_snapshot(config, context, session, hedger_context, block)
-            config.last_historical_snapshot_block = block.number
+            config.lastHistoricalSnapshotBlock = block.number
             config.upsert(session)

@@ -26,7 +26,7 @@ class Block:
         return self.block["timestamp"]
 
     def datetime(self) -> datetime.datetime:
-        return datetime.datetime.utcfromtimestamp(self.timestamp())
+        return datetime.datetime.fromtimestamp(self.timestamp(), datetime.timezone.utc)
 
     def is_for_past(self):
         return self.timestamp() < time.time() - (60 * 10)

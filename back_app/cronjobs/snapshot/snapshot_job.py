@@ -1,5 +1,3 @@
-from datetime import datetime, timedelta, timezone
-
 import web3
 from web3.middleware import geth_poa_middleware
 
@@ -16,52 +14,40 @@ from app.models import (
 )
 from config.settings import (
     Context,
+    SNAPSHOT_BLOCK_LAG,
 )
 from cronjobs.snapshot.affiliate_snapshot import prepare_affiliate_snapshot
-from cronjobs.snapshot.hedger_snapshot import prepare_hedger_snapshot
 from cronjobs.snapshot.snapshot_context import SnapshotContext
-from cronjobs.subgraph_synchronizer import SubgraphSynchronizer
-from services.binance_service import (
-    fetch_binance_income_histories,
-)
 from services.config_service import load_config
 from utils.block import Block
+from utils.subgraph.subgraph_client import SubgraphClient
 
 
-def fetch_snapshot(context: Context):
-    print("----------------------Prepare Snapshot----------------------------")
+async def fetch_snapshot(context: Context):
     with db_session() as session:
-        config: RuntimeConfiguration = load_config(session, context)  # Configuration may have changed during this method
-        config.nextSnapshotTimestamp = datetime.now(timezone.utc) - timedelta(minutes=5)  # for subgraph sync time
-        config.upsert(session)
-
         w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
         w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-        snapshot_context = SnapshotContext(context, session, config, w3)
 
-        for hedger_context in context.hedgers:
-            if hedger_context.utils.binance_client:
-                fetch_binance_income_histories(snapshot_context, hedger_context)
+        config: RuntimeConfiguration = load_config(session, context)
+        snapshot_context = SnapshotContext(context, session, config, w3)
+        snapshot_block = Block.latest(w3).backward(SNAPSHOT_BLOCK_LAG)
 
         session.commit()
 
-        SubgraphSynchronizer(context, User).sync(session)
-        SubgraphSynchronizer(context, Symbol).sync(session)
-        SubgraphSynchronizer(context, Account).sync(session)
-        SubgraphSynchronizer(context, BalanceChange).sync(session)
-        SubgraphSynchronizer(context, Quote).sync(session)
-        SubgraphSynchronizer(context, TradeHistory).sync(session)
-        SubgraphSynchronizer(context, DailyHistory).sync(session)
+        SubgraphClient(context, User).sync(session, snapshot_block)
+        SubgraphClient(context, Symbol).sync(session, snapshot_block)
+        SubgraphClient(context, Account).sync(session, snapshot_block)
+        SubgraphClient(context, BalanceChange).sync(session, snapshot_block)
+        SubgraphClient(context, Quote).sync(session, snapshot_block)
+        SubgraphClient(context, TradeHistory).sync(session, snapshot_block)
+        SubgraphClient(context, DailyHistory).sync(session, snapshot_block)
 
-        config = load_config(session, context)  # Configuration may have changed during this method
-        config.lastSnapshotTimestamp = config.nextSnapshotTimestamp
+        config.lastSnapshotBlock = snapshot_block
         config.upsert(session)
 
         session.commit()
 
-        print(f"{context.tenant}: Data loaded...\nPreparing snapshot data...")
-
-        latest_block = Block.latest(w3)
+        print(f"{context.tenant}: Data loaded...\nPreparing snapshots...")
 
         for affiliate_context in context.affiliates:
             for hedger_context in context.hedgers:
@@ -69,8 +55,11 @@ def fetch_snapshot(context: Context):
                     snapshot_context,
                     affiliate_context,
                     hedger_context,
-                    latest_block,
+                    snapshot_block,
                 )
                 session.commit()
-        for hedger_context in context.hedgers:
-            prepare_hedger_snapshot(snapshot_context, hedger_context, latest_block)
+
+        # for hedger_context in context.hedgers:
+        #     if hedger_context.utils.binance_client:
+        #         fetch_binance_income_histories(snapshot_context, hedger_context)
+        #     prepare_hedger_snapshot(snapshot_context, hedger_context, snapshot_block)

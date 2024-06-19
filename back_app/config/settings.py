@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass
 from typing import List
 
-from context.context import ContextUtils, HedgerContextUtils
+from context.context import HedgerContextUtils
 
 
 @dataclass
@@ -54,7 +54,6 @@ class Context:
     mention_for_red_alert_maintenance_accounts: List[str]
     mention_cooldown: int
 
-    utils: ContextUtils | None
     historical_snapshot_step = 100
 
     def hedger_with_name(self, hedger_name: str):
@@ -69,7 +68,9 @@ SERVER_PORT = 7231
 
 # Intervals
 FETCH_STAT_DATA_INTERVAL = 5 * 5
-FETCH_DATA_INTERVAL = 2 * 5
+SNAPSHOT_INTERVAL = 2 * 5
+SNAPSHOT_BLOCK_LAG = 30
+DEBUG_MODE = True
 
 # Alerting system
 FUNDING_RATE_ALERT_THRESHOLD = 100
