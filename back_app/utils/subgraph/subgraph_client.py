@@ -148,7 +148,7 @@ class SubgraphClient:
                 formatted_pv = str(pagination_value)
             else:
                 formatted_pv = None
-            temp = self.context.utils.gc.load(
+            temp = self.load(
                 method=self.config.method_name,
                 fields=fields,
                 create_function=create_function,
