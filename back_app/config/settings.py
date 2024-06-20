@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass
 from typing import List
 
-from context.context import HedgerContextUtils
+from config.context import HedgerContextUtils
 
 
 @dataclass
@@ -28,7 +28,6 @@ class HedgerContext:
 class AffiliateContext:
     name: str  # Should be unique
     symmio_multi_account: str
-    symmio_liquidators: List[str]
 
 
 @dataclass
@@ -46,6 +45,7 @@ class Context:
 
     hedgers: List[HedgerContext]
     affiliates: List[AffiliateContext]
+    liquidators: List[str]
 
     # Telegram
     telegram_group_id: str

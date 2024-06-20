@@ -96,10 +96,7 @@ def get_rebalance_report():
                     )
                     write_incomes(context, writer, incomes, hedger.name)
 
-                liquidators = set()
-                for affiliate in context.affiliates:
-                    liquidators.update(affiliate.symmio_liquidators)
-                for liq in liquidators:
+                for liq in context.liquidators:
                     balance_changes = (
                         session.execute(
                             select(BalanceChange)

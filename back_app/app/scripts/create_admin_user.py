@@ -2,7 +2,7 @@ from getpass import getpass
 
 from app import db_session
 from app.models import AdminUser
-from security.security_utils import hash_password
+from utils.security_utils import hash_password
 
 
 def create_admin_user(username, password):

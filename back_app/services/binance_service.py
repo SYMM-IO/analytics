@@ -9,7 +9,7 @@ from app.models import (
     BinanceIncome,
 )
 from config.settings import HedgerContext
-from cronjobs.snapshot.snapshot_context import SnapshotContext
+from services.snapshot.snapshot_context import SnapshotContext
 from services.config_service import load_config
 
 # Cache dictionary to store the symbol, funding rate, and last update time

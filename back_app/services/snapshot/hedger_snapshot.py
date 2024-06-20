@@ -21,8 +21,8 @@ from config.settings import (
     HedgerContext,
     IGNORE_BINANCE_TRADE_VOLUME,
 )
-from cronjobs.binance_trade_volume import calculate_binance_trade_volume
-from cronjobs.snapshot.snapshot_context import SnapshotContext
+from services.binance_trade_volume import calculate_binance_trade_volume
+from services.snapshot.snapshot_context import SnapshotContext
 from services.binance_service import real_time_funding_rate
 from services.snaphshot_service import get_last_affiliate_snapshot_for
 from utils.attr_dict import AttrDict

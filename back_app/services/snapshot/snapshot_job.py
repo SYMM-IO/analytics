@@ -1,4 +1,5 @@
 import web3
+from multicallable import Multicallable
 from web3.middleware import geth_poa_middleware
 
 from app import db_session
@@ -15,9 +16,11 @@ from app.models import (
 from config.settings import (
     Context,
     SNAPSHOT_BLOCK_LAG,
+    SYMMIO_ABI,
 )
-from cronjobs.snapshot.affiliate_snapshot import prepare_affiliate_snapshot
-from cronjobs.snapshot.snapshot_context import SnapshotContext
+from services.snapshot.affiliate_snapshot import prepare_affiliate_snapshot
+from services.snapshot.liquidator_snapshot import prepare_liquidator_snapshot
+from services.snapshot.snapshot_context import SnapshotContext
 from services.config_service import load_config
 from utils.block import Block
 from utils.subgraph.subgraph_client import SubgraphClient
@@ -27,9 +30,10 @@ async def fetch_snapshot(context: Context):
     with db_session() as session:
         w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
         w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        multicallable = Multicallable(w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, w3)
 
         config: RuntimeConfiguration = load_config(session, context)
-        snapshot_context = SnapshotContext(context, session, config, w3)
+        snapshot_context = SnapshotContext(context, session, config, w3, multicallable)
         snapshot_block = Block.latest(w3).backward(SNAPSHOT_BLOCK_LAG)
 
         session.commit()
@@ -58,6 +62,9 @@ async def fetch_snapshot(context: Context):
                     snapshot_block,
                 )
                 session.commit()
+
+        for liquidator in context.liquidators:
+            prepare_liquidator_snapshot(snapshot_context, liquidator, snapshot_block)
 
         # for hedger_context in context.hedgers:
         #     if hedger_context.utils.binance_client:

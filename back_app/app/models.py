@@ -284,7 +284,6 @@ class AffiliateSnapshot(BaseModel):
     active_accounts = Column(Integer)
     users_count = Column(Integer)
     active_users = Column(Integer)
-    liquidator_states = Column(JSON)
     trade_volume = Column(Numeric(40, 0))
     timestamp = Column(DateTime, primary_key=True)
     block_number = Column(Numeric(40, 0))
@@ -295,6 +294,19 @@ class AffiliateSnapshot(BaseModel):
 
     def get_status_quotes(self):
         return json.loads(self.status_quotes.replace("'", '"'))
+
+
+class LiquidatorSnapshot(BaseModel):
+    __tablename__ = "liquidator_snapshot"
+    __is_timeseries__ = True
+    __pk_name__ = "timestamp"
+
+    timestamp = Column(DateTime, primary_key=True)
+    address = Column(String, nullable=False)
+    withdraw = Column(Numeric(40, 0))
+    balance = Column(Numeric(40, 0))
+    allocated = Column(Numeric(40, 0))
+    tenant = Column(String, nullable=False, primary_key=True)
 
 
 class HedgerSnapshot(BaseModel):

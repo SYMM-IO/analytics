@@ -3,7 +3,7 @@ from decimal import Decimal
 import requests
 
 from config.settings import Context, HedgerContext
-from cronjobs.snapshot.snapshot_context import SnapshotContext
+from services.snapshot.snapshot_context import SnapshotContext
 
 
 def fetch_native_transferred(context: Context, w3, wallet_address, initial_block=0, page_size=10000):

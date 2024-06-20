@@ -2,7 +2,6 @@ import json
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from multicallable import Multicallable
 from sqlalchemy import func, and_, or_, select
 from sqlalchemy.orm import Session, load_only, joinedload
 
@@ -18,13 +17,12 @@ from app.models import (
     RuntimeConfiguration,
 )
 from config.settings import (
-    SYMMIO_ABI,
     AffiliateContext,
     HedgerContext,
     Context,
     DEBUG_MODE,
 )
-from cronjobs.snapshot.snapshot_context import SnapshotContext
+from services.snapshot.snapshot_context import SnapshotContext
 from utils.attr_dict import AttrDict
 from utils.block import Block
 
@@ -90,7 +88,6 @@ def prepare_affiliate_snapshot(
     )
 
     # ------------------------------------------
-    contract_multicallable = Multicallable(snapshot_context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, snapshot_context.w3)
     all_accounts = session.execute(
         select(Account.id).where(
             and_(
@@ -105,7 +102,7 @@ def prepare_affiliate_snapshot(
     hedger_addr = snapshot_context.w3.to_checksum_address(hedger_context.hedger_address)
     snapshot.hedger_contract_allocated = Decimal(
         sum(
-            contract_multicallable.allocatedBalanceOfPartyB(
+            snapshot_context.multicallable.allocatedBalanceOfPartyB(
                 [(hedger_addr, snapshot_context.w3.to_checksum_address(a.id)) for a in all_accounts]
             ).call(n=pages_count, block_identifier=block.number)
         )
@@ -148,9 +145,9 @@ def prepare_affiliate_snapshot(
     snapshot.all_contract_withdraw = all_accounts_withdraw * 10 ** (18 - config.decimals)
 
     if DEBUG_MODE:
-        ppp = contract_multicallable.getPartyAOpenPositions([(snapshot_context.w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]).call(
-            n=pages_count, block_identifier=block.number
-        )
+        ppp = snapshot_context.multicallable.getPartyAOpenPositions(
+            [(snapshot_context.w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]
+        ).call(n=pages_count, block_identifier=block.number)
 
         print(f"{context.tenant}: Checking diff of open quotes with subgraph")
         for pp in ppp:
@@ -226,31 +223,6 @@ def prepare_affiliate_snapshot(
         )
         or 0
     )
-
-    # ------------------------------------------
-    for liquidator in affiliate_context.symmio_liquidators:
-        account_withdraw = session.scalar(
-            select(func.sum(BalanceChange.amount)).where(
-                and_(
-                    BalanceChange.collateral == context.symmio_collateral_address,
-                    BalanceChange.type == BalanceChangeType.WITHDRAW,
-                    BalanceChange.account_id == liquidator,
-                    BalanceChange.blockNumber <= block.number,
-                    BalanceChange.tenant == context.tenant,
-                )
-            )
-        ) or Decimal(0)
-        liquidator_state = {
-            "address": liquidator,
-            "withdraw": int(account_withdraw) * 10 ** (18 - config.decimals),
-            "balance": contract_multicallable.balanceOf([snapshot_context.w3.to_checksum_address(liquidator)]).call(block_identifier=block.number)[0],
-            "allocated": contract_multicallable.balanceInfoOfPartyA([snapshot_context.w3.to_checksum_address(liquidator)]).call(
-                block_identifier=block.number
-            )[0][0],
-        }
-        if "liquidator_states" not in snapshot:
-            snapshot.liquidator_states = []
-        snapshot.liquidator_states.append(liquidator_state)
 
     # ------------------------------------------
     snapshot.platform_fee = (

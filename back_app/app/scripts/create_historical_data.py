@@ -1,14 +1,17 @@
 import os
 
 import web3
+from multicallable import Multicallable
 from web3.middleware import geth_poa_middleware
 
 from app import db_session
 from app.models import RuntimeConfiguration
 from config.local_settings import contexts
-from cronjobs.snapshot.affiliate_snapshot import prepare_affiliate_snapshot
-from cronjobs.snapshot.hedger_snapshot import prepare_hedger_snapshot
+from config.settings import SYMMIO_ABI
+from services.snapshot.affiliate_snapshot import prepare_affiliate_snapshot
 from services.config_service import load_config
+from services.snapshot.liquidator_snapshot import prepare_liquidator_snapshot
+from services.snapshot.snapshot_context import SnapshotContext
 from utils.block import Block
 
 
@@ -25,27 +28,37 @@ def prepare_historical_snapshots():
 
     w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
     w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-    block = Block.latest(w3)
+    multicallable = Multicallable(w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, w3)
+    snapshot_block = Block.latest(w3)
 
-    while block.timestamp() > context.from_unix_timestamp:
+    while snapshot_block.timestamp() > context.from_unix_timestamp:
         with db_session() as session:
             config: RuntimeConfiguration = load_config(session, context)
-            if config.lastHistoricalSnapshotBlock:
-                block = Block(w3, config.lastHistoricalSnapshotBlock)
-            block.backward(context.historical_snapshot_step)
+            snapshot_context = SnapshotContext(context, session, config, w3, multicallable)
 
-            print(f"{context.tenant}: Historical snapshot for block {block.number} - {block.datetime()}")
+            if config.lastHistoricalSnapshotBlock:
+                snapshot_block = Block(w3, config.lastHistoricalSnapshotBlock)
+            snapshot_block.backward(context.historical_snapshot_step)
+
+            print(f"{context.tenant}: Historical snapshot for snapshot_block {snapshot_block.number} - {snapshot_block.datetime()}")
+
             for affiliate_context in context.affiliates:
                 for hedger_context in context.hedgers:
                     prepare_affiliate_snapshot(
-                        config,
-                        context,
-                        session,
+                        snapshot_context,
                         affiliate_context,
                         hedger_context,
-                        block,
+                        snapshot_block,
                     )
-            for hedger_context in context.hedgers:
-                prepare_hedger_snapshot(config, context, session, hedger_context, block)
-            config.lastHistoricalSnapshotBlock = block.number
+                    session.commit()
+
+            for liquidator in context.liquidators:
+                prepare_liquidator_snapshot(snapshot_context, liquidator, snapshot_block)
+
+            # for hedger_context in context.hedgers:
+            #     if hedger_context.utils.binance_client:
+            #         fetch_binance_income_histories(snapshot_context, hedger_context)
+            #     prepare_hedger_snapshot(snapshot_context, hedger_context, snapshot_block)
+
+            config.lastHistoricalSnapshotBlock = snapshot_block.number
             config.upsert(session)

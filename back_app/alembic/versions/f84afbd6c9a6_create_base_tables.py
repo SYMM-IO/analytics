@@ -10,7 +10,6 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "f84afbd6c9a6"
@@ -55,7 +54,6 @@ def upgrade() -> None:
         sa.Column("active_accounts", sa.Integer(), nullable=True),
         sa.Column("users_count", sa.Integer(), nullable=True),
         sa.Column("active_users", sa.Integer(), nullable=True),
-        sa.Column("liquidator_states", postgresql.JSON(astext_type=sa.Text()), nullable=True),
         sa.Column("trade_volume", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("timestamp", sa.DateTime(), nullable=False),
         sa.Column("block_number", sa.Numeric(precision=40, scale=0), nullable=True),
@@ -64,6 +62,16 @@ def upgrade() -> None:
         sa.Column("hedger_name", sa.String(), nullable=False),
         sa.Column("tenant", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("timestamp", "tenant", "name", "hedger_name"),
+    )
+    op.create_table(
+        "liquidator_snapshot",
+        sa.Column("withdraw", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("balance", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("allocated", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("address", sa.String(), nullable=False),
+        sa.Column("tenant", sa.String(), nullable=False),
+        sa.Column("timestamp", sa.DateTime(), nullable=False),
+        sa.PrimaryKeyConstraint("timestamp", "tenant", "address"),
     )
     op.create_table(
         "binance_income",

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from context.binance_client import BinanceClient
+from utils.binance_client import BinanceClient
 
 
 @dataclass
