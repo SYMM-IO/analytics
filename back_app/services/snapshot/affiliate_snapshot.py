@@ -44,7 +44,7 @@ def prepare_affiliate_snapshot(
     snapshot.status_quotes = json.dumps(count_quotes_per_status(session, affiliate_context, hedger_context, context, from_time, block))
     snapshot.pnl_of_closed = calculate_pnl_of_hedger(context, session, affiliate_context, hedger_context, 7, from_time, block)
     snapshot.pnl_of_liquidated = calculate_pnl_of_hedger(context, session, affiliate_context, hedger_context, 8, from_time, block)
-    snapshot.hedger_upnl, subgraph_open_quotes = calculate_hedger_upnl(context, session, affiliate_context, hedger_context, from_time, block)
+    snapshot.hedger_upnl, local_open_quotes = calculate_hedger_upnl(context, session, affiliate_context, hedger_context, from_time, block)
     snapshot.closed_notional_value = calculate_notional_value(context, session, affiliate_context, hedger_context, 7, from_time, block)
     snapshot.liquidated_notional_value = calculate_notional_value(context, session, affiliate_context, hedger_context, 8, from_time, block)
     snapshot.opened_notional_value = calculate_notional_value(context, session, affiliate_context, hedger_context, 4, from_time, block)
@@ -152,17 +152,19 @@ def prepare_affiliate_snapshot(
         print(f"{context.tenant}: Checking diff of open quotes with subgraph")
         for pp in ppp:
             for quote in pp:
-                # key = f"{quote.id}-{9uiui8iuu jm  quote.openPrice}-{quote.closedAmount}-{quote.quantity}"
-                key = f"{context.tenant}_{quote[0]}-{quote[5]}-{quote[10]}-{quote[9]}"
+                # key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}"
+                key = f"{context.tenant}_{quote[0]}-{quote[5]}-{quote[10]}-{quote[9]}-{quote[16]}"
                 quote_id = f"{context.tenant}_{quote[0]}"
-                if key not in subgraph_open_quotes:
+                if key not in local_open_quotes:
                     db_quote = session.scalar(select(Quote).where(and_(Quote.id == quote_id, Quote.tenant == context.tenant)))
                     if db_quote and db_quote.partyB != hedger_context.hedger_address:
                         continue
+                    db_account = session.scalar(select(Account).where(and_(Account.id == db_quote.account_id, Account.tenant == context.tenant)))
+                    if db_account.accountSource != affiliate_context.symmio_multi_account:
+                        continue
                     if db_quote:
-                        print(
-                            f"{context.tenant} => Contract: {key} Local DB: {db_quote.id}-{db_quote.openPrice}-{db_quote.closedAmount}-{db_quote.quantity}"
-                        )
+                        local_key = f"{db_quote.id}-{db_quote.openPrice}-{db_quote.closedAmount}-{db_quote.quantity}-{db_quote.quoteStatus}"
+                        print(f"{context.tenant} => Contract: {key} Local DB: {local_key}")
                     else:
                         print(f"{context.tenant} => Contract opened quote not found in the subgraph: {key}")
 
@@ -342,15 +344,15 @@ def calculate_hedger_upnl(
         )
     )
 
-    subgraph_open_quotes = []
+    local_open_quotes = []
     hedger_upnl = Decimal(0)
     for quote in party_b_opened_quotes:
-        key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}"
-        subgraph_open_quotes.append(key)
+        key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}-{quote.quoteStatus}"
+        local_open_quotes.append(key)
         side_sign = 1 if quote.positionType == "0" else -1
         current_price = Decimal(prices_map[quote.symbol.name]) * 10**18
         hedger_upnl += side_sign * (quote.openPrice - current_price) * (quote.quantity - quote.closedAmount) // 10**18
-    return hedger_upnl, subgraph_open_quotes
+    return hedger_upnl, local_open_quotes
 
 
 def calculate_pnl_of_hedger(

@@ -329,6 +329,7 @@ def downgrade() -> None:
     op.drop_table("stats_bot_message")
     op.drop_table("runtime_configuration")
     op.drop_table("hedger_snapshot")
+    op.drop_table("liquidator_snapshot")
     op.drop_table("daily_history")
     op.drop_table("binance_trade")
     op.drop_table("binance_income")

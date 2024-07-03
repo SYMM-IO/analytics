@@ -27,6 +27,7 @@ def get_context():
 
 @group.task(trigger=Every(seconds=SNAPSHOT_INTERVAL))
 async def run_snapshot():
+    print("----------------- Running Snapshot ------------------")
     try:
         await fetch_snapshot(get_context())
     except Exception as e:

@@ -28,13 +28,12 @@ def load_config(session: Session, context: Context, name: str = "DefaultConfigur
         )
         decimals = collateral_contract.functions.decimals().call()
         start_time = datetime.datetime.utcfromtimestamp(context.from_unix_timestamp // 1000) - datetime.timedelta(days=5)
-        deploy_time = datetime.datetime.utcfromtimestamp(context.deploy_timestamp // 1000) - datetime.timedelta(days=5)
         config = RuntimeConfiguration(
-            decimals=decimals,
             name=name,
+            decimals=decimals,
             tenant=context.tenant,
             deployTimestamp=start_time,
-            lastSnapshotTimestamp=deploy_time,
+            lastSnapshotBlock=0,
         )
         config.save(session)
         session.flush()

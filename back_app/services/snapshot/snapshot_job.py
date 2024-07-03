@@ -18,10 +18,10 @@ from config.settings import (
     SNAPSHOT_BLOCK_LAG,
     SYMMIO_ABI,
 )
+from services.config_service import load_config
 from services.snapshot.affiliate_snapshot import prepare_affiliate_snapshot
 from services.snapshot.liquidator_snapshot import prepare_liquidator_snapshot
 from services.snapshot.snapshot_context import SnapshotContext
-from services.config_service import load_config
 from utils.block import Block
 from utils.subgraph.subgraph_client import SubgraphClient
 
@@ -34,10 +34,10 @@ async def fetch_snapshot(context: Context):
 
         config: RuntimeConfiguration = load_config(session, context)
         snapshot_context = SnapshotContext(context, session, config, w3, multicallable)
-        snapshot_block = Block.latest(w3).backward(SNAPSHOT_BLOCK_LAG)
+        snapshot_block = Block.latest(w3)
+        snapshot_block.backward(SNAPSHOT_BLOCK_LAG)
 
         session.commit()
-
         SubgraphClient(context, User).sync(session, snapshot_block)
         SubgraphClient(context, Symbol).sync(session, snapshot_block)
         SubgraphClient(context, Account).sync(session, snapshot_block)
@@ -46,7 +46,7 @@ async def fetch_snapshot(context: Context):
         SubgraphClient(context, TradeHistory).sync(session, snapshot_block)
         SubgraphClient(context, DailyHistory).sync(session, snapshot_block)
 
-        config.lastSnapshotBlock = snapshot_block
+        config.lastSnapshotBlock = snapshot_block.number
         config.upsert(session)
 
         session.commit()

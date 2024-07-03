@@ -1,10 +1,10 @@
 import datetime
+import enum
 from typing import List, Type
 
 import requests
-from sqlalchemy import select, delete
+from sqlalchemy import select
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.operators import eq
 
 from app import BaseModel
 from app.models import RuntimeConfiguration
@@ -31,6 +31,11 @@ class GraphQlCondition:
             return f"{self.field}{f'_{self.operator}' if self.operator else ''}: {self.value}"
 
 
+class OrderDirection(enum.Enum):
+    ASCENDING = "asc"
+    DESCENDING = "desc"
+
+
 def aggregate_conditions(conditions: List[GraphQlCondition]) -> List[GraphQlCondition]:
     filtered_dict = {}
     for c in conditions:
@@ -50,7 +55,7 @@ class SubgraphClient:
         self.config: SubgraphClientConfig = model.__subgraph_client_config__
         self.proxies = proxies
 
-    def create_function(self, session, data):
+    def create_function(self, session: Session, data):
         for f in self.config.tenant_needed_fields:
             tag_tenant_to_field(data, self.context.tenant, f)
         for key, value in self.config.name_maps.items():
@@ -71,6 +76,7 @@ class SubgraphClient:
         block: Block = None,
         conditions: List[GraphQlCondition] = None,
         order_by: str = None,
+        order_direction: OrderDirection = OrderDirection.DESCENDING,
         change_block_gte: int = None,
         log_prefix="",
     ):
@@ -82,17 +88,20 @@ class SubgraphClient:
             where_str += "where: "
             cb_addition = []
             if change_block_gte:
-                cb_addition.append(f"{{_change_block: {{number_gte: {change_block_gte}}} }}")
+                cb_addition.append(f"_change_block: {{number_gte: {change_block_gte}}}")
             where_str += f"{{ {', '.join(cb_addition + [str(w) for w in conditions])}  }}"
 
-        print(f"{log_prefix}Loading a page of {method} with condition: {where_str}")
+        print(f"|{log_prefix}: Loading a page of {method}----------")
+        print(f"|    condition: {where_str}")
+        print(f"|    change after block: {change_block_gte}")
+        print(f"|    in block: {block.number if block else ""}")
 
         query = f"""
             query q {{
                 {method}(
                     {f'block: {{ number: {block.number} }}' if block else ''}
                     first: {first},
-                    {f'orderBy: {order_by}' if order_by else ''}
+                    {f'orderBy: {order_by}, orderDirection: {order_direction.value}' if order_by else ''}
                     {where_str}
                     ) {{ """
         for f in fields:
@@ -107,10 +116,11 @@ class SubgraphClient:
         items = []
         if response:
             if "data" in response.json():
+                print(f"-------> Loaded {len(response.json()["data"][method])} items ---------")
                 for data in response.json()["data"][method]:
                     items.append(create_function(data))
             elif "errors" in response.json():
-                raise Exception(f"{log_prefix}Failed to load data from subgraph " + str(response.json()))
+                raise Exception(f"{log_prefix}: Failed to load data from subgraph " + str(response.json()))
             else:
                 raise Exception(response.json())
         else:
@@ -133,10 +143,9 @@ class SubgraphClient:
         limit = 1000
         pagination_field = getattr(self.model, self.config.pagination_field)
         pagination_value = None
-        found_items = session.scalar(select(self.model).order_by(pagination_field.desc()).limit(1))
-        if found_items:
-            pagination_value = getattr(found_items[0], self.config.pagination_field)
-            session.execute(delete(self.model).where(eq(pagination_field, pagination_value)))
+        found_item = session.scalar(select(self.model).order_by(pagination_field.desc()).limit(1))
+        if found_item:
+            pagination_value = getattr(found_item, self.config.pagination_field)
 
         result = set()
         while page_limit is None or page_limit > 0:
@@ -148,22 +157,24 @@ class SubgraphClient:
                 formatted_pv = str(pagination_value)
             else:
                 formatted_pv = None
+            pagination_field_name = self.config.name_maps.get(self.config.pagination_field) or self.config.pagination_field
             temp = self.load(
                 method=self.config.method_name,
                 fields=fields,
                 create_function=create_function,
                 first=limit,
-                conditions=([GraphQlCondition(self.config.name_maps.get(self.config.pagination_field), "gte", formatted_pv)] if formatted_pv else [])
-                + conditions,
+                conditions=([GraphQlCondition(pagination_field_name, "gte", formatted_pv)] if formatted_pv else []) + conditions,
                 log_prefix=log_prefix,
                 change_block_gte=change_block_gte,
                 block=block,
+                order_by=pagination_field_name,
+                order_direction=OrderDirection.ASCENDING,
             )
             is_done = False
             if len(temp) > 0:
                 yield [d for d in temp if d not in result]
                 result.update(temp)
-                for item in reversed(temp):
+                for item in temp:
                     if item:
                         pagination_value = getattr(temp[-1], self.config.pagination_field)
                         break

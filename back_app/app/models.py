@@ -25,10 +25,11 @@ Base = declarative_base()
 
 
 class BaseModel(Base):
+    __is_timeseries__ = False
     __abstract__ = True
 
     def __init__(self, **kw: Any):
-        super().__init__(kw)
+        super().__init__(**kw)
         self.__subgraph_client_config__ = None
 
     def to_dict(self):
@@ -253,11 +254,11 @@ class RuntimeConfiguration(BaseModel):
     __pk_name__ = "id"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
+    tenant = Column(String, nullable=False)
     decimals = Column(Integer)
-    lastHistoricalSnapshotBlock = Column(Integer)
+    lastHistoricalSnapshotBlock = Column(Integer, nullable=True)
     lastSnapshotBlock = Column(Integer)
     deployTimestamp = Column(DateTime)
-    tenant = Column(String, nullable=False)
 
     def __repr__(self):
         return f"{self.name}, {self.tenant}"
