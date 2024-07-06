@@ -8,8 +8,9 @@ from app import db_session
 from app.models import RuntimeConfiguration
 from config.local_settings import contexts
 from config.settings import SYMMIO_ABI
-from services.snapshot.affiliate_snapshot import prepare_affiliate_snapshot
 from services.config_service import load_config
+from services.snapshot.affiliate_snapshot import prepare_affiliate_snapshot
+from services.snapshot.hedger_snapshot import prepare_hedger_snapshot
 from services.snapshot.liquidator_snapshot import prepare_liquidator_snapshot
 from services.snapshot.snapshot_context import SnapshotContext
 from utils.block import Block
@@ -55,10 +56,11 @@ def prepare_historical_snapshots():
             for liquidator in context.liquidators:
                 prepare_liquidator_snapshot(snapshot_context, liquidator, snapshot_block)
 
-            # for hedger_context in context.hedgers:
-            #     if hedger_context.utils.binance_client:
-            #         fetch_binance_income_histories(snapshot_context, hedger_context)
-            #     prepare_hedger_snapshot(snapshot_context, hedger_context, snapshot_block)
+            for hedger_context in context.hedgers:
+                prepare_hedger_snapshot(snapshot_context, hedger_context, snapshot_block)
+                # if hedger_context.utils.binance_client:
+                #     fetch_binance_income_histories(snapshot_context, hedger_context)
+                #     prepare_hedger_binance_snapshot(snapshot_context, hedger_context, snapshot_block)
 
             config.lastHistoricalSnapshotBlock = snapshot_block.number
             config.upsert(session)
