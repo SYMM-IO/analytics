@@ -16,6 +16,7 @@ from config.settings import (
     SYMMIO_ABI,
     HedgerContext,
 )
+from services.gas_checker_service import gas_used_by_hedger_wallets
 from services.snaphshot_service import get_last_affiliate_snapshot_for
 from services.snapshot.snapshot_context import SnapshotContext
 from utils.attr_dict import AttrDict
@@ -33,9 +34,8 @@ def prepare_hedger_snapshot(
     config: RuntimeConfiguration = snapshot_context.config
 
     snapshot = AttrDict()
-
-    # snapshot.gas, snapshot.gas_dollar = gas_used_by_hedger_wallets(snapshot_context, hedger_context)
-    # print(f"Total gas spent by all wallets of {hedger_context.name}: {snapshot.gas} (${snapshot.gas_dollar})")
+    snapshot.gas = gas_used_by_hedger_wallets(snapshot_context, hedger_context)
+    print(f"Total gas spent by all wallets of {hedger_context.name}: {snapshot.gas}")
 
     snapshot.users_paid_funding_fee = session.execute(
         select(func.coalesce(func.sum(Quote.fundingReceived), Decimal(0))).where(
@@ -57,10 +57,10 @@ def prepare_hedger_snapshot(
         )
     ).scalar_one()
 
-    contract_multicallable = Multicallable(snapshot_context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, snapshot_context.w3)
+    contract_multicallable = Multicallable(snapshot_context.context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, snapshot_context.w3)
 
     snapshot.hedger_contract_balance = contract_multicallable.balanceOf(
-        [snapshot_context.w3.to_checksum_address(hedger_context.hedger_address)]
+        [snapshot_context.context.w3.to_checksum_address(hedger_context.hedger_address)]
     ).call(block_identifier=block.number)[0]
 
     hedger_deposit = session.execute(
@@ -108,27 +108,10 @@ def prepare_hedger_snapshot(
     snapshot.earned_cva = sum([snapshot.earned_cva for snapshot in affiliates_snapshots])
     snapshot.loss_cva = sum([snapshot.loss_cva for snapshot in affiliates_snapshots])
 
-    snapshot.liquidators_balance = Decimal(0)
-    snapshot.liquidators_withdraw = Decimal(0)
-    snapshot.liquidators_allocated = Decimal(0)
-    checked_liquidators = set()
-    for affiliate_snapshot in affiliates_snapshots:
-        if affiliate_snapshot.liquidator_states:
-            for state in affiliate_snapshot.liquidator_states:
-                if state["address"] in checked_liquidators:
-                    continue
-                checked_liquidators.add(state["address"])
-                snapshot.liquidators_balance += Decimal(state["balance"])
-                snapshot.liquidators_withdraw += Decimal(state["withdraw"])
-                snapshot.liquidators_allocated += Decimal(state["allocated"])
-
-    snapshot.liquidators_profit = snapshot.liquidators_balance + snapshot.liquidators_allocated + snapshot.liquidators_withdraw
-
     snapshot.timestamp = block.datetime()
     snapshot.name = hedger_context.name
     snapshot.tenant = context.tenant
     snapshot.block_number = block.number
-    print(snapshot)
     hedger_snapshot = HedgerSnapshot(**snapshot)
     hedger_snapshot.save(session)
     return hedger_snapshot

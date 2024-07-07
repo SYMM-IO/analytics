@@ -134,7 +134,6 @@ def upgrade() -> None:
         sa.Column("liquidators_withdraw", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("liquidators_allocated", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("gas", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("gas_dollar", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("block_number", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("name", sa.String(), nullable=False, primary_key=True),
         sa.Column("tenant", sa.String(), nullable=False, primary_key=True),

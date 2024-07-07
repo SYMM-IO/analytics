@@ -302,12 +302,12 @@ class LiquidatorSnapshot(BaseModel):
     __is_timeseries__ = True
     __pk_name__ = "timestamp"
 
-    timestamp = Column(DateTime, primary_key=True)
-    address = Column(String, nullable=False)
+    address = Column(String, nullable=False, primary_key=True)
     withdraw = Column(Numeric(40, 0))
     balance = Column(Numeric(40, 0))
     allocated = Column(Numeric(40, 0))
     tenant = Column(String, nullable=False, primary_key=True)
+    timestamp = Column(DateTime, primary_key=True)
 
 
 class HedgerSnapshot(BaseModel):
@@ -320,15 +320,10 @@ class HedgerSnapshot(BaseModel):
     users_paid_funding_fee = Column(Numeric(40, 0), nullable=True)
     users_received_funding_fee = Column(Numeric(40, 0), nullable=True)
     contract_profit = Column(Numeric(40, 0), nullable=True)
-    liquidators_profit = Column(Numeric(40, 0), nullable=True)
     total_deposit = Column(Numeric(40, 0), nullable=True)
     earned_cva = Column(Numeric(40, 0), nullable=True)
     loss_cva = Column(Numeric(40, 0), nullable=True)
-    liquidators_balance = Column(Numeric(40, 0), nullable=True)
-    liquidators_withdraw = Column(Numeric(40, 0), nullable=True)
-    liquidators_allocated = Column(Numeric(40, 0), nullable=True)
     gas = Column(Numeric(40, 0), nullable=True)
-    gas_dollar = Column(Numeric(40, 0), nullable=True)
     block_number = Column(Numeric(40, 0))
     name = Column(String, nullable=False, primary_key=True)
     tenant = Column(String, nullable=False, primary_key=True)

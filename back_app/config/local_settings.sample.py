@@ -33,7 +33,6 @@ x_contexts = Context(
     ],
     liquidators=[],
     telegram_group_id="",
-    from_unix_timestamp=1693958400000,
     deploy_timestamp=1693958400000,
     mention_for_red_alert_accounts=[],
     mention_for_red_alert_maintenance_accounts=[],

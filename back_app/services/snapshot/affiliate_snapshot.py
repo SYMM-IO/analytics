@@ -38,7 +38,7 @@ def prepare_affiliate_snapshot(
     session: Session = snapshot_context.session
     config: RuntimeConfiguration = snapshot_context.config
 
-    from_time = datetime.fromtimestamp(context.from_unix_timestamp / 1000)
+    from_time = datetime.fromtimestamp(context.deploy_timestamp / 1000)
     snapshot = AttrDict()
 
     snapshot.status_quotes = json.dumps(count_quotes_per_status(session, affiliate_context, hedger_context, context, from_time, block))
@@ -99,11 +99,11 @@ def prepare_affiliate_snapshot(
     ).all()
 
     pages_count = len(all_accounts) // 100 if len(all_accounts) > 100 else 1
-    hedger_addr = snapshot_context.w3.to_checksum_address(hedger_context.hedger_address)
+    hedger_addr = snapshot_context.context.w3.to_checksum_address(hedger_context.hedger_address)
     snapshot.hedger_contract_allocated = Decimal(
         sum(
             snapshot_context.multicallable.allocatedBalanceOfPartyB(
-                [(hedger_addr, snapshot_context.w3.to_checksum_address(a.id)) for a in all_accounts]
+                [(hedger_addr, snapshot_context.context.w3.to_checksum_address(a.id)) for a in all_accounts]
             ).call(n=pages_count, block_identifier=block.number)
         )
     )
@@ -145,13 +145,14 @@ def prepare_affiliate_snapshot(
     snapshot.all_contract_withdraw = all_accounts_withdraw * 10 ** (18 - config.decimals)
 
     if DEBUG_MODE:
-        ppp = snapshot_context.multicallable.getPartyAOpenPositions(
-            [(snapshot_context.w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]
+        print(f"{context.tenant}: Checking diff of open quotes with subgraph")
+
+        party_a_open_positions = snapshot_context.multicallable.getPartyAOpenPositions(
+            [(snapshot_context.context.w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]
         ).call(n=pages_count, block_identifier=block.number)
 
-        print(f"{context.tenant}: Checking diff of open quotes with subgraph")
-        for pp in ppp:
-            for quote in pp:
+        for party_a_quotes in party_a_open_positions:
+            for quote in party_a_quotes:
                 # key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}"
                 key = f"{context.tenant}_{quote[0]}-{quote[5]}-{quote[10]}-{quote[9]}-{quote[16]}"
                 quote_id = f"{context.tenant}_{quote[0]}"
@@ -164,7 +165,7 @@ def prepare_affiliate_snapshot(
                         continue
                     if db_quote:
                         local_key = f"{db_quote.id}-{db_quote.openPrice}-{db_quote.closedAmount}-{db_quote.quantity}-{db_quote.quoteStatus}"
-                        print(f"{context.tenant} => Contract: {key} Local DB: {local_key}")
+                        print(f"{context.tenant} => We have diff: Contract: {key} Local DB: {local_key}")
                     else:
                         print(f"{context.tenant} => Contract opened quote not found in the subgraph: {key}")
 

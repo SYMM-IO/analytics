@@ -23,11 +23,12 @@ def prepare_liquidator_snapshot(snapshot_context: SnapshotContext, liquidator: s
     LiquidatorSnapshot(
         address=liquidator,
         withdraw=int(account_withdraw) * 10 ** (18 - snapshot_context.config.decimals),
-        balance=snapshot_context.multicallable.balanceOf([snapshot_context.w3.to_checksum_address(liquidator)]).call(block_identifier=block.number)[
-            0
-        ],
-        allocated=snapshot_context.multicallable.balanceInfoOfPartyA([snapshot_context.w3.to_checksum_address(liquidator)]).call(
+        balance=snapshot_context.multicallable.balanceOf([snapshot_context.context.w3.to_checksum_address(liquidator)]).call(
+            block_identifier=block.number
+        )[0],
+        allocated=snapshot_context.multicallable.balanceInfoOfPartyA([snapshot_context.context.w3.to_checksum_address(liquidator)]).call(
             block_identifier=block.number
         )[0][0],
+        tenant=snapshot_context.context.tenant,
         timestamp=block.datetime(),
     ).save(session=snapshot_context.session)

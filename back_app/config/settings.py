@@ -2,6 +2,9 @@ import json
 from dataclasses import dataclass
 from typing import List
 
+import web3
+from web3.middleware import geth_poa_middleware
+
 from config.context import HedgerContextUtils
 
 
@@ -40,7 +43,6 @@ class Context:
     native_coin: str
     symmio_address: str
     symmio_collateral_address: str
-    from_unix_timestamp: int
     deploy_timestamp: int
 
     hedgers: List[HedgerContext]
@@ -54,7 +56,12 @@ class Context:
     mention_for_red_alert_maintenance_accounts: List[str]
     mention_cooldown: int
 
+    w3: web3.Web3 = None
     historical_snapshot_step = 100
+
+    def __post_init__(self):
+        self.w3 = web3.Web3(web3.Web3.HTTPProvider(self.rpc))
+        self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def hedger_with_name(self, hedger_name: str):
         for hedger in self.hedgers:

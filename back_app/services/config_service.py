@@ -27,7 +27,7 @@ def load_config(session: Session, context: Context, name: str = "DefaultConfigur
             abi=ERC20_ABI,
         )
         decimals = collateral_contract.functions.decimals().call()
-        start_time = datetime.datetime.utcfromtimestamp(context.from_unix_timestamp // 1000) - datetime.timedelta(days=5)
+        start_time = datetime.datetime.utcfromtimestamp(context.deploy_timestamp // 1000) - datetime.timedelta(days=5)
         config = RuntimeConfiguration(
             name=name,
             decimals=decimals,
