@@ -93,6 +93,7 @@ def prepare_hedger_binance_snapshot(
         snapshot.binance_max_withdraw_amount = stat_message.content["Max Withdraw Amount"]
         snapshot.max_open_interest = Decimal(hedger_context.hedger_max_open_interest_ratio * snapshot.binance_max_withdraw_amount)
 
+    snapshot.binance_profit = snapshot.binance_total_balance - (snapshot.binance_deposit or Decimal(0))
     snapshot.binance_trade_volume = (
         0 if IGNORE_BINANCE_TRADE_VOLUME else Decimal(calculate_binance_trade_volume(context, session, hedger_context, block) * 10**18)
     )

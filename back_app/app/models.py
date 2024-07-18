@@ -258,6 +258,8 @@ class RuntimeConfiguration(BaseModel):
     decimals = Column(Integer)
     lastHistoricalSnapshotBlock = Column(Integer, nullable=True)
     lastSnapshotBlock = Column(Integer)
+    lastSyncBlock = Column(Integer)
+    snapshotBlockLag = Column(Integer)
     deployTimestamp = Column(DateTime)
 
     def __repr__(self):

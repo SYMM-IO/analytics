@@ -172,6 +172,8 @@ def upgrade() -> None:
         sa.Column("decimals", sa.Integer(), nullable=True),
         sa.Column("lastHistoricalSnapshotBlock", sa.Integer(), nullable=True),
         sa.Column("lastSnapshotBlock", sa.Integer(), nullable=True),
+        sa.Column("lastSyncBlock", sa.Integer()),
+        sa.Column("snapshotBlockLag", sa.Integer()),
         sa.Column("deployTimestamp", sa.DateTime(), nullable=True),
         sa.Column("tenant", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id"),

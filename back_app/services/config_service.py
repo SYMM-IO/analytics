@@ -4,7 +4,7 @@ import web3
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
-from config.settings import ERC20_ABI, Context
+from config.settings import ERC20_ABI, Context, SNAPSHOT_BLOCK_LAG
 
 
 def load_config(session: Session, context: Context, name: str = "DefaultConfiguration"):
@@ -29,11 +29,7 @@ def load_config(session: Session, context: Context, name: str = "DefaultConfigur
         decimals = collateral_contract.functions.decimals().call()
         start_time = datetime.datetime.utcfromtimestamp(context.deploy_timestamp // 1000) - datetime.timedelta(days=5)
         config = RuntimeConfiguration(
-            name=name,
-            decimals=decimals,
-            tenant=context.tenant,
-            deployTimestamp=start_time,
-            lastSnapshotBlock=0,
+            name=name, decimals=decimals, tenant=context.tenant, deployTimestamp=start_time, lastSnapshotBlock=0, snapshotBlockLag=SNAPSHOT_BLOCK_LAG
         )
         config.save(session)
         session.flush()

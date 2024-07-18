@@ -5,6 +5,7 @@ from typing import List, Type
 import requests
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.operators import eq
 
 from app import BaseModel
 from app.models import RuntimeConfiguration
@@ -143,7 +144,9 @@ class SubgraphClient:
         limit = 1000
         pagination_field = getattr(self.model, self.config.pagination_field)
         pagination_value = None
-        found_item = session.scalar(select(self.model).order_by(pagination_field.desc()).limit(1))
+        found_item = session.scalar(
+            select(self.model).where(eq(getattr(self.model, "tenant"), self.context.tenant)).order_by(pagination_field.desc()).limit(1)
+        )
         if found_item:
             pagination_value = getattr(found_item, self.config.pagination_field)
 
