@@ -4,6 +4,7 @@ from typing import List
 
 import web3
 from web3.middleware import geth_poa_middleware
+from web3_collections import MultiEndpointHTTPProvider
 
 from config.context import HedgerContextUtils
 
@@ -37,7 +38,7 @@ class AffiliateContext:
 class Context:
     tenant: str
     subgraph_endpoint: str
-    rpc: str
+    rpcs: List[str]
     explorer: str
     explorer_api_key: str
     native_coin: str
@@ -60,7 +61,7 @@ class Context:
     historical_snapshot_step = 100
 
     def __post_init__(self):
-        self.w3 = web3.Web3(web3.Web3.HTTPProvider(self.rpc))
+        self.w3 = web3.Web3(MultiEndpointHTTPProvider(self.rpcs))
         self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def hedger_with_name(self, hedger_name: str):
@@ -78,7 +79,7 @@ FETCH_STAT_DATA_INTERVAL = 5 * 5
 SNAPSHOT_INTERVAL = 2 * 5
 SNAPSHOT_BLOCK_LAG = 10
 SNAPSHOT_BLOCK_LAG_STEP = 25
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 # Alerting system
 FUNDING_RATE_ALERT_THRESHOLD = 100

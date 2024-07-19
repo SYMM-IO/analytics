@@ -202,7 +202,7 @@ class SubgraphClient:
             fields=fields,
             create_function=lambda data: self.create_function(session, data),
             log_prefix=self.context.tenant,
-            change_block_gte=runtime_config.lastSnapshotBlock,
+            change_block_gte=runtime_config.lastSyncBlock,
             block=block,
         )
         for o in out:

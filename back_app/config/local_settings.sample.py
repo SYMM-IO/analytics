@@ -4,7 +4,7 @@ from config.context import HedgerContextUtils
 x_contexts = Context(
     tenant="X",
     subgraph_endpoint="",
-    rpc="",
+    rpcs=[""],
     explorer="",
     explorer_api_key="",
     native_coin="ETH",
