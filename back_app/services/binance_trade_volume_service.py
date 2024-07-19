@@ -72,7 +72,7 @@ def calculate_binance_trade_volume(context: Context, session: Session, hedger_co
     if last_bt:
         start_time = datetime.timestamp(last_bt.timestamp) * 1000 + 1000
     else:
-        start_time = context.from_unix_timestamp
+        start_time = context.deploy_timestamp
     fetch_and_save_all_trades(context, hedger_context, start_time)
     return session.scalar(
         select(func.coalesce(func.sum(BinanceTrade.price * BinanceTrade.qty), 0)).where(

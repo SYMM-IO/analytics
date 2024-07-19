@@ -2,7 +2,6 @@ import json
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from multicallable import Multicallable
 from sqlalchemy import func, and_, or_, select
 from sqlalchemy.orm import Session, load_only, joinedload
 
@@ -18,12 +17,12 @@ from app.models import (
     RuntimeConfiguration,
 )
 from config.settings import (
-    SYMMIO_ABI,
     AffiliateContext,
     HedgerContext,
     Context,
+    DEBUG_MODE,
 )
-from cronjobs.snapshot.snapshot_context import SnapshotContext
+from services.snapshot.snapshot_context import SnapshotContext
 from utils.attr_dict import AttrDict
 from utils.block import Block
 
@@ -39,13 +38,13 @@ def prepare_affiliate_snapshot(
     session: Session = snapshot_context.session
     config: RuntimeConfiguration = snapshot_context.config
 
-    from_time = datetime.fromtimestamp(context.from_unix_timestamp / 1000)
+    from_time = datetime.fromtimestamp(context.deploy_timestamp / 1000)
     snapshot = AttrDict()
 
     snapshot.status_quotes = json.dumps(count_quotes_per_status(session, affiliate_context, hedger_context, context, from_time, block))
     snapshot.pnl_of_closed = calculate_pnl_of_hedger(context, session, affiliate_context, hedger_context, 7, from_time, block)
     snapshot.pnl_of_liquidated = calculate_pnl_of_hedger(context, session, affiliate_context, hedger_context, 8, from_time, block)
-    snapshot.hedger_upnl, subgraph_open_quotes = calculate_hedger_upnl(context, session, affiliate_context, hedger_context, from_time, block)
+    snapshot.hedger_upnl, local_open_quotes = calculate_hedger_upnl(context, session, affiliate_context, hedger_context, from_time, block)
     snapshot.closed_notional_value = calculate_notional_value(context, session, affiliate_context, hedger_context, 7, from_time, block)
     snapshot.liquidated_notional_value = calculate_notional_value(context, session, affiliate_context, hedger_context, 8, from_time, block)
     snapshot.opened_notional_value = calculate_notional_value(context, session, affiliate_context, hedger_context, 4, from_time, block)
@@ -89,7 +88,6 @@ def prepare_affiliate_snapshot(
     )
 
     # ------------------------------------------
-    contract_multicallable = Multicallable(snapshot_context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, snapshot_context.w3)
     all_accounts = session.execute(
         select(Account.id).where(
             and_(
@@ -101,11 +99,11 @@ def prepare_affiliate_snapshot(
     ).all()
 
     pages_count = len(all_accounts) // 100 if len(all_accounts) > 100 else 1
-    hedger_addr = snapshot_context.w3.to_checksum_address(hedger_context.hedger_address)
+    hedger_addr = snapshot_context.context.w3.to_checksum_address(hedger_context.hedger_address)
     snapshot.hedger_contract_allocated = Decimal(
         sum(
-            contract_multicallable.allocatedBalanceOfPartyB(
-                [(hedger_addr, snapshot_context.w3.to_checksum_address(a.id)) for a in all_accounts]
+            snapshot_context.multicallable.allocatedBalanceOfPartyB(
+                [(hedger_addr, snapshot_context.context.w3.to_checksum_address(a.id)) for a in all_accounts]
             ).call(n=pages_count, block_identifier=block.number)
         )
     )
@@ -146,26 +144,30 @@ def prepare_affiliate_snapshot(
     )
     snapshot.all_contract_withdraw = all_accounts_withdraw * 10 ** (18 - config.decimals)
 
-    ppp = contract_multicallable.getPartyAOpenPositions([(snapshot_context.w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]).call(
-        n=pages_count, block_identifier=block.number
-    )
+    if DEBUG_MODE:
+        print(f"{context.tenant}: Checking diff of open quotes with subgraph")
 
-    print(f"{context.tenant}: Checking diff of open quotes with subgraph")
-    for pp in ppp:
-        for quote in pp:
-            # key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}"
-            key = f"{context.tenant}_{quote[0]}-{quote[5]}-{quote[10]}-{quote[9]}"
-            quote_id = f"{context.tenant}_{quote[0]}"
-            if key not in subgraph_open_quotes:
-                db_quote = session.scalar(select(Quote).where(and_(Quote.id == quote_id, Quote.tenant == context.tenant)))
-                if db_quote and db_quote.partyB != hedger_context.hedger_address:
-                    continue
-                if db_quote:
-                    print(
-                        f"{context.tenant} => Contract: {key} Local DB: {db_quote.id}-{db_quote.openPrice}-{db_quote.closedAmount}-{db_quote.quantity}"
-                    )
-                else:
-                    print(f"{context.tenant} => Contract opened quote not found in the subgraph: {key}")
+        party_a_open_positions = snapshot_context.multicallable.getPartyAOpenPositions(
+            [(snapshot_context.context.w3.to_checksum_address(a.id), 0, 100) for a in all_accounts]
+        ).call(n=pages_count, block_identifier=block.number)
+
+        for party_a_quotes in party_a_open_positions:
+            for quote in party_a_quotes:
+                # key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}"
+                key = f"{context.tenant}_{quote[0]}-{quote[5]}-{quote[10]}-{quote[9]}-{quote[16]}"
+                quote_id = f"{context.tenant}_{quote[0]}"
+                if key not in local_open_quotes:
+                    db_quote = session.scalar(select(Quote).where(and_(Quote.id == quote_id, Quote.tenant == context.tenant)))
+                    if db_quote and db_quote.partyB != hedger_context.hedger_address:
+                        continue
+                    db_account = session.scalar(select(Account).where(and_(Account.id == db_quote.account_id, Account.tenant == context.tenant)))
+                    if db_account.accountSource != affiliate_context.symmio_multi_account:
+                        continue
+                    if db_quote:
+                        local_key = f"{db_quote.id}-{db_quote.openPrice}-{db_quote.closedAmount}-{db_quote.quantity}-{db_quote.quoteStatus}"
+                        print(f"{context.tenant} => We have diff: Contract: {key} Local DB: {local_key}")
+                    else:
+                        print(f"{context.tenant} => Contract opened quote not found in the subgraph: {key}")
 
     # ------------------------------------------
 
@@ -224,31 +226,6 @@ def prepare_affiliate_snapshot(
         )
         or 0
     )
-
-    # ------------------------------------------
-    for liquidator in affiliate_context.symmio_liquidators:
-        account_withdraw = session.scalar(
-            select(func.sum(BalanceChange.amount)).where(
-                and_(
-                    BalanceChange.collateral == context.symmio_collateral_address,
-                    BalanceChange.type == BalanceChangeType.WITHDRAW,
-                    BalanceChange.account_id == liquidator,
-                    BalanceChange.blockNumber <= block.number,
-                    BalanceChange.tenant == context.tenant,
-                )
-            )
-        ) or Decimal(0)
-        liquidator_state = {
-            "address": liquidator,
-            "withdraw": int(account_withdraw) * 10 ** (18 - config.decimals),
-            "balance": contract_multicallable.balanceOf([snapshot_context.w3.to_checksum_address(liquidator)]).call(block_identifier=block.number)[0],
-            "allocated": contract_multicallable.balanceInfoOfPartyA([snapshot_context.w3.to_checksum_address(liquidator)]).call(
-                block_identifier=block.number
-            )[0][0],
-        }
-        if "liquidator_states" not in snapshot:
-            snapshot.liquidator_states = []
-        snapshot.liquidator_states.append(liquidator_state)
 
     # ------------------------------------------
     snapshot.platform_fee = (
@@ -368,15 +345,15 @@ def calculate_hedger_upnl(
         )
     )
 
-    subgraph_open_quotes = []
+    local_open_quotes = []
     hedger_upnl = Decimal(0)
     for quote in party_b_opened_quotes:
-        key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}"
-        subgraph_open_quotes.append(key)
+        key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}-{quote.quoteStatus}"
+        local_open_quotes.append(key)
         side_sign = 1 if quote.positionType == "0" else -1
         current_price = Decimal(prices_map[quote.symbol.name]) * 10**18
         hedger_upnl += side_sign * (quote.openPrice - current_price) * (quote.quantity - quote.closedAmount) // 10**18
-    return hedger_upnl, subgraph_open_quotes
+    return hedger_upnl, local_open_quotes
 
 
 def calculate_pnl_of_hedger(

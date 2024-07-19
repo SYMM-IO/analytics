@@ -9,7 +9,7 @@ from app.models import (
     BinanceIncome,
 )
 from config.settings import HedgerContext
-from cronjobs.snapshot.snapshot_context import SnapshotContext
+from services.snapshot.snapshot_context import SnapshotContext
 from services.config_service import load_config
 
 # Cache dictionary to store the symbol, funding rate, and last update time
@@ -67,7 +67,7 @@ def fetch_binance_income_histories_of_type(
 
     while start_time < current_time:
         print(f"{snapshot_context.context.tenant}: Fetching binance {income_type} income histories between {start_time} and {end_time}: ", end="")
-        time.sleep(7) # Prevents binance rate limit
+        time.sleep(7)  # Prevents binance rate limit
         data = hedger_context.utils.binance_client.futures_income_history(
             startTime=int(start_time.timestamp() * 1000),
             endTime=int(end_time.timestamp() * 1000),

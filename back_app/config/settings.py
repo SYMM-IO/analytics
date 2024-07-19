@@ -2,7 +2,11 @@ import json
 from dataclasses import dataclass
 from typing import List
 
-from context.context import ContextUtils, HedgerContextUtils
+import web3
+from web3.middleware import geth_poa_middleware
+from web3_collections import MultiEndpointHTTPProvider
+
+from config.context import HedgerContextUtils
 
 
 @dataclass
@@ -28,24 +32,23 @@ class HedgerContext:
 class AffiliateContext:
     name: str  # Should be unique
     symmio_multi_account: str
-    symmio_liquidators: List[str]
 
 
 @dataclass
 class Context:
     tenant: str
     subgraph_endpoint: str
-    rpc: str
+    rpcs: List[str]
     explorer: str
     explorer_api_key: str
     native_coin: str
     symmio_address: str
     symmio_collateral_address: str
-    from_unix_timestamp: int
     deploy_timestamp: int
 
     hedgers: List[HedgerContext]
     affiliates: List[AffiliateContext]
+    liquidators: List[str]
 
     # Telegram
     telegram_group_id: str
@@ -54,8 +57,12 @@ class Context:
     mention_for_red_alert_maintenance_accounts: List[str]
     mention_cooldown: int
 
-    utils: ContextUtils | None
+    w3: web3.Web3 = None
     historical_snapshot_step = 100
+
+    def __post_init__(self):
+        self.w3 = web3.Web3(MultiEndpointHTTPProvider(self.rpcs))
+        self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def hedger_with_name(self, hedger_name: str):
         for hedger in self.hedgers:
@@ -69,7 +76,10 @@ SERVER_PORT = 7231
 
 # Intervals
 FETCH_STAT_DATA_INTERVAL = 5 * 5
-FETCH_DATA_INTERVAL = 2 * 5
+SNAPSHOT_INTERVAL = 2 * 5
+SNAPSHOT_BLOCK_LAG = 10
+SNAPSHOT_BLOCK_LAG_STEP = 25
+DEBUG_MODE = False
 
 # Alerting system
 FUNDING_RATE_ALERT_THRESHOLD = 100

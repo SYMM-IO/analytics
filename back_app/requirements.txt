@@ -1,6 +1,5 @@
 requests==2.31.0
 PySocks==1.7.1
-APScheduler==3.10.4
 web3==6.15.1
 python-binance==1.0.19
 SQLAlchemy==2.0.27
@@ -23,3 +22,5 @@ httpx~=0.26.0
 pydantic~=2.6.1
 starlette~=0.36.3
 ruff==0.3.4
+aioclock==0.2.0
+web3-collections==0.0.1

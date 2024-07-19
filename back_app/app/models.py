@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import (
     Column,
@@ -17,14 +18,19 @@ from sqlalchemy.dialects.postgresql import JSON, insert
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, Session
 
-from cronjobs.subgraph_synchronizer import SubgraphSynchronizerConfig
+from utils.subgraph.subgraph_client_config import SubgraphClientConfig
 from utils.time_utils import convert_timestamps
 
 Base = declarative_base()
 
 
 class BaseModel(Base):
+    __is_timeseries__ = False
     __abstract__ = True
+
+    def __init__(self, **kw: Any):
+        super().__init__(**kw)
+        self.__subgraph_client_config__ = None
 
     def to_dict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
@@ -47,7 +53,7 @@ class User(BaseModel):
     __tablename__ = "user"
     __is_timeseries__ = False
     __pk_name__ = "id"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="users",
         pagination_field="timestamp",
         catch_up_field="timestamp",
@@ -73,7 +79,7 @@ class Account(BaseModel):
     __tablename__ = "account"
     __is_timeseries__ = False
     __pk_name__ = "id"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="accounts",
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
@@ -101,7 +107,7 @@ class BalanceChange(BaseModel):
     __tablename__ = "balance_change"
     __is_timeseries__ = False
     __pk_name__ = "id"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="balanceChanges",
         pagination_field="timestamp",
         catch_up_field="timestamp",
@@ -130,7 +136,7 @@ class Symbol(BaseModel):
     __tablename__ = "symbol"
     __is_timeseries__ = False
     __pk_name__ = "id"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="symbols",
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
@@ -151,7 +157,7 @@ class Quote(BaseModel):
     __tablename__ = "quote"
     __is_timeseries__ = False
     __pk_name__ = "id"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="quotes",
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
@@ -195,7 +201,7 @@ class TradeHistory(BaseModel):
     __tablename__ = "trade_history"
     __is_timeseries__ = False
     __pk_name__ = "id"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="tradeHistories",
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
@@ -220,7 +226,7 @@ class DailyHistory(BaseModel):
     __tablename__ = "daily_history"
     __is_timeseries__ = True
     __pk_name__ = "timestamp"
-    __subgraph_synchronizer_config__ = SubgraphSynchronizerConfig(
+    __subgraph_client_config__ = SubgraphClientConfig(
         method_name="dailyHistories",
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
@@ -248,13 +254,13 @@ class RuntimeConfiguration(BaseModel):
     __pk_name__ = "id"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
-    decimals = Column(Integer)
-    last_historical_snapshot_block = Column(Integer)
-    last_gas_check_block = Column(Integer)
-    lastSnapshotTimestamp = Column(DateTime, default=datetime.fromtimestamp(0))
-    nextSnapshotTimestamp = Column(DateTime, default=datetime.fromtimestamp(0))
-    deployTimestamp = Column(DateTime)
     tenant = Column(String, nullable=False)
+    decimals = Column(Integer)
+    lastHistoricalSnapshotBlock = Column(Integer, nullable=True)
+    lastSnapshotBlock = Column(Integer)
+    lastSyncBlock = Column(Integer)
+    snapshotBlockLag = Column(Integer)
+    deployTimestamp = Column(DateTime)
 
     def __repr__(self):
         return f"{self.name}, {self.tenant}"
@@ -281,7 +287,6 @@ class AffiliateSnapshot(BaseModel):
     active_accounts = Column(Integer)
     users_count = Column(Integer)
     active_users = Column(Integer)
-    liquidator_states = Column(JSON)
     trade_volume = Column(Numeric(40, 0))
     timestamp = Column(DateTime, primary_key=True)
     block_number = Column(Numeric(40, 0))
@@ -294,6 +299,19 @@ class AffiliateSnapshot(BaseModel):
         return json.loads(self.status_quotes.replace("'", '"'))
 
 
+class LiquidatorSnapshot(BaseModel):
+    __tablename__ = "liquidator_snapshot"
+    __is_timeseries__ = True
+    __pk_name__ = "timestamp"
+
+    address = Column(String, nullable=False, primary_key=True)
+    withdraw = Column(Numeric(40, 0))
+    balance = Column(Numeric(40, 0))
+    allocated = Column(Numeric(40, 0))
+    tenant = Column(String, nullable=False, primary_key=True)
+    timestamp = Column(DateTime, primary_key=True)
+
+
 class HedgerSnapshot(BaseModel):
     __tablename__ = "hedger_snapshot"
     __is_timeseries__ = True
@@ -301,6 +319,23 @@ class HedgerSnapshot(BaseModel):
     hedger_contract_balance = Column(Numeric(40, 0))
     hedger_contract_deposit = Column(Numeric(40, 0))
     hedger_contract_withdraw = Column(Numeric(40, 0))
+    users_paid_funding_fee = Column(Numeric(40, 0), nullable=True)
+    users_received_funding_fee = Column(Numeric(40, 0), nullable=True)
+    contract_profit = Column(Numeric(40, 0), nullable=True)
+    total_deposit = Column(Numeric(40, 0), nullable=True)
+    earned_cva = Column(Numeric(40, 0), nullable=True)
+    loss_cva = Column(Numeric(40, 0), nullable=True)
+    gas = Column(Numeric(40, 0), nullable=True)
+    block_number = Column(Numeric(40, 0))
+    name = Column(String, nullable=False, primary_key=True)
+    tenant = Column(String, nullable=False, primary_key=True)
+    timestamp = Column(DateTime, primary_key=True)
+
+
+class HedgerBinanceSnapshot(BaseModel):
+    __tablename__ = "hedger_binance_snapshot"
+    __is_timeseries__ = True
+    __pk_name__ = "timestamp"
     max_open_interest = Column(Numeric(40, 0), nullable=True)
     binance_maintenance_margin = Column(Numeric(40, 0), nullable=True)
     binance_total_balance = Column(Numeric(40, 0), nullable=True)
@@ -317,16 +352,7 @@ class HedgerSnapshot(BaseModel):
     users_received_funding_fee = Column(Numeric(40, 0), nullable=True)
     binance_next_funding_fee = Column(Numeric(40, 0), nullable=True)
     binance_profit = Column(Numeric(40, 0), nullable=True)
-    contract_profit = Column(Numeric(40, 0), nullable=True)
-    liquidators_profit = Column(Numeric(40, 0), nullable=True)
     total_deposit = Column(Numeric(40, 0), nullable=True)
-    earned_cva = Column(Numeric(40, 0), nullable=True)
-    loss_cva = Column(Numeric(40, 0), nullable=True)
-    liquidators_balance = Column(Numeric(40, 0), nullable=True)
-    liquidators_withdraw = Column(Numeric(40, 0), nullable=True)
-    liquidators_allocated = Column(Numeric(40, 0), nullable=True)
-    gas = Column(Numeric(40, 0), nullable=True)
-    gas_dollar = Column(Numeric(40, 0), nullable=True)
     block_number = Column(Numeric(40, 0))
     name = Column(String, nullable=False, primary_key=True)
     tenant = Column(String, nullable=False, primary_key=True)

@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app import get_db_session
 from app.exception_handlers import ErrorCodeResponse, ErrorInfoContainer
 from app.models import AdminUser
-from security.security_utils import (
+from utils.security_utils import (
     get_jwt_token,
     get_current_user,
     verify_password,

@@ -57,7 +57,7 @@ def create_hyper_tables_read_write_permissions():
     with db_session() as session:
         for model in BaseModel.__subclasses__():
             if model.__is_timeseries__:
-                if not is_hyper_table(model.__tablename__):
+                if not is_hyper_table(session, model.__tablename__):
                     hypertable_query = text("SELECT create_hypertable(:table_name, 'timestamp')")
                     hypertable_query = hypertable_query.bindparams(bindparam("table_name", type_=String))
                     session.execute(hypertable_query, {"table_name": model.__tablename__})
