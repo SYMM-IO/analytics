@@ -1,7 +1,7 @@
 ## Setup
 
 ```
-sudo ./set_services user
+sudo ./setup_services user
 ```
 
 ### Restart all services
