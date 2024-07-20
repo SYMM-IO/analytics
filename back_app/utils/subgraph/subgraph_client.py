@@ -3,9 +3,7 @@ import enum
 from typing import List, Type
 
 import requests
-from sqlalchemy import select
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.operators import eq
 
 from app import BaseModel
 from app.models import RuntimeConfiguration
@@ -130,7 +128,6 @@ class SubgraphClient:
 
     def load_all(
         self,
-        session: Session,
         fields: List[str],
         create_function,
         block: Block = None,
@@ -142,13 +139,7 @@ class SubgraphClient:
         if not conditions:
             conditions = []
         limit = 1000
-        pagination_field = getattr(self.model, self.config.pagination_field)
         pagination_value = None
-        found_item = session.scalar(
-            select(self.model).where(eq(getattr(self.model, "tenant"), self.context.tenant)).order_by(pagination_field.desc()).limit(1)
-        )
-        if found_item:
-            pagination_value = getattr(found_item, self.config.pagination_field)
 
         result = set()
         while page_limit is None or page_limit > 0:
@@ -198,7 +189,6 @@ class SubgraphClient:
                 fields.append(f)
 
         out = self.load_all(
-            session=session,
             fields=fields,
             create_function=lambda data: self.create_function(session, data),
             log_prefix=self.context.tenant,
