@@ -1,0 +1,52 @@
+#!/bin/bash
+
+# First, ensure that a username has been provided
+if [ -z "$1" ]; then
+  echo "Please provide a username as an argument."
+  exit 1
+fi
+
+# Use the provided argument for the username
+USERNAME=$1
+
+# Define the specific services we're managing
+SERVICES=(
+  "analytics_base_8_2_snapshot"
+  "analytics_bnb_8_2_snapshot"
+  "analytics_blast_8_2_snapshot"
+  "analytics_mantle_8_2_snapshot"
+  "analytics_arbitrum_8_2_snapshot"
+  "analytics_server"
+)
+
+# Function to clear logs for a specific service
+clear_logs() {
+  local service=$1
+  if systemctl is-active --quiet "$service"; then
+    echo "Stopping $service to clear logs"
+    sudo systemctl stop "$service"
+  fi
+  sudo journalctl --vacuum-time=1s --unit="$service"
+  echo "Cleared logs for $service"
+}
+
+# Clear logs for all analytics services
+clear_all_logs() {
+  for service in "${SERVICES[@]}"; do
+    clear_logs "${service}.service"
+  done
+  echo "All analytics service logs have been cleared"
+}
+
+# ... [Rest of the setup script remains the same]
+
+# Clear all logs before setting up
+clear_all_logs
+
+# ... [Continue with the rest of the setup process]
+
+# Reload systemd to recognize the changes
+sudo systemctl daemon-reload
+echo "Reloaded systemd."
+
+echo "Setup complete and logs cleared"
