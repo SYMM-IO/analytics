@@ -4,7 +4,7 @@ from sqlalchemy import create_engine, text, bindparam, String
 from sqlalchemy.orm import sessionmaker, Session
 
 from app.models import BaseModel
-from config.settings import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
+from config.local_settings import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 
 # Define the database connection URL
 DATABASE_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"

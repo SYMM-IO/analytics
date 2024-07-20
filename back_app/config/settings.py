@@ -81,17 +81,6 @@ SNAPSHOT_BLOCK_LAG = 10
 SNAPSHOT_BLOCK_LAG_STEP = 25
 DEBUG_MODE = False
 
-# Alerting system
-FUNDING_RATE_ALERT_THRESHOLD = 100
-CLOSABLE_FUNDING_RATE_ALERT_THRESHOLD = 100
-
-# DB
-DB_NAME = "postgres"
-DB_USER = "postgres"
-DB_PASSWORD = "password"
-DB_HOST = "localhost"
-DB_PORT = 5432
-
 with open("./config/abis/erc20abi.json", "r") as f:
     ERC20_ABI = json.load(f)
 
@@ -103,4 +92,3 @@ IGNORE_BINANCE_TRADE_VOLUME = True
 # JWT setting
 ACCESS_TOKEN_EXPIRE_TIME = 3 * 24 * 60 * 60  # 3 Days
 JWT_ALGORITHM = "HS256"
-JWT_SECRET_KEY = ""
