@@ -19,23 +19,33 @@ SERVICES=(
   "analytics_server"
 )
 
+# Function to clear logs for a specific service
+clear_logs() {
+  local service=$1
+  echo "Stopping $service"
+  sudo systemctl stop "$service"
+  echo "Clearing logs for $service"
+  sudo journalctl --rotate
+  sudo journalctl --vacuum-time=1s
+  sudo rm -f /var/log/journal/*
+  sudo systemctl reset-failed "$service"
+}
+
+# Clear logs for all analytics services
+clear_all_logs() {
+  for service in "${SERVICES[@]}"; do
+    clear_logs "${service}.service"
+  done
+  echo "All analytics service logs have been cleared"
+}
+
+# Clear all logs before setting up
+clear_all_logs
+
 # Remove old runner symlink if it exists
 if [ -L /usr/local/bin/runner ]; then
   sudo rm -f /usr/local/bin/runner
   echo "Removed old runner symlink."
-fi
-
-# Remove old service and target files
-for service in "${SERVICES[@]}"; do
-  if [ -f "/etc/systemd/system/${service}.service" ]; then
-    sudo rm -f "/etc/systemd/system/${service}.service"
-    echo "Removed old service file: ${service}.service"
-  fi
-done
-
-if [ -f "/etc/systemd/system/analytics.target" ]; then
-  sudo rm -f "/etc/systemd/system/analytics.target"
-  echo "Removed old target file: analytics.target"
 fi
 
 # Create new runner symlink
@@ -62,8 +72,19 @@ done
 sudo sed -i "s|ANALYTICS_PATH|$(pwd)|g" /usr/local/bin/runner
 echo "Updated ANALYTICS_PATH in runner script."
 
+# Ensure the virtual environment exists and is activated in the runner script
+VENV_PATH="$(pwd)/.venv"
+if [ ! -d "$VENV_PATH" ]; then
+  echo "Creating virtual environment"
+  python3 -m venv "$VENV_PATH"
+fi
+
+# Update the runner script to use the correct virtual environment path
+sudo sed -i "s|/home/hcoder/symmio-analytics/back_app/systemd/.venv/bin/activate|$VENV_PATH/bin/activate|g" /usr/local/bin/runner
+echo "Updated virtual environment path in runner script."
+
 # Reload systemd to recognize the changes
 sudo systemctl daemon-reload
 echo "Reloaded systemd."
 
-echo "Setup complete"
+echo "Setup complete. You may now start the services."
