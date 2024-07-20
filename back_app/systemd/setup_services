@@ -80,7 +80,7 @@ if [ ! -d "$VENV_PATH" ]; then
 fi
 
 # Update the runner script to use the correct virtual environment path
-sudo sed -i "s|/home/hcoder/symmio-analytics/back_app/systemd/.venv/bin/activate|$VENV_PATH/bin/activate|g" /usr/local/bin/runner
+sudo sed -i "s|/home/hcoder/symmio-analytics/back_app/.venv/bin/activate|$VENV_PATH/bin/activate|g" /usr/local/bin/runner
 echo "Updated virtual environment path in runner script."
 
 # Reload systemd to recognize the changes
