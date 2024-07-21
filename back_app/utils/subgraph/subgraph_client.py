@@ -115,7 +115,7 @@ class SubgraphClient:
         items = []
         if response:
             if "data" in response.json():
-                print(f"-------> Loaded {len(response.json()["data"][method])} items ---------")
+                print(f"-------> Loaded {len(response.json()['data'][method])} items ---------")
                 for data in response.json()["data"][method]:
                     items.append(create_function(data))
             elif "errors" in response.json():
