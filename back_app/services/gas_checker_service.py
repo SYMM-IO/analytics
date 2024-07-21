@@ -54,7 +54,7 @@ def fetch_native_transferred(context: Context, w3, wallet_address, initial_block
 def gas_used_by_hedger_wallets(snapshot_context: SnapshotContext, hedger_context: HedgerContext):
     total_gas_spent_by_all_wallets = 0
     for address in hedger_context.wallets:
-        tx_count, gas_used = fetch_native_transferred(snapshot_context.context, snapshot_context.w3, address)
+        tx_count, gas_used = fetch_native_transferred(snapshot_context.context, snapshot_context.context.w3, address)
         print(f"Loaded {tx_count} transactions for wallet {address} with total gas of {gas_used}")
         total_gas_spent_by_all_wallets += gas_used
     return total_gas_spent_by_all_wallets

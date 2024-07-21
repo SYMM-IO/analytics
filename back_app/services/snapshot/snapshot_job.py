@@ -90,7 +90,7 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block,
     for hedger_context in context.hedgers:
         prepare_hedger_snapshot(snapshot_context, hedger_context, snapshot_block)
 
-        if prepare_binance_snapshot and hedger_context.utils.binance_client:
+        if prepare_binance_snapshot and hedger_context.has_binance_keys():
             fetch_binance_income_histories(snapshot_context, hedger_context)
             prepare_hedger_binance_snapshot(snapshot_context, hedger_context, snapshot_block)
 

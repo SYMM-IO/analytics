@@ -27,6 +27,9 @@ class HedgerContext:
 
     utils: HedgerContextUtils | None
 
+    def has_binance_keys(self) -> bool:
+        return self.binance_api_key is not None and len(self.binance_api_key) > 0
+
 
 @dataclass
 class AffiliateContext:

@@ -300,15 +300,11 @@ def calculate_hedger_upnl(
     context,
     session: Session,
     affiliate_context,
-    hedger_context,
+    hedger_context: HedgerContext,
     from_time,
     block: Block,
 ):
-    if hedger_context.utils.binance_client:
-        prices = hedger_context.utils.binance_client.futures_mark_price()
-    else:
-        prices = context.hedgers[0].utils.binance_client.futures_mark_price()  # FIXME: Find a better way later
-
+    prices = hedger_context.utils.binance_client.futures_mark_price()
     prices_map = {}
     for p in prices:
         prices_map[p["symbol"]] = p["markPrice"]
