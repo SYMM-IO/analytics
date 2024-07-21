@@ -6,7 +6,21 @@ import web3
 from web3.middleware import geth_poa_middleware
 from web3_collections import MultiEndpointHTTPProvider
 
-from config.context import HedgerContextUtils
+from utils.binance_client import BinanceClient
+
+
+@dataclass
+class HedgerContextUtils:
+    binance_client: BinanceClient
+
+    @staticmethod
+    def from_context(context, fallback_binance_api_key, fallback_binance_api_secret):
+        context = HedgerContextUtils(
+            binance_client=BinanceClient(context.binance_api_key, context.binance_api_secret)
+            if len(context.binance_api_key) > 0
+            else BinanceClient(fallback_binance_api_key, fallback_binance_api_secret),
+        )
+        return context
 
 
 @dataclass

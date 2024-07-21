@@ -1,7 +1,6 @@
 from typing import List
 
-from config.settings import Context, HedgerContext, AffiliateContext
-from config.context import HedgerContextUtils
+from config.settings import Context, HedgerContext, AffiliateContext, HedgerContextUtils
 
 x_context = Context(
     tenant="X",
@@ -44,13 +43,16 @@ x_context = Context(
 
 x_context.hedgers[0].utils = HedgerContextUtils.from_context(x_context.hedgers[0])
 
-contexts: List[Context] = [
-    x_context,
-]
-
 # Will be only used for fetching prices
 fallback_binance_api_key: str = ""
 fallback_binance_api_secret: str = ""
+
+contexts: List[Context] = [
+    x_context,
+]
+for context in contexts:
+    for hedger in context.hedgers:
+        hedger.utils = HedgerContextUtils.from_context(hedger, fallback_binance_api_key, fallback_binance_api_secret)
 
 # DB
 DB_NAME = ""
