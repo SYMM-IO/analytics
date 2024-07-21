@@ -64,12 +64,12 @@ done
 
 # Replace ANALYTICS_PATH in service files
 for service in "${SERVICES[@]}"; do
-  sudo sed -i "s|ANALYTICS_PATH|$(pwd)|g" "/etc/systemd/system/${service}.service"
+  sudo sed -i "s|ANALYTICS_PATH|$(pwd)/../|g" "/etc/systemd/system/${service}.service"
   echo "Updated ANALYTICS_PATH in ${service}.service"
 done
 
 # Replace ANALYTICS_PATH in runner script
-sudo sed -i "s|ANALYTICS_PATH|$(pwd)|g" /usr/local/bin/runner
+sudo sed -i "s|ANALYTICS_PATH|$(pwd)/../|g" /usr/local/bin/runner
 echo "Updated ANALYTICS_PATH in runner script."
 
 # Ensure the virtual environment exists and is activated in the runner script

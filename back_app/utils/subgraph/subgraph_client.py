@@ -93,7 +93,7 @@ class SubgraphClient:
         print(f"|{log_prefix}: Loading a page of {method}----------")
         print(f"|    condition: {where_str}")
         print(f"|    change after block: {change_block_gte}")
-        print(f"|    in block: {block.number if block else ""}")
+        print(f"|    in block: {block.number if block else ''}")
 
         query = f"""
             query q {{
