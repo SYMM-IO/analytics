@@ -57,7 +57,9 @@ def prepare_hedger_snapshot(
         )
     ).scalar_one()
 
-    contract_multicallable = Multicallable(snapshot_context.context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, snapshot_context.w3)
+    contract_multicallable = Multicallable(
+        snapshot_context.context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, snapshot_context.context.w3
+    )
 
     snapshot.hedger_contract_balance = contract_multicallable.balanceOf(
         [snapshot_context.context.w3.to_checksum_address(hedger_context.hedger_address)]
