@@ -11,7 +11,8 @@ from starlette import status
 from app import db_session
 from app.exception_handlers import ErrorCodeResponse, ErrorInfoContainer
 from app.models import AdminUser
-from config.settings import ACCESS_TOKEN_EXPIRE_TIME, JWT_SECRET_KEY, JWT_ALGORITHM
+from config.local_settings import JWT_SECRET_KEY
+from config.settings import ACCESS_TOKEN_EXPIRE_TIME, JWT_ALGORITHM
 
 password_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 reusable_oauth = OAuth2PasswordBearer(tokenUrl="/auth/login", scheme_name="JWT", auto_error=True)
