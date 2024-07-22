@@ -57,6 +57,7 @@ class User(BaseModel):
         method_name="users",
         pagination_field="timestamp",
         catch_up_field="timestamp",
+        tenant_needed_fields=["id"],
         converter=convert_timestamps,
     )
     id = Column(String, primary_key=True)
@@ -83,6 +84,7 @@ class Account(BaseModel):
         method_name="accounts",
         pagination_field="timestamp",
         catch_up_field="updateTimestamp",
+        tenant_needed_fields=["user"],
         name_maps={"user_id": "user"},
     )
     id = Column(String, primary_key=True)
