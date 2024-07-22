@@ -10,6 +10,7 @@ from config.settings import (
 )
 from routers.auth_router import router as auth_router
 from routers.snapshot_router import router as snapshot_router
+from routers.user_history_router import router as user_history_router
 from utils.security_utils import get_current_user
 
 
@@ -36,6 +37,7 @@ app.add_middleware(
 )
 
 app.include_router(snapshot_router, dependencies=(Depends(get_current_user),))
+app.include_router(user_history_router, dependencies=(Depends(get_current_user),))
 app.include_router(auth_router)
 
 
