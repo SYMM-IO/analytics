@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Path, Depends
-from sqlalchemy import and_, eq
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.operators import eq, and_
 
 from app import get_db_session
 from app.models import AffiliateSnapshot, HedgerSnapshot, LiquidatorSnapshot, HedgerBinanceSnapshot
