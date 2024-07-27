@@ -398,3 +398,13 @@ class StatsBotMessage(BaseModel):
     timestamp = Column(DateTime)
     content = Column(JSON)
     tenant = Column(String, nullable=False, primary_key=True)
+
+
+class GasHistory(BaseModel):
+    __tablename__ = "gas_history"
+    __is_timeseries__ = False
+    address = Column(String, primary_key=True)
+    gas_amount = Column(Numeric(40, 0))
+    initial_block = Column(Integer)
+    tx_count = Column(Integer)
+    tenant = Column(String, primary_key=True)

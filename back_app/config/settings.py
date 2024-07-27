@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 import web3
 from web3.middleware import geth_poa_middleware
@@ -11,15 +11,18 @@ from utils.binance_client import BinanceClient
 
 @dataclass
 class HedgerContextUtils:
-    binance_client: BinanceClient
+    binance_client: Optional[BinanceClient]
 
     @staticmethod
     def from_context(context, fallback_binance_api_key, fallback_binance_api_secret):
-        context = HedgerContextUtils(
-            binance_client=BinanceClient(context.binance_api_key, context.binance_api_secret)
-            if len(context.binance_api_key) > 0
-            else BinanceClient(fallback_binance_api_key, fallback_binance_api_secret),
-        )
+        if CHAIN_ONLY:
+            context = HedgerContextUtils(binance_client=None)
+        else:
+            context = HedgerContextUtils(
+                binance_client=BinanceClient(context.binance_api_key, context.binance_api_secret)
+                if len(context.binance_api_key) > 0
+                else BinanceClient(fallback_binance_api_key, fallback_binance_api_secret),
+            )
         return context
 
 
@@ -109,3 +112,5 @@ IGNORE_BINANCE_TRADE_VOLUME = True
 # JWT setting
 ACCESS_TOKEN_EXPIRE_TIME = 3 * 24 * 60 * 60  # 3 Days
 JWT_ALGORITHM = "HS256"
+
+CHAIN_ONLY = True

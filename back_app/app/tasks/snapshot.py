@@ -1,5 +1,6 @@
 import asyncio
 import os
+import traceback
 
 from aioclock import AioClock, OnStartUp, OnShutDown, Every
 from aioclock.group import Group
@@ -31,6 +32,7 @@ async def run_snapshot():
     try:
         await fetch_snapshot(get_context())
     except Exception as e:
+        print(traceback.print_exc())
         send_alert(escape_markdown_v1(f"Snapshot task of {get_context().tenant} raised {e.__class__.__name__}\n {e}"))
 
 

@@ -19,6 +19,7 @@ from config.settings import (
     SYMMIO_ABI,
     SNAPSHOT_BLOCK_LAG,
     SNAPSHOT_BLOCK_LAG_STEP,
+    CHAIN_ONLY,
 )
 from services.binance_service import fetch_binance_income_histories
 from services.config_service import load_config
@@ -34,7 +35,7 @@ from utils.subgraph.subgraph_client import SubgraphClient
 async def fetch_snapshot(context: Context):
     with db_session() as session:
         sync_block = await sync_data(context, session)
-        do_fetch_snapshot(context, session, snapshot_block=sync_block, prepare_binance_snapshot=False)
+        do_fetch_snapshot(context, session, snapshot_block=sync_block)
 
 
 async def sync_data(context, session):
@@ -69,7 +70,7 @@ async def sync_data(context, session):
     return sync_block
 
 
-def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block, prepare_binance_snapshot: bool = False):
+def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block):
     config: RuntimeConfiguration = load_config(session, context)
     multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
     snapshot_context = SnapshotContext(context, session, config, multicallable)
@@ -90,7 +91,7 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block,
     for hedger_context in context.hedgers:
         prepare_hedger_snapshot(snapshot_context, hedger_context, snapshot_block)
 
-        if prepare_binance_snapshot and hedger_context.has_binance_keys():
+        if not CHAIN_ONLY and hedger_context.has_binance_keys():
             fetch_binance_income_histories(snapshot_context, hedger_context)
             prepare_hedger_binance_snapshot(snapshot_context, hedger_context, snapshot_block)
 

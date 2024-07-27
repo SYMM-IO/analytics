@@ -8,8 +8,8 @@ Create Date: 2024-03-06 14:04:42.453254
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "f84afbd6c9a6"
@@ -304,6 +304,15 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
+    op.create_table(
+        "gas_history",
+        sa.Column("address", sa.String(), nullable=False),
+        sa.Column("gas_amount", sa.Numeric(precision=40, scale=0), nullable=False),
+        sa.Column("initial_block", sa.Integer(), nullable=False),
+        sa.Column("tx_count", sa.Integer(), nullable=False),
+        sa.Column("tenant", sa.String(), nullable=False),
+        sa.PrimaryKeyConstraint("address", "tenant"),
+    )
 
 
 # ### end Alembic commands ###
@@ -327,4 +336,5 @@ def downgrade() -> None:
     op.drop_table("binance_income")
     op.drop_table("affiliate_snapshot")
     op.drop_table("admin_user")
+    op.drop_table("gas_history")
     # ### end Alembic commands ###
