@@ -70,6 +70,8 @@ class Context:
     affiliates: List[AffiliateContext]
     liquidators: List[str]
 
+    get_snapshot: bool
+
     # Telegram
     telegram_group_id: str
     telegram_stat_group_id: int

@@ -35,7 +35,8 @@ from utils.subgraph.subgraph_client import SubgraphClient
 async def fetch_snapshot(context: Context):
     with db_session() as session:
         sync_block = await sync_data(context, session)
-        do_fetch_snapshot(context, session, snapshot_block=sync_block)
+        if context.get_snapshot:
+            do_fetch_snapshot(context, session, snapshot_block=sync_block)
 
 
 async def sync_data(context, session):
