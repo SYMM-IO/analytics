@@ -5,10 +5,10 @@ from web3 import Web3
 
 
 class Block:
-    def __init__(self, w3: Web3, block_number: int):
+    def __init__(self, w3: Web3, block_number: int, block=None):
         self.number = block_number
         self.w3 = w3
-        self.block = self.load_block()
+        self.block = self.load_block() if not block else block
 
     def load_block(self):
         return self.w3.eth.get_block(self.number)
@@ -16,7 +16,7 @@ class Block:
     @staticmethod
     def latest(w3: Web3):
         latest_block = w3.eth.get_block("latest")
-        return Block(w3, latest_block.get("number"))
+        return Block(w3, latest_block.get("number"), latest_block)
 
     def backward(self, offset: int):
         self.number = self.number - offset
