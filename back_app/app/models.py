@@ -238,6 +238,7 @@ class DailyHistory(BaseModel):
     newUsers = Column(Integer)
     accountSource = Column(String)
     newAccounts = Column(Integer)
+    activeUsers = Column(Integer)
     tradeVolume = Column(Numeric(40, 0))
     deposit = Column(Numeric(40, 0))
     withdraw = Column(Numeric(40, 0))
@@ -411,11 +412,13 @@ class GasHistory(BaseModel):
 
 
 class DailyHistoryAffiliate:
-    def __init__(self, quotesCount=0, newUsers=0, newAccounts=0, tradeVolume=0, deposit=0, withdraw=0, allocate=0,
+    def __init__(self, quotesCount=0, newUsers=0, newAccounts=0, activeUsers=0, tradeVolume=0, deposit=0, withdraw=0,
+                 allocate=0,
                  deallocate=0, platformFee=0, openInterest=0, start_date=None):
         self.quotesCount = quotesCount
         self.newUsers = newUsers
         self.newAccounts = newAccounts
+        self.activeUsers = activeUsers
         self.tradeVolume = tradeVolume
         self.deposit = deposit
         self.withdraw = withdraw
@@ -424,3 +427,12 @@ class DailyHistoryAffiliate:
         self.platformFee = platformFee
         self.openInterest = openInterest
         self.start_date = start_date
+
+
+class HealthMetric:
+    def __init__(self, last_block, snapshot_block, sync_block):
+        self.last_block = last_block
+        self.snapshot_block = snapshot_block
+        self.sync_block = sync_block
+        self.diff_snapshot_block = last_block - snapshot_block
+        self.diff_sync_block = last_block - sync_block

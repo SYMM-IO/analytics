@@ -105,6 +105,7 @@ def upgrade() -> None:
         sa.Column("newUsers", sa.Integer(), nullable=True),
         sa.Column("accountSource", sa.String(), nullable=True),
         sa.Column("newAccounts", sa.Integer(), nullable=True),
+        sa.Column("activeUsers", sa.Integer(), nullable=True),
         sa.Column("tradeVolume", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("deposit", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("withdraw", sa.Numeric(precision=40, scale=0), nullable=True),

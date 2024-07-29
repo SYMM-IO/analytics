@@ -1,21 +1,18 @@
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, and_
 
-from app import db_session
 from app.exception_handlers import ExceptionHandlers, ErrorCodeResponse
-from app.models import DailyHistory, RuntimeConfiguration, DailyHistoryAffiliate
-from config.local_settings import contexts
 from config.settings import (
     SERVER_PORT,
 )
 from routers.auth_router import router as auth_router
 from routers.snapshot_router import router as snapshot_router
 from routers.user_history_router import router as user_history_router
+from routers.daily_history_router import router as daily_history_router
+from routers.health_metric_router import router as heath_metric_router
 from utils.security_utils import get_current_user
 
 
@@ -43,97 +40,14 @@ app.add_middleware(
 
 app.include_router(snapshot_router, dependencies=(Depends(get_current_user),))
 app.include_router(user_history_router, dependencies=(Depends(get_current_user),))
+app.include_router(daily_history_router)
+app.include_router(heath_metric_router)
 app.include_router(auth_router)
 
 
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
-
-
-@app.get("/daily-history/{group_by}")
-async def get_affiliate_history(group_by='day'):
-    all_recs = dict()
-    new_recs = dict()
-    base_date = (datetime.today() - timedelta(days=3 * 365)).date()
-    with db_session() as session:
-        decimals = {context.tenant: context.decimals for context in session.scalars(select(RuntimeConfiguration)).all()}
-        for context in contexts:
-            for affiliate in context.affiliates:
-                if affiliate.name not in all_recs:
-                    all_recs[affiliate.name] = []
-                all_recs[affiliate.name].extend(session.scalars(
-                    select(DailyHistory).where(
-                        and_(
-                            DailyHistory.accountSource == affiliate.symmio_multi_account,
-                            DailyHistory.tenant == context.tenant,
-                            DailyHistory.timestamp >= base_date,
-                        ))).all())
-        for affiliate in all_recs:
-            all_recs[affiliate].sort(key=lambda rec: rec.timestamp)
-            try:
-                rec = all_recs[affiliate][0]
-                new_recs[affiliate] = [DailyHistoryAffiliate(quotesCount=rec.quotesCount, newUsers=rec.newUsers,
-                                                             newAccounts=rec.newAccounts, tradeVolume=rec.tradeVolume,
-                                                             deposit=rec.deposit * 10 ** (18 - decimals[rec.tenant]),
-                                                             withdraw=rec.withdraw, allocate=rec.allocate,
-                                                             deallocate=rec.deallocate, platformFee=rec.platformFee,
-                                                             openInterest=rec.openInterest,
-                                                             start_date=rec.timestamp.date())]
-                for rec in all_recs[affiliate][1:]:
-                    if rec.timestamp.date() == new_recs[affiliate][-1].start_date or (
-                            group_by == 'week' and rec.timestamp.weekday()) or (
-                            group_by == 'month' and rec.timestamp.day != 1):
-                        new_recs[affiliate][-1].quotesCount += rec.quotesCount
-                        new_recs[affiliate][-1].newUsers += rec.newUsers
-                        new_recs[affiliate][-1].tradeVolume += rec.tradeVolume
-                        new_recs[affiliate][-1].deposit += rec.deposit * 10 ** (18 - decimals[rec.tenant])
-                        new_recs[affiliate][-1].withdraw += rec.withdraw
-                        new_recs[affiliate][-1].allocate += rec.allocate
-                        new_recs[affiliate][-1].deallocate += rec.deallocate
-                        new_recs[affiliate][-1].platformFee += rec.platformFee
-                        new_recs[affiliate][-1].openInterest += rec.openInterest
-                    else:
-                        new_recs[affiliate].append(
-                            DailyHistoryAffiliate(quotesCount=rec.quotesCount, newUsers=rec.newUsers,
-                                                  newAccounts=rec.newAccounts, tradeVolume=rec.tradeVolume,
-                                                  deposit=rec.deposit * 10 ** (18 - decimals[rec.tenant]),
-                                                  withdraw=rec.withdraw, allocate=rec.allocate,
-                                                  deallocate=rec.deallocate, platformFee=rec.platformFee,
-                                                  openInterest=rec.openInterest, start_date=rec.timestamp.date()))
-            except IndexError:
-                pass
-        return new_recs
-
-
-@app.get("/daily-history")
-async def get_affiliate_daily_history():
-    return await get_affiliate_history()
-
-
-@app.get("/full-history/{until}")
-async def _get_affiliate_full_history(until='today'):
-    recs = await get_affiliate_history()
-    result = {affiliate: DailyHistoryAffiliate(start_date=recs[affiliate][0].start_date) for affiliate in recs}
-    for affiliate in recs:
-        if until == 'yesterday' and recs[affiliate][-1].start_date == datetime.today().date():
-            recs[affiliate].pop()
-        for rec in recs[affiliate]:
-            result[affiliate].quotesCount += rec.quotesCount
-            result[affiliate].newUsers += rec.newUsers
-            result[affiliate].tradeVolume += rec.tradeVolume
-            result[affiliate].deposit += rec.deposit
-            result[affiliate].withdraw += rec.withdraw
-            result[affiliate].allocate += rec.allocate
-            result[affiliate].deallocate += rec.deallocate
-            result[affiliate].platformFee += rec.platformFee
-            result[affiliate].openInterest += rec.openInterest
-    return result
-
-
-@app.get("/full-history")
-async def get_affiliate_full_history():
-    return await _get_affiliate_full_history()
 
 
 if __name__ == "__main__":
