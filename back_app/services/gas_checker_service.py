@@ -73,6 +73,6 @@ def gas_used_by_hedger_wallets(snapshot_context: SnapshotContext, hedger_context
             record.save(snapshot_context.session)
         print(f"Loaded {record.tx_count} transactions for wallet {address} with total gas of",
               snapshot_context.context.w3.from_wei(record.gas_amount, 'ether'))
-        snapshot_context.session.commit()
+        # snapshot_context.session.commit()
         total_gas_spent_by_all_wallets += record.gas_amount
     return snapshot_context.context.w3.from_wei(total_gas_spent_by_all_wallets, 'ether')
