@@ -1,6 +1,7 @@
 import re
 
 from multicallable import Multicallable
+from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
 from app import db_session
@@ -12,7 +13,7 @@ from app.models import (
     BalanceChange,
     Quote,
     TradeHistory,
-    DailyHistory,
+    DailyHistory, AffiliateSnapshot,
 )
 from config.settings import (
     Context,
@@ -78,6 +79,12 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block)
 
     for affiliate_context in context.affiliates:
         for hedger_context in context.hedgers:
+            if session.scalar(select(AffiliateSnapshot).where(and_(
+                    AffiliateSnapshot.timestamp == snapshot_block.datetime(),
+                    AffiliateSnapshot.name == affiliate_context.name,
+                    AffiliateSnapshot.hedger_name == hedger_context.name,
+                    AffiliateSnapshot.tenant == snapshot_context.context.tenant))):
+                continue
             prepare_affiliate_snapshot(
                 snapshot_context,
                 affiliate_context,

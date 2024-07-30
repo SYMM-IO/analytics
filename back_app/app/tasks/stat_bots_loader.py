@@ -32,7 +32,8 @@ async def run_snapshot():
         await load_all_messages(get_context())
         await stop_telegram_client()
     except Exception as e:
-        send_alert(escape_markdown_v1(f"StatsLoader task of {get_context().tenant} raised {e.__class__.__name__}\n {e}"))
+        send_alert(
+            escape_markdown_v1(f"StatsLoader task of {get_context().tenant} raised {e.__class__.__name__}\n {e}"))
         await stop_telegram_client()
 
 
