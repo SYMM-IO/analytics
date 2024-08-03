@@ -1,7 +1,6 @@
 import re
 
 from multicallable import Multicallable
-from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 
 from app import db_session
@@ -13,8 +12,7 @@ from app.models import (
     BalanceChange,
     Quote,
     TradeHistory,
-    DailyHistory, AffiliateSnapshot,
-)
+    DailyHistory, )
 from config.settings import (
     Context,
     SYMMIO_ABI,
@@ -81,7 +79,8 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block)
         sync_block = Block.latest(context.w3)
         sync_block.backward(config.snapshotBlockLag)
     if config.lastSnapshotBlock and config.lastSnapshotBlock >= snapshot_block.number:
-        raise f'{config.lastSnapshotBlock=} and in {context.w3.HTTPProvider=} with {config.snapshotBlockLag} --> {snapshot_block.number=}'
+        raise Exception(
+            f'{config.lastSnapshotBlock=} and in {context.w3.HTTPProvider=} with {config.snapshotBlockLag} --> {snapshot_block.number=}')
 
     for affiliate_context in context.affiliates:
         for hedger_context in context.hedgers:
