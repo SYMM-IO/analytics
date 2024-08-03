@@ -76,22 +76,22 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block)
     config: RuntimeConfiguration = load_config(session, context)
     multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
     snapshot_context = SnapshotContext(context, session, config, multicallable)
+    if config.lastSnapshotBlock and config.lastSnapshotBlock >= snapshot_block.number:
+        context.w3.provider.sort_endpoints()
+        sync_block = Block.latest(context.w3)
+        sync_block.backward(config.snapshotBlockLag)
+    if config.lastSnapshotBlock and config.lastSnapshotBlock >= snapshot_block.number:
+        raise f'{config.lastSnapshotBlock=} and in {context.w3.HTTPProvider=} with {config.snapshotBlockLag} --> {snapshot_block.number=}'
 
     for affiliate_context in context.affiliates:
         for hedger_context in context.hedgers:
-            if session.scalar(select(AffiliateSnapshot).where(and_(
-                    AffiliateSnapshot.timestamp == snapshot_block.datetime(),
-                    AffiliateSnapshot.name == affiliate_context.name,
-                    AffiliateSnapshot.hedger_name == hedger_context.name,
-                    AffiliateSnapshot.tenant == snapshot_context.context.tenant))):
-                continue
             prepare_affiliate_snapshot(
                 snapshot_context,
                 affiliate_context,
                 hedger_context,
                 snapshot_block,
             )
-            session.commit()
+            # session.commit()
 
     for liquidator in context.liquidators:
         prepare_liquidator_snapshot(snapshot_context, liquidator, snapshot_block)
