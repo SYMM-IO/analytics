@@ -56,7 +56,6 @@ class User(BaseModel):
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="users",
         pagination_field="timestamp",
-        catch_up_field="timestamp",
         tenant_needed_fields=["id"],
         converter=convert_timestamps,
     )
@@ -83,7 +82,6 @@ class Account(BaseModel):
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="accounts",
         pagination_field="timestamp",
-        catch_up_field="updateTimestamp",
         tenant_needed_fields=["user"],
         name_maps={"user_id": "user"},
     )
@@ -112,7 +110,6 @@ class BalanceChange(BaseModel):
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="balanceChanges",
         pagination_field="timestamp",
-        catch_up_field="timestamp",
         name_maps={"account_id": "account"},
     )
     id = Column(String, primary_key=True)
@@ -141,7 +138,6 @@ class Symbol(BaseModel):
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="symbols",
         pagination_field="timestamp",
-        catch_up_field="updateTimestamp",
         tenant_needed_fields=["id"],
         ignore_columns=["tenant", "main_market"],
     )
@@ -161,42 +157,50 @@ class Quote(BaseModel):
     __pk_name__ = "id"
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="quotes",
-        pagination_field="timestamp",
-        catch_up_field="updateTimestamp",
+        pagination_field="timeStamp",
         tenant_needed_fields=["id", "symbolId"],
-        name_maps={"account_id": "account", "symbol_id": "symbolId"},
+        name_maps={"account_id": "partyA", "symbol_id": "symbolId"},
     )
     id = Column(String, primary_key=True)
-    account_id = Column(String, ForeignKey("account.id"))
     account = relationship("Account", back_populates="quotes")
-    symbol_id = Column(String, ForeignKey("symbol.id"))
-    symbol = relationship("Symbol", back_populates="quotes")
-    partyBsWhiteList = Column(Text)
-    partyB = Column(String)
-    positionType = Column(String)
-    orderType = Column(String)
-    collateral = Column(String)
-    price = Column(Numeric(40, 0))
-    marketPrice = Column(Numeric(40, 0))
-    deadline = Column(Numeric(40, 0))
-    quantity = Column(Numeric(40, 0))
-    closedAmount = Column(Numeric(40, 0))
-    cva = Column(Numeric(40, 0))
-    partyAmm = Column(Numeric(40, 0))
-    partyBmm = Column(Numeric(40, 0))
-    lf = Column(Numeric(40, 0))
-    quoteStatus = Column(Integer)
+    account_id = Column(String, ForeignKey("account.id"))
+    averageClosedPrice = Column(Numeric(40, 0))
     blockNumber = Column(Numeric(40, 0))
-    avgClosedPrice = Column(Numeric(40, 0))
-    openPrice = Column(Numeric(40, 0), nullable=True)
-    fundingPaid = Column(Numeric(40, 0), nullable=True)
-    fundingReceived = Column(Numeric(40, 0), nullable=True)
+    closeDeadline = Column(Numeric(40, 0))
+    closedAmount = Column(Numeric(40, 0))
+    closedPrice = Column(Numeric(40, 0))
+    closePrice = Column(Numeric(40, 0))
+    cva = Column(Numeric(40, 0))
+    fillAmount = Column(Numeric(40, 0))
+    fundingRateFee = Column(Numeric(40, 0))
+    fundingRateOpenedPrice = Column(Numeric(40, 0))
+    initialOpenedPrice = Column(Numeric(40, 0))
+    lf = Column(Numeric(40, 0))
+    liquidateAmount = Column(Numeric(40, 0))
     liquidatedSide = Column(Integer, nullable=True)
-    transaction = Column(String)
-    timestamp = Column(DateTime)
-    updateTimestamp = Column(DateTime)
+    liquidatePrice = Column(Numeric(40, 0))
+    marketPrice = Column(Numeric(40, 0))
+    maxFundingRate = Column(Numeric(40, 0))
+    openDeadline = Column(Numeric(40, 0))
+    openedPrice = Column(Numeric(40, 0), nullable=True)
+    orderTypeClose = Column(String)
+    orderTypeOpen = Column(String)
+    partyA = Column(String)
+    partyAmm = Column(Numeric(40, 0))
+    partyB = Column(String)
+    partyBmm = Column(Numeric(40, 0))
+    partyBsWhiteList = Column(Text)
+    positionType = Column(String)
+    quantity = Column(Numeric(40, 0))
+    quantityToClose = Column(Numeric(40, 0))
+    quoteStatus = Column(Integer)
+    requestedOpenPrice = Column(Numeric(40, 0))
+    symbol = relationship("Symbol", back_populates="quotes")
+    symbol_id = Column(String, ForeignKey("symbol.id"))
     tenant = Column(String, nullable=False)
+    timeStamp = Column(DateTime)
     trade_histories = relationship("TradeHistory", back_populates="quote")
+    tradingFee = Column(Numeric(40, 0))
 
 
 class TradeHistory(BaseModel):
@@ -206,7 +210,6 @@ class TradeHistory(BaseModel):
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="tradeHistories",
         pagination_field="timestamp",
-        catch_up_field="updateTimestamp",
         tenant_needed_fields=["quote"],
         name_maps={"account_id": "account", "quote_id": "quote"},
     )
@@ -231,7 +234,6 @@ class DailyHistory(BaseModel):
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="dailyHistories",
         pagination_field="timestamp",
-        catch_up_field="updateTimestamp",
     )
     id = Column(String)
     quotesCount = Column(Integer)
