@@ -80,7 +80,7 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block)
         snapshot_block.backward(config.snapshotBlockLag)
     if config.lastSnapshotBlock and config.lastSnapshotBlock >= snapshot_block.number:
         raise Exception(
-            f'{config.lastSnapshotBlock=} and in {context.w3.provider=} with {config.snapshotBlockLag} --> {snapshot_block.number=}')
+            f'{config.lastSnapshotBlock=} and in {context.w3.provider.current_endpoint=} with {config.snapshotBlockLag=} --> {snapshot_block.number=}')
 
     for affiliate_context in context.affiliates:
         for hedger_context in context.hedgers:

@@ -12,17 +12,23 @@ def fetch_native_transferred(context: Context, w3, wallet_address, initial_block
     current_balance = w3.eth.get_balance(w3.to_checksum_address(wallet_address))
     from_block = initial_block
     to_block = w3.eth.get_block("latest").get("number")
-
-    while True:
+    explorer_api_keys = context.explorer_api_key.copy()
+    worked = 0
+    while explorer_api_keys:
         url = (
             f"{context.explorer}/api?module=account&action=txlist&address={wallet_address}"
             f"&startblock={from_block}&endblock={to_block}&sort=asc&page=1&offset={page_size}"
-            f"&apikey={context.explorer_api_key}"
+            f"&apikey={explorer_api_keys[0]}"
         )
         response = requests.get(url)
 
         if response.status_code != 200:
-            raise Exception(f"Error fetching transactions for wallet {wallet_address}")
+            if worked:
+                explorer_api_keys.append(explorer_api_keys.pop(0))
+            else:
+                explorer_api_keys.pop(0)
+            worked = 0
+            continue
 
         data = response.json()
 
@@ -30,9 +36,13 @@ def fetch_native_transferred(context: Context, w3, wallet_address, initial_block
             if data["message"] == "No transactions found":
                 print(f"All transactions fetched for wallet {wallet_address}")
                 break
-
-            raise Exception(f"Error fetching transactions for wallet {wallet_address}, ")
-
+            if worked:
+                explorer_api_keys.append(explorer_api_keys.pop(0))
+            else:
+                explorer_api_keys.pop(0)
+            worked = 0
+            continue
+        worked += 1
         transactions = data["result"]
         tx_count += len(transactions)
         for tx in transactions:
@@ -50,6 +60,10 @@ def fetch_native_transferred(context: Context, w3, wallet_address, initial_block
             break
 
         from_block = int(transactions[-1]["blockNumber"]) + 1
+    else:
+        raise Exception(
+            f"Error fetching transactions for wallet {wallet_address}, {response.status_code=}, {data['result']}")  # noqa
+
     return tx_count, value_transferred - current_balance, to_block
 
 
@@ -73,6 +87,5 @@ def gas_used_by_hedger_wallets(snapshot_context: SnapshotContext, hedger_context
             record.save(snapshot_context.session)
         print(f"Loaded {record.tx_count} transactions for wallet {address} with total gas of",
               snapshot_context.context.w3.from_wei(record.gas_amount, 'ether'))
-        # snapshot_context.session.commit()
         total_gas_spent_by_all_wallets += record.gas_amount
     return snapshot_context.context.w3.from_wei(total_gas_spent_by_all_wallets, 'ether')
