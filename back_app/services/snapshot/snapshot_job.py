@@ -74,13 +74,9 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block)
     config: RuntimeConfiguration = load_config(session, context)
     multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
     snapshot_context = SnapshotContext(context, session, config, multicallable)
+
     if config.lastSnapshotBlock and config.lastSnapshotBlock >= snapshot_block.number:
-        context.w3.provider.sort_endpoints()
-        snapshot_block = Block.latest(context.w3)
-        snapshot_block.backward(config.snapshotBlockLag)
-    if config.lastSnapshotBlock and config.lastSnapshotBlock >= snapshot_block.number:
-        raise Exception(
-            f'{config.lastSnapshotBlock=} and in {context.w3.provider.current_endpoint=} with {config.snapshotBlockLag=} --> {snapshot_block.number=}')
+        return
 
     for affiliate_context in context.affiliates:
         for hedger_context in context.hedgers:
