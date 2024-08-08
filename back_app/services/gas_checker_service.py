@@ -12,8 +12,8 @@ def fetch_native_transferred(context: Context, w3, wallet_address, initial_block
     current_balance = w3.eth.get_balance(w3.to_checksum_address(wallet_address))
     from_block = initial_block
     to_block = w3.eth.get_block("latest").get("number")
-    explorer_api_keys = context.explorer_api_key.copy()
-    worked = 0
+    explorer_api_keys = 3 * context.explorer_api_keys.copy()
+    e = []
     while explorer_api_keys:
         url = (
             f"{context.explorer}/api?module=account&action=txlist&address={wallet_address}"
@@ -23,11 +23,8 @@ def fetch_native_transferred(context: Context, w3, wallet_address, initial_block
         response = requests.get(url)
 
         if response.status_code != 200:
-            if worked:
-                explorer_api_keys.append(explorer_api_keys.pop(0))
-            else:
-                explorer_api_keys.pop(0)
-            worked = 0
+            explorer_api_keys.pop(0)
+            e.append('status_code != 200')
             continue
 
         data = response.json()
@@ -36,13 +33,10 @@ def fetch_native_transferred(context: Context, w3, wallet_address, initial_block
             if data["message"] == "No transactions found":
                 print(f"All transactions fetched for wallet {wallet_address}")
                 break
-            if worked:
-                explorer_api_keys.append(explorer_api_keys.pop(0))
-            else:
-                explorer_api_keys.pop(0)
-            worked = 0
+            explorer_api_keys.pop(0)
+            e.append(data['result'])
             continue
-        worked += 1
+
         transactions = data["result"]
         tx_count += len(transactions)
         for tx in transactions:
@@ -62,7 +56,7 @@ def fetch_native_transferred(context: Context, w3, wallet_address, initial_block
         from_block = int(transactions[-1]["blockNumber"]) + 1
     else:
         raise Exception(
-            f"Error fetching transactions for wallet {wallet_address}, {response.status_code=}, {data['result']}")  # noqa
+            f"Error fetching transactions for wallet (All api keys failed) {wallet_address}. {', '.join(e)}")
 
     return tx_count, value_transferred - current_balance, to_block
 
