@@ -1,4 +1,4 @@
-import {Affiliate, EnvironmentInterface, Hedger} from "./environment-interface"
+import {Affiliate, EnvironmentInterface, Hedger, Version} from "./environment-interface"
 
 
 export const intentX: Affiliate = {
@@ -15,8 +15,9 @@ export const hedger: Hedger = {
 export const environment: EnvironmentInterface = {
     name: "MANTLE_8_2",
     serverUrl: "https://analytics-api.symm.io",
-    subgraphUrl: "https://subgraph-api.mantle.xyz/subgraphs/name/analytics_mantle_8_2",
+    subgraphUrl: "https://subgraph-api.mantle.xyz/api/public/b6e877be-3d20-4e6e-8c4c-483b5a1350ed/subgraphs/analytics_mantle/v0.0.1/gn",
     collateralDecimal: 18,
+    version: Version.V_0_8_2,
     startDate: new Date(1712075812000),
     affiliates: [
         intentX

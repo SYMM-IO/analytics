@@ -4,12 +4,23 @@
         <span class="w-full tui-island__title">{{ chartTitle }}</span>
         <div class="flex flex-row justify-content-end align-items-center gap-2 pr-4">
             <button tuiButton type="button" size="s" appearance="outline" (click)="onGroupByMonthChanged()"
-                    [ngClass]="{'selected-button': groupedByMonth}" tuiHint="Group By Month">
+                    [ngClass]="{'selected-button': groupedByMonth}" tuiHint="Group By Month" *ngIf="hasGroupByMonthAction">
                 M
             </button>
             <button tuiIconButton type="button" icon="tuiIconChevronLeft" size="s" appearance="outline"
                     (click)="goBack()" [disabled]="startTime < minTime" tuiHint="Back">
             </button>
+            <tui-select
+                    *ngIf="viewOptions.length > 1"
+                    class="viewSelector"
+                    tuiTextfieldSize="s"
+                    [formControl]="selectedView"
+            >
+                <tui-data-list-wrapper
+                        *tuiDataList
+                        [items]="viewOptions"
+                ></tui-data-list-wrapper>
+            </tui-select>
             <tui-select
                     class="intervalSelector"
                     tuiTextfieldSize="s"

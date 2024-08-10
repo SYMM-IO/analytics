@@ -2,7 +2,7 @@
           [tuiMode]="night ? 'onDark' : null" class="h-full">
     <tui-theme-night *ngIf="night"></tui-theme-night>
     <div class="root flex flex-column h-full flex-grow p-2">
-        <div class="flex flex-row align-content-center justify-content-between toolbar p-2">
+        <tui-island class="flex flex-row align-content-center justify-content-between toolbar p-2">
             <div class="align-items-end flex flex-row gap-2">
                 <img [src]="'../assets/'+assetsFolder+'/logo.svg'" class="clover-logo">
                 @if (aggregated || panel) {
@@ -29,7 +29,7 @@
                     </form>
                 </div>
             }
-        </div>
+        </tui-island>
         <div class="body flex-grow-1 w-full h-full pt-2">
             <router-outlet></router-outlet>
         </div>

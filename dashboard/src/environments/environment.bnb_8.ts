@@ -1,4 +1,4 @@
-import {Affiliate, EnvironmentInterface, Hedger} from "./environment-interface"
+import {Affiliate, EnvironmentInterface, Hedger, Version} from "./environment-interface"
 
 
 export const alpha_v1: Affiliate = {
@@ -31,6 +31,7 @@ export const environment: EnvironmentInterface = {
     serverUrl: "https://analytics-api.symm.io",
     subgraphUrl: "https://api.studio.thegraph.com/query/62454/symmioanalytics_bnb_8/version/latest",
     collateralDecimal: 18,
+    version: Version.V_0_8_0,
     affiliates: [
         cloverfield,
         alpha_v1,

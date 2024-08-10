@@ -1,4 +1,4 @@
-import {Affiliate, EnvironmentInterface, Hedger} from "./environment-interface"
+import {Affiliate, EnvironmentInterface, Hedger, Version} from "./environment-interface"
 
 
 export const pear: Affiliate = {
@@ -17,6 +17,7 @@ export const environment: EnvironmentInterface = {
 	serverUrl: "https://analytics-api.symm.io",
 	subgraphUrl: "https://api.studio.thegraph.com/query/62454/analytics_arbitrum_8_2/version/latest",
 	collateralDecimal: 6,
+	version: Version.V_0_8_2,
 	startDate: new Date(1715990400000),
 	affiliates: [
 		pear
