@@ -60,7 +60,7 @@ class Context:
     subgraph_endpoint: str
     rpcs: List[str]
     explorer: str
-    explorer_api_key: str
+    explorer_api_keys: List[str]
     native_coin: str
     symmio_address: str
     symmio_collateral_address: str

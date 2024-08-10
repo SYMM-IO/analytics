@@ -12,8 +12,7 @@ from app.models import (
     BalanceChange,
     Quote,
     TradeHistory,
-    DailyHistory,
-)
+    DailyHistory, )
 from config.settings import (
     Context,
     SYMMIO_ABI,
@@ -76,6 +75,9 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block)
     multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
     snapshot_context = SnapshotContext(context, session, config, multicallable)
 
+    if config.lastSnapshotBlock and config.lastSnapshotBlock >= snapshot_block.number:
+        return
+
     for affiliate_context in context.affiliates:
         for hedger_context in context.hedgers:
             prepare_affiliate_snapshot(
@@ -84,7 +86,7 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block)
                 hedger_context,
                 snapshot_block,
             )
-            session.commit()
+            # session.commit()
 
     for liquidator in context.liquidators:
         prepare_liquidator_snapshot(snapshot_context, liquidator, snapshot_block)

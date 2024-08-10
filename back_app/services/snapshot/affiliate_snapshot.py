@@ -67,7 +67,7 @@ def prepare_affiliate_snapshot(
                     Quote.partyB == hedger_context.hedger_address,
                     Quote.quoteStatus == 8,
                     Quote.liquidatedSide == 1,
-                    Quote.timestamp > from_time,
+                    Quote.timeStamp > from_time,
                     Quote.blockNumber <= block.number,
                     Quote.tenant == context.tenant,
                 )
@@ -86,7 +86,7 @@ def prepare_affiliate_snapshot(
                     Quote.partyB == hedger_context.hedger_address,
                     Quote.quoteStatus == 8,
                     Quote.liquidatedSide == 0,
-                    Quote.timestamp > from_time,
+                    Quote.timeStamp > from_time,
                     Quote.blockNumber <= block.number,
                     Quote.tenant == context.tenant,
                 )
@@ -174,7 +174,7 @@ def prepare_affiliate_snapshot(
                     if db_account.accountSource != affiliate_context.symmio_multi_account:
                         continue
                     if db_quote:
-                        local_key = f"{db_quote.id}-{db_quote.openPrice}-{db_quote.closedAmount}-{db_quote.quantity}-{db_quote.quoteStatus}"
+                        local_key = f"{db_quote.id}-{db_quote.openedPrice}-{db_quote.closedAmount}-{db_quote.quantity}-{db_quote.quoteStatus}"
                         print(f"{context.tenant} => We have diff: Contract: {key} Local DB: {local_key}")
                     else:
                         print(f"{context.tenant} => Contract opened quote not found in the subgraph: {key}")
@@ -330,7 +330,7 @@ def calculate_hedger_upnl(
                 Quote.id,
                 Quote.quantity,
                 Quote.closedAmount,
-                Quote.openPrice,
+                Quote.openedPrice,
                 Quote.positionType,
             ),
         )
@@ -340,7 +340,7 @@ def calculate_hedger_upnl(
             and_(
                 Quote.blockNumber <= block.number,
                 Account.accountSource == affiliate_context.symmio_multi_account,
-                Quote.timestamp > from_time,
+                Quote.timeStamp > from_time,
                 Quote.partyB == hedger_context.hedger_address,
                 or_(
                     Quote.quoteStatus == 4,
@@ -355,11 +355,12 @@ def calculate_hedger_upnl(
     local_open_quotes = []
     hedger_upnl = Decimal(0)
     for quote in party_b_opened_quotes:
-        key = f"{quote.id}-{quote.openPrice}-{quote.closedAmount}-{quote.quantity}-{quote.quoteStatus}"
+        key = f"{quote.id}-{quote.openedPrice}-{quote.closedAmount}-{quote.quantity}-{quote.quoteStatus}"
         local_open_quotes.append(key)
         side_sign = 1 if quote.positionType == "0" else -1
         current_price = Decimal(prices_map[quote.symbol.name]) * 10 ** 18
-        hedger_upnl += side_sign * (quote.openPrice - current_price) * (quote.quantity - quote.closedAmount) // 10 ** 18
+        hedger_upnl += side_sign * (quote.openedPrice - current_price) * (
+                    quote.quantity - quote.closedAmount) // 10 ** 18
     return hedger_upnl, local_open_quotes
 
 
@@ -377,8 +378,8 @@ def calculate_pnl_of_hedger(
             .options(
             load_only(
                 Quote.quantity,
-                Quote.avgClosedPrice,
-                Quote.openPrice,
+                Quote.averageClosedPrice,
+                Quote.openedPrice,
                 Quote.positionType,
             )
         )
@@ -388,7 +389,7 @@ def calculate_pnl_of_hedger(
                 Account.accountSource == affiliate_context.symmio_multi_account,
                 Quote.partyB == hedger_context.hedger_address,
                 Quote.quoteStatus == quote_status,
-                Quote.timestamp > from_time,
+                Quote.timeStamp > from_time,
                 Quote.blockNumber <= block.number,
                 Quote.tenant == context.tenant,
             )
@@ -397,9 +398,9 @@ def calculate_pnl_of_hedger(
     pnl = Decimal(0)
     for quote in party_b_quotes:
         if quote.positionType == "0":
-            pnl -= Decimal(int(quote.quantity) * (int(quote.avgClosedPrice) - int(quote.openPrice)) / 10 ** 18)
+            pnl -= Decimal(int(quote.quantity) * (int(quote.averageClosedPrice) - int(quote.openedPrice)) / 10 ** 18)
         else:
-            pnl -= Decimal(int(quote.quantity) * (int(quote.openPrice) - int(quote.avgClosedPrice)) / 10 ** 18)
+            pnl -= Decimal(int(quote.quantity) * (int(quote.openedPrice) - int(quote.averageClosedPrice)) / 10 ** 18)
     return pnl
 
 
@@ -416,7 +417,7 @@ def count_quotes_per_status(
             .join(Account)
             .where(
             and_(
-                Quote.timestamp > from_time,
+                Quote.timeStamp > from_time,
                 Quote.blockNumber <= block.number,
                 Account.accountSource == affiliate_context.symmio_multi_account,
                 Quote.tenant == context.tenant,
