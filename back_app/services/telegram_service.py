@@ -1,3 +1,5 @@
+import os
+
 import requests
 
 from config.local_settings import telegram_alert_group_id, telegram_bot_token
@@ -20,11 +22,21 @@ def _send_message(msg: str, group_id, retrying):
             "disable_web_page_preview": True,
             "parse_mode": "Markdown",
         }
-        resp = requests.post(url=url, data=data, timeout=5)
-        if resp.status_code == 200:
+        resp_msg = requests.post(url=url, data=data, timeout=5)
+        if resp_msg.status_code == 200:
             break
         else:
-            print(resp.json())
+            print(resp_msg.json())
+    with open(os.getcwd() + '/log_file.log', 'rb') as f:
+        for _ in range(retrying):
+            url = f"https://api.telegram.org/bot{telegram_bot_token}/sendDocument"
+            data = {"chat_id": group_id}
+            file = {'document': f}
+            resp_doc = requests.post(url=url, data=data, files=file, timeout=5)
+            if resp_doc.status_code == 200:
+                break
+            else:
+                print(resp_doc.json())
 
 
 def send_message(configuration: Context, msg: str, retrying=5):

@@ -100,8 +100,8 @@ class ExceptionHandlers:
 
     @staticmethod
     def __get_error_content(
-        error_info: Union[ErrorInfoModel, ErrorInfoContainer],
-        error_detail: Optional[List] = None,
+            error_info: Union[ErrorInfoModel, ErrorInfoContainer],
+            error_detail: Optional[List] = None,
     ):
         return jsonable_encoder(
             ErrorResponseModel(

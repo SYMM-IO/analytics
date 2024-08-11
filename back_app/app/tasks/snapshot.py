@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import traceback
 
@@ -9,6 +10,9 @@ from config.local_settings import contexts
 from config.settings import SNAPSHOT_INTERVAL
 from services.snapshot.snapshot_job import fetch_snapshot
 from services.telegram_service import send_alert, escape_markdown_v1
+
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
 
 # groups.py
 group = Group()
@@ -34,6 +38,12 @@ async def run_snapshot():
     except Exception as e:
         print(traceback.print_exc())
         send_alert(escape_markdown_v1(f"Snapshot task of {get_context().tenant} raised {e.__class__.__name__}\n {e}"))
+    finally:
+        os.remove(os.getcwd() + '/log_file.log')
+        log_file = logging.FileHandler('log_file.log', 'w')
+        log_file.setFormatter(formatter)
+        logger.handlers.pop()
+        logger.addHandler(log_file)
 
 
 @app.task(trigger=OnStartUp())

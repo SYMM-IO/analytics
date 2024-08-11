@@ -1,7 +1,9 @@
+import logging
 import re
 
 from multicallable import Multicallable
 from sqlalchemy.orm import Session
+from traceback_with_variables import printing_exc, LoggerAsFile
 
 from app import db_session
 from app.models import (
@@ -12,7 +14,8 @@ from app.models import (
     BalanceChange,
     Quote,
     TradeHistory,
-    DailyHistory, )
+    DailyHistory,
+)
 from config.settings import (
     Context,
     SYMMIO_ABI,
@@ -30,6 +33,10 @@ from services.snapshot.snapshot_context import SnapshotContext
 from utils.block import Block
 from utils.subgraph.subgraph_client import SubgraphClient
 
+logging.basicConfig(level=logging.ERROR, filename="log_file.log", format='%(asctime)s - %(levelname)s - %(message)s',
+                    filemode='w')
+logger = logging.getLogger()
+
 
 async def fetch_snapshot(context: Context):
     with db_session() as session:
@@ -38,6 +45,7 @@ async def fetch_snapshot(context: Context):
             do_fetch_snapshot(context, session, snapshot_block=sync_block)
 
 
+@printing_exc(file_=LoggerAsFile(logger))
 async def sync_data(context, session):
     config: RuntimeConfiguration = load_config(session, context)
     sync_block = Block.latest(context.w3)
@@ -70,12 +78,13 @@ async def sync_data(context, session):
     return sync_block
 
 
+@printing_exc(file_=LoggerAsFile(logger))
 def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block):
     config: RuntimeConfiguration = load_config(session, context)
     multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
     snapshot_context = SnapshotContext(context, session, config, multicallable)
 
-    if config.lastSnapshotBlock and config.lastSnapshotBlock >= snapshot_block.number:
+    if config.lastSnapshotBlock >= snapshot_block.number:
         return
 
     for affiliate_context in context.affiliates:
