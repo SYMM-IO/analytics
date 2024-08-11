@@ -24,7 +24,7 @@ def fetch_native_transferred(context: Context, w3, wallet_address, initial_block
 
         if response.status_code != 200:
             explorer_api_keys.pop(0)
-            e.append('status_code != 200')
+            e.append(f'{response.status_code=}')
             continue
 
         data = response.json()

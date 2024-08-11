@@ -2,7 +2,7 @@ import os
 
 import requests
 
-from config.local_settings import telegram_alert_group_id, telegram_bot_token
+from config.local_settings import telegram_alert_group_id, telegram_bot_token, LOG_PATH
 from config.settings import Context
 
 
@@ -27,7 +27,7 @@ def _send_message(msg: str, group_id, retrying):
             break
         else:
             print(resp_msg.json())
-    with open(os.getcwd() + '/log_file.log', 'rb') as f:
+    with open(LOG_PATH + f'/log_file_{os.environ["TENANT"]}.log', 'rb') as f:
         for _ in range(retrying):
             url = f"https://api.telegram.org/bot{telegram_bot_token}/sendDocument"
             data = {"chat_id": group_id}

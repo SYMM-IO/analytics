@@ -33,8 +33,6 @@ from services.snapshot.snapshot_context import SnapshotContext
 from utils.block import Block
 from utils.subgraph.subgraph_client import SubgraphClient
 
-logging.basicConfig(level=logging.ERROR, filename="log_file.log", format='%(asctime)s - %(levelname)s - %(message)s',
-                    filemode='w')
 logger = logging.getLogger()
 
 
