@@ -59,15 +59,18 @@ async def sync_data(context, session):
     except Exception as e:
         if "only indexed up to block number" in str(e):
             last_synced_block = int(re.search(r"indexed up to block number (\d+)", str(e)).group(1))
-            config = load_config(session, context)
-            lag = Block.latest(context.w3).number - last_synced_block
-            print(f"Last Synced Block is {last_synced_block} => Increasing snapshotBlockLag to {lag}")
-            config.snapshotBlockLag = lag
-            config.upsert(session)
-            session.commit()
-            return await sync_data(context, session)
+        elif "only has data starting at block number" in str(e):
+            last_synced_block = int(re.search(r"has data starting at block number (\d+)", str(e)).group(1))
         else:
             raise e
+        config = load_config(session, context)
+        context.w3.provider.sort_endpoints()
+        lag = Block.latest(context.w3).number - last_synced_block
+        print(f"Last Synced Block is {last_synced_block} => Increasing snapshotBlockLag to {lag}")
+        config.snapshotBlockLag = lag
+        config.upsert(session)
+        session.commit()
+        return await sync_data(context, session)
     print(f"{context.tenant}: =====> SYNC COMPLETED <=====")
     config.lastSyncBlock = sync_block.number
     config.snapshotBlockLag = max(config.snapshotBlockLag - SNAPSHOT_BLOCK_LAG_STEP, SNAPSHOT_BLOCK_LAG)
