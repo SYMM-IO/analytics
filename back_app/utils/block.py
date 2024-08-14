@@ -1,7 +1,11 @@
 import datetime
+import logging
 import time
 
+from traceback_with_variables import printing_exc, LoggerAsFile
 from web3 import Web3
+
+logger = logging.getLogger()
 
 
 class Block:
@@ -10,6 +14,7 @@ class Block:
         self.w3 = w3
         self.block = self.load_block() if not block else block
 
+    @printing_exc(file_=LoggerAsFile(logger))
     def load_block(self):
         return self.w3.eth.get_block(self.number)
 

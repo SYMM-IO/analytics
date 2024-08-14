@@ -36,6 +36,7 @@ from utils.subgraph.subgraph_client import SubgraphClient
 logger = logging.getLogger()
 
 
+@printing_exc(file_=LoggerAsFile(logger))
 async def fetch_snapshot(context: Context):
     with db_session() as session:
         sync_block = await sync_data(context, session)
@@ -85,7 +86,7 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block)
     multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
     snapshot_context = SnapshotContext(context, session, config, multicallable)
 
-    if config.lastSnapshotBlock >= snapshot_block.number:
+    if Block(context.w3, config.lastSnapshotBlock).timestamp() >= snapshot_block.timestamp():
         return
 
     for affiliate_context in context.affiliates:
