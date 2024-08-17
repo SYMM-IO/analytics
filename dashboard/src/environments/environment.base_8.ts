@@ -1,4 +1,4 @@
-import {Affiliate, EnvironmentInterface, Hedger} from "./environment-interface"
+import {Affiliate, EnvironmentInterface, Hedger, Version} from "./environment-interface"
 import BigNumber from "bignumber.js"
 
 export const based: Affiliate = {
@@ -24,6 +24,7 @@ export const environment: EnvironmentInterface = {
     name: "BASE_8",
     serverUrl: "https://analytics-api.symm.io",
     subgraphUrl: "https://api.studio.thegraph.com/query/62454/symmioanalytics_base_8/version/latest",
+    version: Version.V_0_8_0,
     collateralDecimal: 6,
     affiliates: [
         based,

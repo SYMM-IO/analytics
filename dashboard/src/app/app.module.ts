@@ -48,19 +48,20 @@ import {AffiliateStateViewerComponent} from "./panel-home/affiliate-state-viewer
 import {TimeAgoPipe} from "./panel-home/hedger-state-viewer/timeAgo.pipe"
 
 @NgModule({
-    declarations: [
-        AppComponent,
-        InfoComponent,
-        ChartComponent,
-        HomeComponent,
-        ResizeObserverDirective,
-        PanelHomeComponent,
-        BigNumberFormatPipe,
-        QuoteLoaderComponent,
-        HedgerStateViewerComponent,
-        AffiliateStateViewerComponent,
-        TimeAgoPipe
-    ],
+	declarations: [
+		AppComponent,
+		InfoComponent,
+		ChartComponent,
+		HomeComponent,
+		ResizeObserverDirective,
+		PanelHomeComponent,
+		BigNumberFormatPipe,
+		QuoteLoaderComponent,
+		HedgerStateViewerComponent,
+		AffiliateStateViewerComponent,
+		TimeAgoPipe,
+		ChartComponent
+	],
     imports: [
         BrowserModule,
         BrowserAnimationsModule,

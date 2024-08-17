@@ -35,7 +35,7 @@ export class DailyHistory {
 		return dailyHistory
 	}
 
-	static emtpyOne(timestamp: string, accountSource = ""): DailyHistory {
+	static emptyOne(timestamp: string, accountSource = ""): DailyHistory {
 		const dailyHistory = new DailyHistory()
 		dailyHistory.id = timestamp + "_"
 		dailyHistory.quotesCount = BigNumber(0)
@@ -96,6 +96,67 @@ export class TotalHistory {
 	}
 }
 
+
+export class WeeklyHistory {
+	[key: string]: string | BigNumber | undefined;
+
+	id?: string
+	activeUsers?: BigNumber
+	accountSource?: string
+
+	static fromRawObject(raw: any): WeeklyHistory {
+		const h = new WeeklyHistory()
+		h.id = raw.id
+		h.activeUsers = BigNumber(raw.activeUsers)
+		h.accountSource = raw.accountSource
+		return h
+	}
+
+	static emptyOne(timestamp: string, accountSource = ""): WeeklyHistory {
+		const h = new WeeklyHistory()
+		h.id = timestamp + "_"
+		h.activeUsers = BigNumber(0)
+		h.accountSource = accountSource
+		return h
+	}
+
+	public static getTime(dh: WeeklyHistory): number | null {
+		if (dh.id != null)
+			return Number(dh.id?.split("_")[0])
+		return null
+	}
+}
+
+
+export class MonthlyHistory {
+	[key: string]: string | BigNumber | undefined;
+
+	id?: string
+	activeUsers?: BigNumber
+	accountSource?: string
+
+	static fromRawObject(raw: any): MonthlyHistory {
+		const h = new MonthlyHistory()
+		h.id = raw.id
+		h.activeUsers = BigNumber(raw.activeUsers)
+		h.accountSource = raw.accountSource
+		return h
+	}
+
+	static emptyOne(timestamp: string, accountSource = ""): MonthlyHistory {
+		const h = new MonthlyHistory()
+		h.id = timestamp + "_"
+		h.activeUsers = BigNumber(0)
+		h.accountSource = accountSource
+		return h
+	}
+
+	public static getTime(dh: MonthlyHistory): number | null {
+		if (dh.id != null)
+			return Number(dh.id?.split("_")[0])
+		return null
+	}
+}
 
 export class AffiliateSnapshot {
 	status_quotes?: string

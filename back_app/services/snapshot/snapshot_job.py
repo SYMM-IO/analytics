@@ -1,7 +1,9 @@
+import logging
 import re
 
 from multicallable import Multicallable
 from sqlalchemy.orm import Session
+from traceback_with_variables import printing_exc, LoggerAsFile
 
 from app import db_session
 from app.models import (
@@ -19,6 +21,7 @@ from config.settings import (
     SYMMIO_ABI,
     SNAPSHOT_BLOCK_LAG,
     SNAPSHOT_BLOCK_LAG_STEP,
+    CHAIN_ONLY,
 )
 from services.binance_service import fetch_binance_income_histories
 from services.config_service import load_config
@@ -30,13 +33,18 @@ from services.snapshot.snapshot_context import SnapshotContext
 from utils.block import Block
 from utils.subgraph.subgraph_client import SubgraphClient
 
+logger = logging.getLogger()
 
+
+@printing_exc(file_=LoggerAsFile(logger))
 async def fetch_snapshot(context: Context):
     with db_session() as session:
         sync_block = await sync_data(context, session)
-        do_fetch_snapshot(context, session, snapshot_block=sync_block, prepare_binance_snapshot=False)
+        if context.get_snapshot:
+            do_fetch_snapshot(context, session, snapshot_block=sync_block)
 
 
+@printing_exc(file_=LoggerAsFile(logger))
 async def sync_data(context, session):
     config: RuntimeConfiguration = load_config(session, context)
     sync_block = Block.latest(context.w3)
@@ -52,15 +60,18 @@ async def sync_data(context, session):
     except Exception as e:
         if "only indexed up to block number" in str(e):
             last_synced_block = int(re.search(r"indexed up to block number (\d+)", str(e)).group(1))
-            config = load_config(session, context)
-            lag = Block.latest(context.w3).number - last_synced_block
-            print(f"Last Synced Block is {last_synced_block} => Increasing snapshotBlockLag to {lag}")
-            config.snapshotBlockLag = lag
-            config.upsert(session)
-            session.commit()
-            return await sync_data(context, session)
+        elif "only has data starting at block number" in str(e):
+            last_synced_block = int(re.search(r"has data starting at block number (\d+)", str(e)).group(1))
         else:
             raise e
+        config = load_config(session, context)
+        context.w3.provider.sort_endpoints()
+        lag = Block.latest(context.w3).number - last_synced_block
+        print(f"Last Synced Block is {last_synced_block} => Increasing snapshotBlockLag to {lag}")
+        config.snapshotBlockLag = lag
+        config.upsert(session)
+        session.commit()
+        return await sync_data(context, session)
     print(f"{context.tenant}: =====> SYNC COMPLETED <=====")
     config.lastSyncBlock = sync_block.number
     config.snapshotBlockLag = max(config.snapshotBlockLag - SNAPSHOT_BLOCK_LAG_STEP, SNAPSHOT_BLOCK_LAG)
@@ -69,10 +80,14 @@ async def sync_data(context, session):
     return sync_block
 
 
-def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block, prepare_binance_snapshot: bool = False):
+@printing_exc(file_=LoggerAsFile(logger))
+def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block):
     config: RuntimeConfiguration = load_config(session, context)
     multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
     snapshot_context = SnapshotContext(context, session, config, multicallable)
+
+    if Block(context.w3, config.lastSnapshotBlock).timestamp() >= snapshot_block.timestamp():
+        return
 
     for affiliate_context in context.affiliates:
         for hedger_context in context.hedgers:
@@ -82,7 +97,7 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block,
                 hedger_context,
                 snapshot_block,
             )
-            session.commit()
+            # session.commit()
 
     for liquidator in context.liquidators:
         prepare_liquidator_snapshot(snapshot_context, liquidator, snapshot_block)
@@ -90,7 +105,7 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block,
     for hedger_context in context.hedgers:
         prepare_hedger_snapshot(snapshot_context, hedger_context, snapshot_block)
 
-        if prepare_binance_snapshot and hedger_context.utils.binance_client:
+        if not CHAIN_ONLY and hedger_context.has_binance_keys():
             fetch_binance_income_histories(snapshot_context, hedger_context)
             prepare_hedger_binance_snapshot(snapshot_context, hedger_context, snapshot_block)
 

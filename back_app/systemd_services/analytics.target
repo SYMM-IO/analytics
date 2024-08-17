@@ -1,6 +1,0 @@
-[Unit]
-Description=Main Analytics service
-Wants=analytics_base_8_2_snapshot.service analytics_bnb_8_2_snapshot.service analytics_blast_8_2_snapshot.service analytics_server.service analytics_stats_bot_loader.service
-
-[Install]
-WantedBy=multi-user.target

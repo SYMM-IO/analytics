@@ -17,6 +17,7 @@ def prepare_historical_snapshots():
                 snapshot_block = Block(context.w3, config.lastHistoricalSnapshotBlock)
             snapshot_block.backward(context.historical_snapshot_step)
             print(f"{context.tenant}: Historical snapshot for snapshot_block {snapshot_block.number} - {snapshot_block.datetime()}")
-            do_fetch_snapshot(context, session, snapshot_block)
+            if context.get_snapshot:
+                do_fetch_snapshot(context, session, snapshot_block)
             config.lastHistoricalSnapshotBlock = snapshot_block.number
             session.commit()

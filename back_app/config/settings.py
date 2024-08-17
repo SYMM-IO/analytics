@@ -1,12 +1,29 @@
 import json
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 import web3
 from web3.middleware import geth_poa_middleware
 from web3_collections import MultiEndpointHTTPProvider
 
-from config.context import HedgerContextUtils
+from utils.binance_client import BinanceClient
+
+
+@dataclass
+class HedgerContextUtils:
+    binance_client: Optional[BinanceClient]
+
+    @staticmethod
+    def from_context(context, fallback_binance_api_key, fallback_binance_api_secret):
+        if CHAIN_ONLY:
+            context = HedgerContextUtils(binance_client=None)
+        else:
+            context = HedgerContextUtils(
+                binance_client=BinanceClient(context.binance_api_key, context.binance_api_secret)
+                if len(context.binance_api_key) > 0
+                else BinanceClient(fallback_binance_api_key, fallback_binance_api_secret),
+            )
+        return context
 
 
 @dataclass
@@ -27,6 +44,9 @@ class HedgerContext:
 
     utils: HedgerContextUtils | None
 
+    def has_binance_keys(self) -> bool:
+        return self.binance_api_key is not None and len(self.binance_api_key) > 0
+
 
 @dataclass
 class AffiliateContext:
@@ -40,7 +60,7 @@ class Context:
     subgraph_endpoint: str
     rpcs: List[str]
     explorer: str
-    explorer_api_key: str
+    explorer_api_keys: List[str]
     native_coin: str
     symmio_address: str
     symmio_collateral_address: str
@@ -49,6 +69,8 @@ class Context:
     hedgers: List[HedgerContext]
     affiliates: List[AffiliateContext]
     liquidators: List[str]
+
+    get_snapshot: bool
 
     # Telegram
     telegram_group_id: str
@@ -76,21 +98,10 @@ SERVER_PORT = 7231
 
 # Intervals
 FETCH_STAT_DATA_INTERVAL = 5 * 5
-SNAPSHOT_INTERVAL = 2 * 5
+SNAPSHOT_INTERVAL = 2 * 15
 SNAPSHOT_BLOCK_LAG = 10
 SNAPSHOT_BLOCK_LAG_STEP = 25
 DEBUG_MODE = False
-
-# Alerting system
-FUNDING_RATE_ALERT_THRESHOLD = 100
-CLOSABLE_FUNDING_RATE_ALERT_THRESHOLD = 100
-
-# DB
-DB_NAME = "postgres"
-DB_USER = "postgres"
-DB_PASSWORD = "password"
-DB_HOST = "localhost"
-DB_PORT = 5432
 
 with open("./config/abis/erc20abi.json", "r") as f:
     ERC20_ABI = json.load(f)
@@ -103,4 +114,5 @@ IGNORE_BINANCE_TRADE_VOLUME = True
 # JWT setting
 ACCESS_TOKEN_EXPIRE_TIME = 3 * 24 * 60 * 60  # 3 Days
 JWT_ALGORITHM = "HS256"
-JWT_SECRET_KEY = ""
+
+CHAIN_ONLY = True

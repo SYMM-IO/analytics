@@ -1,7 +1,8 @@
-from config.settings import Context, HedgerContext, AffiliateContext
-from config.context import HedgerContextUtils
+from typing import List
 
-x_contexts = Context(
+from config.settings import Context, HedgerContext, AffiliateContext, HedgerContextUtils
+
+x_context = Context(
     tenant="X",
     subgraph_endpoint="",
     rpcs=[""],
@@ -40,4 +41,34 @@ x_contexts = Context(
     telegram_stat_group_id=-1001968869688,
 )
 
-x_contexts.hedgers[0].utils = HedgerContextUtils.from_context(x_contexts.hedgers[0])
+x_context.hedgers[0].utils = HedgerContextUtils.from_context(x_context.hedgers[0])
+
+# Will be only used for fetching prices
+fallback_binance_api_key: str = ""
+fallback_binance_api_secret: str = ""
+
+contexts: List[Context] = [
+    x_context,
+]
+for context in contexts:
+    for hedger in context.hedgers:
+        hedger.utils = HedgerContextUtils.from_context(hedger, fallback_binance_api_key, fallback_binance_api_secret)
+
+# DB
+DB_NAME = ""
+DB_USER = ""
+DB_PASSWORD = ""
+DB_HOST = "localhost"
+DB_PORT = 5432
+
+# JWT
+JWT_SECRET_KEY = ""
+
+# Telegram
+telegram_alert_group_id = ""
+telegram_bot_token = ""
+telegram_client_api_id = 0
+telegram_client_api_hash = ""
+telegram_phone_number = ""
+
+admin_api_key = ""

@@ -8,8 +8,8 @@ Create Date: 2024-03-06 14:04:42.453254
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "f84afbd6c9a6"
@@ -105,6 +105,7 @@ def upgrade() -> None:
         sa.Column("newUsers", sa.Integer(), nullable=True),
         sa.Column("accountSource", sa.String(), nullable=True),
         sa.Column("newAccounts", sa.Integer(), nullable=True),
+        sa.Column("activeUsers", sa.Integer(), nullable=True),
         sa.Column("tradeVolume", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("deposit", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("withdraw", sa.Numeric(precision=40, scale=0), nullable=True),
@@ -246,32 +247,41 @@ def upgrade() -> None:
         "quote",
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("account_id", sa.String(), nullable=True),
-        sa.Column("symbol_id", sa.String(), nullable=True),
-        sa.Column("partyBsWhiteList", sa.Text(), nullable=True),
-        sa.Column("partyB", sa.String(), nullable=True),
-        sa.Column("positionType", sa.String(), nullable=True),
-        sa.Column("orderType", sa.String(), nullable=True),
-        sa.Column("collateral", sa.String(), nullable=True),
-        sa.Column("price", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("marketPrice", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("deadline", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("quantity", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("closedAmount", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("cva", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("partyAmm", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("partyBmm", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("lf", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("quoteStatus", sa.Integer(), nullable=True),
+        sa.Column("averageClosedPrice", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("blockNumber", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("avgClosedPrice", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("openPrice", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("fundingPaid", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("fundingReceived", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("closeDeadline", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("closedAmount", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("closedPrice", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("closePrice", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("cva", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("fillAmount", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("fundingRateFee", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("fundingRateOpenedPrice", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("initialOpenedPrice", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("lf", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("liquidateAmount", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("liquidatedSide", sa.Integer(), nullable=True),
-        sa.Column("transaction", sa.String(), nullable=True),
-        sa.Column("timestamp", sa.DateTime(), nullable=True),
-        sa.Column("updateTimestamp", sa.DateTime(), nullable=True),
+        sa.Column("liquidatePrice", sa.Integer(), nullable=True),
+        sa.Column("marketPrice", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("maxFundingRate", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("openDeadline", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("openedPrice", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("orderTypeClose", sa.String(), nullable=True),
+        sa.Column("orderTypeOpen", sa.String(), nullable=True),
+        sa.Column("partyA", sa.String(), nullable=True),
+        sa.Column("partyAmm", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("partyB", sa.String(), nullable=True),
+        sa.Column("partyBmm", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("partyBsWhiteList", sa.Text(), nullable=True),
+        sa.Column("positionType", sa.String(), nullable=True),
+        sa.Column("quantity", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("quantityToClose", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("quoteStatus", sa.Integer(), nullable=True),
+        sa.Column("requestedOpenPrice", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("symbol_id", sa.String(), nullable=True),
         sa.Column("tenant", sa.String(), nullable=False),
+        sa.Column("timeStamp", sa.DateTime(), nullable=True),
+        sa.Column("tradingFee", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.ForeignKeyConstraint(
             ["account_id"],
             ["account.id"],
@@ -304,6 +314,15 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
+    op.create_table(
+        "gas_history",
+        sa.Column("address", sa.String(), nullable=False),
+        sa.Column("gas_amount", sa.Numeric(precision=40, scale=0), nullable=False),
+        sa.Column("initial_block", sa.Integer(), nullable=False),
+        sa.Column("tx_count", sa.Integer(), nullable=False),
+        sa.Column("tenant", sa.String(), nullable=False),
+        sa.PrimaryKeyConstraint("address", "tenant"),
+    )
 
 
 # ### end Alembic commands ###
@@ -327,4 +346,5 @@ def downgrade() -> None:
     op.drop_table("binance_income")
     op.drop_table("affiliate_snapshot")
     op.drop_table("admin_user")
+    op.drop_table("gas_history")
     # ### end Alembic commands ###

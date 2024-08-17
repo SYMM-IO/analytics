@@ -1,19 +1,21 @@
 import datetime
 import enum
+import logging
 from typing import List, Type
 
 import requests
-from sqlalchemy import select
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.operators import eq
+from traceback_with_variables import printing_exc, LoggerAsFile
 
 from app import BaseModel
 from app.models import RuntimeConfiguration
 from config.settings import Context
-from utils.block import Block
-from utils.subgraph.subgraph_client_config import SubgraphClientConfig
 from services.config_service import load_config
+from utils.block import Block
 from utils.model_utils import tag_tenant_to_field, get_model_fields
+from utils.subgraph.subgraph_client_config import SubgraphClientConfig
+
+logger = logging.getLogger()
 
 
 class GraphQlCondition:
@@ -68,18 +70,19 @@ class SubgraphClient:
         obj.upsert(session)
         return obj
 
+    @printing_exc(file_=LoggerAsFile(logger))
     def load(
-        self,
-        method: str,
-        fields: List[str],
-        first: int,
-        create_function,
-        block: Block = None,
-        conditions: List[GraphQlCondition] = None,
-        order_by: str = None,
-        order_direction: OrderDirection = OrderDirection.DESCENDING,
-        change_block_gte: int = None,
-        log_prefix="",
+            self,
+            method: str,
+            fields: List[str],
+            first: int,
+            create_function,
+            block: Block = None,
+            conditions: List[GraphQlCondition] = None,
+            order_by: str = None,
+            order_direction: OrderDirection = OrderDirection.DESCENDING,
+            change_block_gte: int = None,
+            log_prefix="",
     ):
         if conditions is None:
             conditions = []
@@ -95,7 +98,7 @@ class SubgraphClient:
         print(f"|{log_prefix}: Loading a page of {method}----------")
         print(f"|    condition: {where_str}")
         print(f"|    change after block: {change_block_gte}")
-        print(f"|    in block: {block.number if block else ""}")
+        print(f"|    in block: {block.number if block else ''}")
 
         query = f"""
             query q {{
@@ -117,7 +120,7 @@ class SubgraphClient:
         items = []
         if response:
             if "data" in response.json():
-                print(f"-------> Loaded {len(response.json()["data"][method])} items ---------")
+                print(f"-------> Loaded {len(response.json()['data'][method])} items ---------")
                 for data in response.json()["data"][method]:
                     items.append(create_function(data))
             elif "errors" in response.json():
@@ -128,27 +131,21 @@ class SubgraphClient:
             raise Exception(response.json())
         return items
 
+    @printing_exc(file_=LoggerAsFile(logger))
     def load_all(
-        self,
-        session: Session,
-        fields: List[str],
-        create_function,
-        block: Block = None,
-        conditions: List[GraphQlCondition] = None,
-        page_limit: int = None,
-        change_block_gte: int = None,
-        log_prefix="",
+            self,
+            fields: List[str],
+            create_function,
+            block: Block = None,
+            conditions: List[GraphQlCondition] = None,
+            page_limit: int = None,
+            change_block_gte: int = None,
+            log_prefix="",
     ):
         if not conditions:
             conditions = []
         limit = 1000
-        pagination_field = getattr(self.model, self.config.pagination_field)
         pagination_value = None
-        found_item = session.scalar(
-            select(self.model).where(eq(getattr(self.model, "tenant"), self.context.tenant)).order_by(pagination_field.desc()).limit(1)
-        )
-        if found_item:
-            pagination_value = getattr(found_item, self.config.pagination_field)
 
         result = set()
         while page_limit is None or page_limit > 0:
@@ -160,13 +157,15 @@ class SubgraphClient:
                 formatted_pv = str(pagination_value)
             else:
                 formatted_pv = None
-            pagination_field_name = self.config.name_maps.get(self.config.pagination_field) or self.config.pagination_field
+            pagination_field_name = self.config.name_maps.get(
+                self.config.pagination_field) or self.config.pagination_field
             temp = self.load(
                 method=self.config.method_name,
                 fields=fields,
                 create_function=create_function,
                 first=limit,
-                conditions=([GraphQlCondition(pagination_field_name, "gte", formatted_pv)] if formatted_pv else []) + conditions,
+                conditions=([GraphQlCondition(pagination_field_name, "gte",
+                                              formatted_pv)] if formatted_pv else []) + conditions,
                 log_prefix=log_prefix,
                 change_block_gte=change_block_gte,
                 block=block,
@@ -186,6 +185,7 @@ class SubgraphClient:
             if is_done or len(temp) < limit:
                 break
 
+    @printing_exc(file_=LoggerAsFile(logger))
     def sync(self, session, block: Block):
         runtime_config: RuntimeConfiguration = load_config(session, self.context)
         fields = []
@@ -198,7 +198,6 @@ class SubgraphClient:
                 fields.append(f)
 
         out = self.load_all(
-            session=session,
             fields=fields,
             create_function=lambda data: self.create_function(session, data),
             log_prefix=self.context.tenant,

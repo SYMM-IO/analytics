@@ -56,7 +56,7 @@ class User(BaseModel):
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="users",
         pagination_field="timestamp",
-        catch_up_field="timestamp",
+        tenant_needed_fields=["id"],
         converter=convert_timestamps,
     )
     id = Column(String, primary_key=True)
@@ -82,7 +82,7 @@ class Account(BaseModel):
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="accounts",
         pagination_field="timestamp",
-        catch_up_field="updateTimestamp",
+        tenant_needed_fields=["user"],
         name_maps={"user_id": "user"},
     )
     id = Column(String, primary_key=True)
@@ -110,7 +110,6 @@ class BalanceChange(BaseModel):
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="balanceChanges",
         pagination_field="timestamp",
-        catch_up_field="timestamp",
         name_maps={"account_id": "account"},
     )
     id = Column(String, primary_key=True)
@@ -139,7 +138,6 @@ class Symbol(BaseModel):
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="symbols",
         pagination_field="timestamp",
-        catch_up_field="updateTimestamp",
         tenant_needed_fields=["id"],
         ignore_columns=["tenant", "main_market"],
     )
@@ -159,42 +157,50 @@ class Quote(BaseModel):
     __pk_name__ = "id"
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="quotes",
-        pagination_field="timestamp",
-        catch_up_field="updateTimestamp",
+        pagination_field="timeStamp",
         tenant_needed_fields=["id", "symbolId"],
-        name_maps={"account_id": "account", "symbol_id": "symbolId"},
+        name_maps={"account_id": "partyA", "symbol_id": "symbolId"},
     )
     id = Column(String, primary_key=True)
-    account_id = Column(String, ForeignKey("account.id"))
     account = relationship("Account", back_populates="quotes")
-    symbol_id = Column(String, ForeignKey("symbol.id"))
-    symbol = relationship("Symbol", back_populates="quotes")
-    partyBsWhiteList = Column(Text)
-    partyB = Column(String)
-    positionType = Column(String)
-    orderType = Column(String)
-    collateral = Column(String)
-    price = Column(Numeric(40, 0))
-    marketPrice = Column(Numeric(40, 0))
-    deadline = Column(Numeric(40, 0))
-    quantity = Column(Numeric(40, 0))
-    closedAmount = Column(Numeric(40, 0))
-    cva = Column(Numeric(40, 0))
-    partyAmm = Column(Numeric(40, 0))
-    partyBmm = Column(Numeric(40, 0))
-    lf = Column(Numeric(40, 0))
-    quoteStatus = Column(Integer)
+    account_id = Column(String, ForeignKey("account.id"))
+    averageClosedPrice = Column(Numeric(40, 0))
     blockNumber = Column(Numeric(40, 0))
-    avgClosedPrice = Column(Numeric(40, 0))
-    openPrice = Column(Numeric(40, 0), nullable=True)
-    fundingPaid = Column(Numeric(40, 0), nullable=True)
-    fundingReceived = Column(Numeric(40, 0), nullable=True)
+    closeDeadline = Column(Numeric(40, 0))
+    closedAmount = Column(Numeric(40, 0))
+    closedPrice = Column(Numeric(40, 0))
+    closePrice = Column(Numeric(40, 0))
+    cva = Column(Numeric(40, 0))
+    fillAmount = Column(Numeric(40, 0))
+    fundingRateFee = Column(Numeric(40, 0))
+    fundingRateOpenedPrice = Column(Numeric(40, 0))
+    initialOpenedPrice = Column(Numeric(40, 0))
+    lf = Column(Numeric(40, 0))
+    liquidateAmount = Column(Numeric(40, 0))
     liquidatedSide = Column(Integer, nullable=True)
-    transaction = Column(String)
-    timestamp = Column(DateTime)
-    updateTimestamp = Column(DateTime)
+    liquidatePrice = Column(Numeric(40, 0))
+    marketPrice = Column(Numeric(40, 0))
+    maxFundingRate = Column(Numeric(40, 0))
+    openDeadline = Column(Numeric(40, 0))
+    openedPrice = Column(Numeric(40, 0), nullable=True)
+    orderTypeClose = Column(String)
+    orderTypeOpen = Column(String)
+    partyA = Column(String)
+    partyAmm = Column(Numeric(40, 0))
+    partyB = Column(String)
+    partyBmm = Column(Numeric(40, 0))
+    partyBsWhiteList = Column(Text)
+    positionType = Column(String)
+    quantity = Column(Numeric(40, 0))
+    quantityToClose = Column(Numeric(40, 0))
+    quoteStatus = Column(Integer)
+    requestedOpenPrice = Column(Numeric(40, 0))
+    symbol = relationship("Symbol", back_populates="quotes")
+    symbol_id = Column(String, ForeignKey("symbol.id"))
     tenant = Column(String, nullable=False)
+    timeStamp = Column(DateTime)
     trade_histories = relationship("TradeHistory", back_populates="quote")
+    tradingFee = Column(Numeric(40, 0))
 
 
 class TradeHistory(BaseModel):
@@ -204,7 +210,6 @@ class TradeHistory(BaseModel):
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="tradeHistories",
         pagination_field="timestamp",
-        catch_up_field="updateTimestamp",
         tenant_needed_fields=["quote"],
         name_maps={"account_id": "account", "quote_id": "quote"},
     )
@@ -229,13 +234,13 @@ class DailyHistory(BaseModel):
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="dailyHistories",
         pagination_field="timestamp",
-        catch_up_field="updateTimestamp",
     )
     id = Column(String)
     quotesCount = Column(Integer)
     newUsers = Column(Integer)
     accountSource = Column(String)
     newAccounts = Column(Integer)
+    activeUsers = Column(Integer)
     tradeVolume = Column(Numeric(40, 0))
     deposit = Column(Numeric(40, 0))
     withdraw = Column(Numeric(40, 0))
@@ -396,3 +401,39 @@ class StatsBotMessage(BaseModel):
     timestamp = Column(DateTime)
     content = Column(JSON)
     tenant = Column(String, nullable=False, primary_key=True)
+
+
+class GasHistory(BaseModel):
+    __tablename__ = "gas_history"
+    __is_timeseries__ = False
+    address = Column(String, primary_key=True)
+    gas_amount = Column(Numeric(40, 0))
+    initial_block = Column(Integer)
+    tx_count = Column(Integer)
+    tenant = Column(String, primary_key=True)
+
+
+class DailyHistoryAffiliate:
+    def __init__(self, quotesCount=0, newUsers=0, newAccounts=0, activeUsers=0, tradeVolume=0, deposit=0, withdraw=0,
+                 allocate=0, deallocate=0, platformFee=0, openInterest=0, start_date=None):
+        self.quotesCount = quotesCount
+        self.newUsers = newUsers
+        self.newAccounts = newAccounts
+        self.activeUsers = activeUsers
+        self.tradeVolume = tradeVolume
+        self.deposit = deposit
+        self.withdraw = withdraw
+        self.allocate = allocate
+        self.deallocate = deallocate
+        self.platformFee = platformFee
+        self.openInterest = openInterest
+        self.start_date = start_date
+
+
+class HealthMetric:
+    def __init__(self, last_block, snapshot_block, sync_block):
+        self.last_block = last_block
+        self.snapshot_block = snapshot_block
+        self.sync_block = sync_block
+        self.diff_snapshot_block = last_block - snapshot_block
+        self.diff_sync_block = last_block - sync_block

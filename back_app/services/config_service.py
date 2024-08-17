@@ -3,6 +3,7 @@ import datetime
 import web3
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
+from web3_collections import MultiEndpointHTTPProvider
 
 from config.settings import ERC20_ABI, Context, SNAPSHOT_BLOCK_LAG
 
@@ -21,7 +22,7 @@ def load_config(session: Session, context: Context, name: str = "DefaultConfigur
         ).scalar_one()
         session.expunge(config)
     except Exception:
-        w3 = web3.Web3(web3.Web3.HTTPProvider(context.rpc))
+        w3 = web3.Web3(MultiEndpointHTTPProvider(context.rpcs))
         collateral_contract = w3.eth.contract(
             address=w3.to_checksum_address(context.symmio_collateral_address),
             abi=ERC20_ABI,

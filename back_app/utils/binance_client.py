@@ -25,7 +25,7 @@ class BinanceClient(Client):
 
     @handle_rec_window
     def futures_mark_price(self, **params):
-        return super().futures_mark_price(**params)
+        raise Exception('not allowed')
 
     @handle_rec_window
     def futures_income_history(self, **params):
