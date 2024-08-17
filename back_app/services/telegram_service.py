@@ -14,29 +14,29 @@ def escape_markdown_v1(text):
 
 
 def _send_message(msg: str, group_id, retrying):
+    log_file_path = LOG_PATH + f'/log_file_{os.environ["TENANT"]}.log'
+
     for _ in range(retrying):
-        url = f"https://api.telegram.org/bot{telegram_bot_token}/sendMessage"
-        data = {
-            "chat_id": group_id,
-            "text": msg,
-            "disable_web_page_preview": True,
-            "parse_mode": "Markdown",
-        }
-        resp_msg = requests.post(url=url, data=data, timeout=5)
-        if resp_msg.status_code == 200:
-            break
-        else:
-            print(resp_msg.json())
-    with open(LOG_PATH + f'/log_file_{os.environ["TENANT"]}.log', 'rb') as f:
-        for _ in range(retrying):
-            url = f"https://api.telegram.org/bot{telegram_bot_token}/sendDocument"
-            data = {"chat_id": group_id}
-            file = {'document': f}
-            resp_doc = requests.post(url=url, data=data, files=file, timeout=5)
-            if resp_doc.status_code == 200:
+        url = f"https://api.telegram.org/bot{telegram_bot_token}/sendDocument"
+
+        with open(log_file_path, 'rb') as f:
+            data = {
+                "chat_id": group_id,
+                "caption": msg,
+                "parse_mode": "Markdown",
+                "disable_web_page_preview": True
+            }
+            files = {'document': f}
+
+            response = requests.post(url=url, data=data, files=files, timeout=5)
+
+            if response.status_code == 200:
                 break
             else:
-                print(resp_doc.json())
+                print(response.json())
+
+    if response.status_code != 200:
+        print(f"Failed to send message after {retrying} attempts.")
 
 
 def send_message(configuration: Context, msg: str, retrying=5):

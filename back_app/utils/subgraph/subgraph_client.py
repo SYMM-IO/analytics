@@ -1,11 +1,9 @@
 import datetime
 import enum
-import logging
 from typing import List, Type
 
 import requests
 from sqlalchemy.orm import Session
-from traceback_with_variables import printing_exc, LoggerAsFile
 
 from app import BaseModel
 from app.models import RuntimeConfiguration
@@ -14,8 +12,6 @@ from services.config_service import load_config
 from utils.block import Block
 from utils.model_utils import tag_tenant_to_field, get_model_fields
 from utils.subgraph.subgraph_client_config import SubgraphClientConfig
-
-logger = logging.getLogger()
 
 
 class GraphQlCondition:
@@ -70,7 +66,6 @@ class SubgraphClient:
         obj.upsert(session)
         return obj
 
-    @printing_exc(file_=LoggerAsFile(logger))
     def load(
             self,
             method: str,
@@ -128,10 +123,9 @@ class SubgraphClient:
             else:
                 raise Exception(response.json())
         else:
-            raise Exception(response.json())
+            raise Exception(response.text)
         return items
 
-    @printing_exc(file_=LoggerAsFile(logger))
     def load_all(
             self,
             fields: List[str],
@@ -185,7 +179,6 @@ class SubgraphClient:
             if is_done or len(temp) < limit:
                 break
 
-    @printing_exc(file_=LoggerAsFile(logger))
     def sync(self, session, block: Block):
         runtime_config: RuntimeConfiguration = load_config(session, self.context)
         fields = []

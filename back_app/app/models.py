@@ -267,9 +267,6 @@ class RuntimeConfiguration(BaseModel):
     snapshotBlockLag = Column(Integer)
     deployTimestamp = Column(DateTime)
 
-    def __repr__(self):
-        return f"{self.name}, {self.tenant}"
-
 
 class AffiliateSnapshot(BaseModel):
     __tablename__ = "affiliate_snapshot"

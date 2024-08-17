@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 
 from multicallable import Multicallable
@@ -8,19 +9,22 @@ from app.models import (
     BalanceChange,
     BalanceChangeType,
     HedgerSnapshot,
-    Quote,
     RuntimeConfiguration,
 )
 from config.settings import (
     Context,
     SYMMIO_ABI,
     HedgerContext,
+    LOGGER,
 )
 from services.gas_checker_service import gas_used_by_hedger_wallets
 from services.snaphshot_service import get_last_affiliate_snapshot_for
 from services.snapshot.snapshot_context import SnapshotContext
 from utils.attr_dict import AttrDict
 from utils.block import Block
+from utils.model_utils import log_object_properties
+
+logger = logging.getLogger(LOGGER)
 
 
 def prepare_hedger_snapshot(
@@ -80,7 +84,7 @@ def prepare_hedger_snapshot(
     ).scalar_one()
 
     snapshot.hedger_contract_deposit = hedger_deposit * 10 ** (
-                18 - config.decimals) + hedger_context.contract_deposit_diff
+            18 - config.decimals) + hedger_context.contract_deposit_diff
 
     hedger_withdraw = session.execute(
         select(func.coalesce(func.sum(BalanceChange.amount), Decimal(0))).where(
@@ -118,5 +122,7 @@ def prepare_hedger_snapshot(
     snapshot.tenant = context.tenant
     snapshot.block_number = block.number
     hedger_snapshot = HedgerSnapshot(**snapshot)
+    hedger_snapshot_details = ", ".join(log_object_properties(hedger_snapshot))
+    logger.debug(f'func={prepare_hedger_snapshot.__name__} -->  {hedger_snapshot_details=}\n')
     hedger_snapshot.save(session)
     return hedger_snapshot
