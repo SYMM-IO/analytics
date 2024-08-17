@@ -8,6 +8,13 @@ export const alpha_v3: Affiliate = {
 	fromTimestamp: null,
 }
 
+export const cloverfield: Affiliate = {
+	name: "Cloverfield",
+	mainColor: "#A2D4EA",
+	accountSource: "0xcCc8CC82868B94Bc2759c69375fC7Ae769703EB8",
+	fromTimestamp: "0",
+}
+
 export const hedger: Hedger = {
 	name: "Thena_Hedger",
 }
@@ -26,6 +33,7 @@ export const environment: EnvironmentInterface = {
 	startDate: new Date(1702058147000),
 	affiliates: [
 		alpha_v3,
+		cloverfield
 	],
 	hedgers: [
 		hedger,

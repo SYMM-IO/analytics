@@ -8,6 +8,13 @@ export const pear: Affiliate = {
 	fromTimestamp: "0",
 }
 
+export const cloverfield: Affiliate = {
+	name: "Cloverfield",
+	mainColor: "#A2D4EA",
+	accountSource: "0x6a3C63Ed5e558a4c4810ecC980ba6075476602D6",
+	fromTimestamp: "0",
+}
+
 export const hedger: Hedger = {
 	name: "arbitrum_Hedger",
 }
@@ -20,7 +27,8 @@ export const environment: EnvironmentInterface = {
 	version: Version.V_0_8_2,
 	startDate: new Date(1715990400000),
 	affiliates: [
-		pear
+		pear,
+		cloverfield
 	],
 	hedgers: [
 		hedger,
