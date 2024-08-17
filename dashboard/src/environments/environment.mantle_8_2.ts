@@ -22,7 +22,7 @@ export const hedger: Hedger = {
 export const environment: EnvironmentInterface = {
 	name: "MANTLE_8_2",
 	serverUrl: "https://analytics-api.symm.io",
-	subgraphUrl: "https://subgraph-api.mantle.xyz/api/public/b6e877be-3d20-4e6e-8c4c-483b5a1350ed/subgraphs/analytics_mantle/v0.0.1/gn",
+	subgraphUrl: "https://subgraph-api.mantle.xyz/api/public/b6e877be-3d20-4e6e-8c4c-483b5a1350ed/subgraphs/analytics_mantle/v0.0.2/gn",
 	collateralDecimal: 18,
 	version: Version.V_0_8_2,
 	startDate: new Date(1712075812000),

@@ -263,17 +263,40 @@ export class ChartComponent implements OnInit, OnDestroy {
 	}
 
 	private createCumulativeSeries(series: any[], fieldName: string) {
+		// Start with the first series' data structure
+		const baseData = series[0].data.map((item: any) => [item[0], 0]);
+
+		// Accumulate values across all series
+		const cumulativeData = baseData.map((baseItem: [Date, number], index: number) => {
+			const date = baseItem[0];
+			let cumulativeValue = 0;
+
+			for (const serie of series) {
+				if (serie.data[index]) {
+					cumulativeValue += serie.data[index][1];
+				}
+			}
+
+			return [date, cumulativeValue];
+		});
+
+		// Create a running total
+		let runningTotal = 0;
+		const finalCumulativeData = cumulativeData.map(([date, value]: [Date, number]) => {
+			runningTotal += value;
+			return [date, runningTotal];
+		});
+
 		return {
 			type: "line",
 			name: "Cumulative",
 			color: "#00ffa2",
-			data: series.reduce((acc, curr) => {
-				return acc.map((item: any, index: number) => {
-					const currValue = curr.data[index] ? curr.data[index][1] : 0;
-					return [item[0], item[1] + currValue];
-				});
-			}, series[0].data.map((item: any) => [item[0], 0])),
+			data: finalCumulativeData,
 			animation: true,
+			smooth: true,  // Optional: makes the line smoother
+			lineStyle: {
+				width: 2  // Optional: adjust line width as needed
+			}
 		};
 	}
 
@@ -365,38 +388,59 @@ export class ChartComponent implements OnInit, OnDestroy {
         <table style="width: 100%; border-collapse: collapse;">
     `;
 
+		let sum = 0;
+
 		params.forEach((item) => {
-			const color = item.color as string;
-			let value: number | string = 'N/A';
-			if (Array.isArray(item.value) && item.value[1] != null) {
-				value = item.value[1] as any;
-			} else if (typeof item.value === 'number') {
-				value = item.value;
+			if (item.seriesName !== 'Cumulative') {  // Exclude Cumulative series from sum
+				const color = item.color as string;
+				let value: number = 0;
+				if (Array.isArray(item.value) && item.value[1] != null) {
+					value = Number(item.value[1]);
+				} else if (typeof item.value === 'number') {
+					value = item.value;
+				}
+				sum += value;
+
+				content += `
+                <tr>
+                  <td style="padding: 3px 5px;">
+                    <span style="display: inline-block; width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-right: 5px;"></span>
+                    <span style="color: #cccccc;">${item.seriesName || 'Unknown'}</span>
+                  </td>
+                  <td style="padding: 3px 5px; text-align: right; color: #ffffff; font-weight: bold;">
+                    ${this.yAxisFormatter(value)}
+                  </td>
+                </tr>
+            `;
 			}
-			content += `
-        <tr>
-          <td style="padding: 3px 5px;">
-            <span style="display: inline-block; width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-right: 5px;"></span>
-            <span style="color: #cccccc;">${item.seriesName || 'Unknown'}</span>
-          </td>
-          <td style="padding: 3px 5px; text-align: right; color: #ffffff; font-weight: bold;">
-            ${this.yAxisFormatter(value)}
-          </td>
-        </tr>
-      `;
 		});
 
-		if (params.length > 1) {
-			const sum = params.reduce((a, b) => {
-				let value = 0;
-				if (Array.isArray(b.value) && b.value[1] != null) {
-					value = typeof b.value[1] === 'number' ? b.value[1] : 0;
-				} else if (typeof b.value === 'number') {
-					value = b.value;
-				}
-				return a + value;
-			}, 0);
+		// Add Cumulative series if it exists
+		const cumulativeItem = params.find(item => item.seriesName === 'Cumulative');
+		if (cumulativeItem) {
+			const color = cumulativeItem.color as string;
+			let value: number = 0;
+			if (Array.isArray(cumulativeItem.value) && cumulativeItem.value[1] != null) {
+				value = Number(cumulativeItem.value[1]);
+			} else if (typeof cumulativeItem.value === 'number') {
+				value = cumulativeItem.value;
+			}
+
 			content += `
+            <tr>
+              <td style="padding: 3px 5px;">
+                <span style="display: inline-block; width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-right: 5px;"></span>
+                <span style="color: #cccccc;">Cumulative</span>
+              </td>
+              <td style="padding: 3px 5px; text-align: right; color: #ffffff; font-weight: bold;">
+                ${this.yAxisFormatter(value)}
+              </td>
+            </tr>
+        `;
+		}
+
+		// Add Aggregated row
+		content += `
         <tr style="border-top: 1px solid rgba(255, 255, 255, 0.2);">
           <td style="padding: 5px; color: #cccccc;">
             <strong>Aggregated</strong>
@@ -405,8 +449,7 @@ export class ChartComponent implements OnInit, OnDestroy {
             ${this.yAxisFormatter(sum)}
           </td>
         </tr>
-      `;
-		}
+    `;
 
 		content += `
         </table>
