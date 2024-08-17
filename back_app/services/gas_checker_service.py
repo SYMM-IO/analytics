@@ -1,11 +1,17 @@
+import logging
+
 import requests
 from sqlalchemy import select, and_
+from traceback_with_variables import printing_exc, LoggerAsFile
 
 from app.models import GasHistory
 from config.settings import Context, HedgerContext
 from services.snapshot.snapshot_context import SnapshotContext
 
+logger = logging.getLogger()
 
+
+@printing_exc(file_=LoggerAsFile(logger))
 def fetch_native_transferred(context: Context, w3, wallet_address, initial_block=0, page_size=10000):
     tx_count = 0
     value_transferred = w3.eth.get_balance(w3.to_checksum_address(wallet_address), block_identifier=initial_block)
@@ -24,7 +30,7 @@ def fetch_native_transferred(context: Context, w3, wallet_address, initial_block
 
         if response.status_code != 200:
             explorer_api_keys.pop(0)
-            e.append('status_code != 200')
+            e.append(f'{response.status_code=}')
             continue
 
         data = response.json()
@@ -34,7 +40,7 @@ def fetch_native_transferred(context: Context, w3, wallet_address, initial_block
                 print(f"All transactions fetched for wallet {wallet_address}")
                 break
             explorer_api_keys.pop(0)
-            e.append(data['result'])
+            e.append(f'{data["result"]}')
             continue
 
         transactions = data["result"]
@@ -61,6 +67,7 @@ def fetch_native_transferred(context: Context, w3, wallet_address, initial_block
     return tx_count, value_transferred - current_balance, to_block
 
 
+@printing_exc(file_=LoggerAsFile(logger))
 def gas_used_by_hedger_wallets(snapshot_context: SnapshotContext, hedger_context: HedgerContext):
     total_gas_spent_by_all_wallets = 0
     for address in hedger_context.wallets:

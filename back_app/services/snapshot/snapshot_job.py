@@ -1,7 +1,9 @@
+import logging
 import re
 
 from multicallable import Multicallable
 from sqlalchemy.orm import Session
+from traceback_with_variables import printing_exc, LoggerAsFile
 
 from app import db_session
 from app.models import (
@@ -12,7 +14,8 @@ from app.models import (
     BalanceChange,
     Quote,
     TradeHistory,
-    DailyHistory, )
+    DailyHistory,
+)
 from config.settings import (
     Context,
     SYMMIO_ABI,
@@ -30,7 +33,10 @@ from services.snapshot.snapshot_context import SnapshotContext
 from utils.block import Block
 from utils.subgraph.subgraph_client import SubgraphClient
 
+logger = logging.getLogger()
 
+
+@printing_exc(file_=LoggerAsFile(logger))
 async def fetch_snapshot(context: Context):
     with db_session() as session:
         sync_block = await sync_data(context, session)
@@ -38,6 +44,7 @@ async def fetch_snapshot(context: Context):
             do_fetch_snapshot(context, session, snapshot_block=sync_block)
 
 
+@printing_exc(file_=LoggerAsFile(logger))
 async def sync_data(context, session):
     config: RuntimeConfiguration = load_config(session, context)
     sync_block = Block.latest(context.w3)
@@ -53,15 +60,18 @@ async def sync_data(context, session):
     except Exception as e:
         if "only indexed up to block number" in str(e):
             last_synced_block = int(re.search(r"indexed up to block number (\d+)", str(e)).group(1))
-            config = load_config(session, context)
-            lag = Block.latest(context.w3).number - last_synced_block
-            print(f"Last Synced Block is {last_synced_block} => Increasing snapshotBlockLag to {lag}")
-            config.snapshotBlockLag = lag
-            config.upsert(session)
-            session.commit()
-            return await sync_data(context, session)
+        elif "only has data starting at block number" in str(e):
+            last_synced_block = int(re.search(r"has data starting at block number (\d+)", str(e)).group(1))
         else:
             raise e
+        config = load_config(session, context)
+        context.w3.provider.sort_endpoints()
+        lag = Block.latest(context.w3).number - last_synced_block
+        print(f"Last Synced Block is {last_synced_block} => Increasing snapshotBlockLag to {lag}")
+        config.snapshotBlockLag = lag
+        config.upsert(session)
+        session.commit()
+        return await sync_data(context, session)
     print(f"{context.tenant}: =====> SYNC COMPLETED <=====")
     config.lastSyncBlock = sync_block.number
     config.snapshotBlockLag = max(config.snapshotBlockLag - SNAPSHOT_BLOCK_LAG_STEP, SNAPSHOT_BLOCK_LAG)
@@ -70,12 +80,13 @@ async def sync_data(context, session):
     return sync_block
 
 
+@printing_exc(file_=LoggerAsFile(logger))
 def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block):
     config: RuntimeConfiguration = load_config(session, context)
     multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
     snapshot_context = SnapshotContext(context, session, config, multicallable)
 
-    if config.lastSnapshotBlock and config.lastSnapshotBlock >= snapshot_block.number:
+    if Block(context.w3, config.lastSnapshotBlock).timestamp() >= snapshot_block.timestamp():
         return
 
     for affiliate_context in context.affiliates:

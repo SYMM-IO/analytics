@@ -415,8 +415,7 @@ class GasHistory(BaseModel):
 
 class DailyHistoryAffiliate:
     def __init__(self, quotesCount=0, newUsers=0, newAccounts=0, activeUsers=0, tradeVolume=0, deposit=0, withdraw=0,
-                 allocate=0,
-                 deallocate=0, platformFee=0, openInterest=0, start_date=None):
+                 allocate=0, deallocate=0, platformFee=0, openInterest=0, start_date=None):
         self.quotesCount = quotesCount
         self.newUsers = newUsers
         self.newAccounts = newAccounts

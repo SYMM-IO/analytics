@@ -1,10 +1,12 @@
 import json
+import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 
 from binance.um_futures import UMFutures
 from sqlalchemy import func, and_, or_, select
 from sqlalchemy.orm import Session, load_only, joinedload
+from traceback_with_variables import printing_exc, LoggerAsFile
 
 from app.models import (
     Account,
@@ -27,7 +29,10 @@ from services.snapshot.snapshot_context import SnapshotContext
 from utils.attr_dict import AttrDict
 from utils.block import Block
 
+logger = logging.getLogger()
 
+
+@printing_exc(file_=LoggerAsFile(logger))
 def prepare_affiliate_snapshot(
         snapshot_context: SnapshotContext,
         affiliate_context: AffiliateContext,
@@ -360,7 +365,7 @@ def calculate_hedger_upnl(
         side_sign = 1 if quote.positionType == "0" else -1
         current_price = Decimal(prices_map[quote.symbol.name]) * 10 ** 18
         hedger_upnl += side_sign * (quote.openedPrice - current_price) * (
-                    quote.quantity - quote.closedAmount) // 10 ** 18
+                quote.quantity - quote.closedAmount) // 10 ** 18
     return hedger_upnl, local_open_quotes
 
 
