@@ -1,5 +1,5 @@
 import {Component, Inject, OnInit} from '@angular/core'
-import {catchError, combineLatest, Observable, of, shareReplay, tap} from "rxjs"
+import {catchError, combineLatest, Observable, of, shareReplay, tap, zip} from "rxjs"
 import {DailyHistory, MonthlyHistory, TotalHistory, WeeklyHistory} from "../models"
 import BigNumber from "bignumber.js"
 import {GraphQlClient} from "../services/graphql-client"
@@ -49,7 +49,7 @@ export class HomeComponent implements OnInit {
 			.map((env: EnvironmentInterface) => env.affiliates!)
 			.flat()
 			.filter(aff => this.singleAffiliateAccountSource == null || aff.accountSource == this.singleAffiliateAccountSource)
-		this.dailyAffiliateHistories = combineLatest(
+		this.dailyAffiliateHistories = zip(
 			this.environments
 				.map((env: EnvironmentInterface) => {
 					return env.affiliates!
