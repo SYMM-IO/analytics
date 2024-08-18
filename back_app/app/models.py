@@ -428,9 +428,10 @@ class DailyHistoryAffiliate:
 
 
 class HealthMetric:
-    def __init__(self, last_block, snapshot_block, sync_block):
-        self.last_block = last_block
+    def __init__(self, latest_block, snapshot_block, sync_block, snapshot_block_lag):
+        self.latest_block = latest_block
         self.snapshot_block = snapshot_block or 0
         self.sync_block = sync_block or 0
-        self.diff_snapshot_block = last_block - self.snapshot_block
-        self.diff_sync_block = last_block - self.sync_block
+        self.snapshot_block_lag = snapshot_block_lag
+        self.diff_snapshot_block = latest_block - self.snapshot_block
+        self.diff_sync_block = latest_block - self.sync_block

@@ -9,13 +9,17 @@ router = APIRouter(prefix="/health-metric", tags=["Health Metric"])
 
 
 @router.get("/")
-async def get_last():
+async def get_health_metric():
     tenant_block = {}
     with db_session() as session:
         for context in contexts:
-            rec = session.scalars(
-                select(RuntimeConfiguration).where(and_(RuntimeConfiguration.tenant == context.tenant))).all()
-            if rec:
+            runtime_config: RuntimeConfiguration = session.scalars(
+                select(RuntimeConfiguration).where(and_(RuntimeConfiguration.tenant == context.tenant))).first()
+            if runtime_config:
                 tenant_block[context.tenant] = HealthMetric(context.w3.eth.get_block("latest").number,
-                                                            rec[0].lastSnapshotBlock, rec[0].lastSyncBlock)
+                                                            runtime_config.lastSnapshotBlock,
+                                                            runtime_config.lastSyncBlock,
+                                                            runtime_config.snapshotBlockLag)
+            else:
+                tenant_block[context.tenant] = None
     return tenant_block
