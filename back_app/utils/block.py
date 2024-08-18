@@ -1,11 +1,6 @@
 import datetime
-import logging
-import time
 
-from traceback_with_variables import printing_exc, LoggerAsFile
 from web3 import Web3
-
-logger = logging.getLogger()
 
 
 class Block:
@@ -14,7 +9,6 @@ class Block:
         self.w3 = w3
         self.block = self.load_block() if not block else block
 
-    @printing_exc(file_=LoggerAsFile(logger))
     def load_block(self):
         return self.w3.eth.get_block(self.number)
 
@@ -26,6 +20,7 @@ class Block:
     def backward(self, offset: int):
         self.number = self.number - offset
         self.block = self.load_block()
+        return self
 
     def timestamp(self) -> int:
         return self.block["timestamp"]
@@ -34,4 +29,7 @@ class Block:
         return datetime.datetime.fromtimestamp(self.timestamp(), datetime.timezone.utc)
 
     def is_for_past(self):
-        return self.timestamp() < time.time() - (60 * 10)
+        return self.timestamp() < datetime.datetime.now().timestamp() - (60 * 10)
+
+    def __repr__(self):
+        return f'{self.w3.provider}, {self.number=}'

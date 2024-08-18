@@ -1,4 +1,6 @@
 import json
+import logging
+import os
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -115,4 +117,11 @@ IGNORE_BINANCE_TRADE_VOLUME = True
 ACCESS_TOKEN_EXPIRE_TIME = 3 * 24 * 60 * 60  # 3 Days
 JWT_ALGORITHM = "HS256"
 
+
 CHAIN_ONLY = True
+
+# logging
+LOGGER = 'analytics'
+FORMATTER = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(LOGGER)
+logger.setLevel(logging.DEBUG)

@@ -6,7 +6,6 @@ from decimal import Decimal
 from binance.um_futures import UMFutures
 from sqlalchemy import func, and_, or_, select
 from sqlalchemy.orm import Session, load_only, joinedload
-from traceback_with_variables import printing_exc, LoggerAsFile
 
 from app.models import (
     Account,
@@ -24,15 +23,16 @@ from config.settings import (
     HedgerContext,
     Context,
     DEBUG_MODE,
+    LOGGER,
 )
 from services.snapshot.snapshot_context import SnapshotContext
 from utils.attr_dict import AttrDict
 from utils.block import Block
+from utils.model_utils import log_object_properties
 
-logger = logging.getLogger()
+logger = logging.getLogger(LOGGER)
 
 
-@printing_exc(file_=LoggerAsFile(logger))
 def prepare_affiliate_snapshot(
         snapshot_context: SnapshotContext,
         affiliate_context: AffiliateContext,
@@ -278,6 +278,8 @@ def prepare_affiliate_snapshot(
     snapshot.tenant = context.tenant
     snapshot.block_number = block.number
     affiliate_snapshot = AffiliateSnapshot(**snapshot)
+    affiliate_snapshot_details = ", ".join(log_object_properties(affiliate_snapshot))
+    logger.debug(f"func={prepare_affiliate_snapshot.__name__} -->  {affiliate_snapshot_details=}")
     affiliate_snapshot.save(session)
     return affiliate_snapshot
 

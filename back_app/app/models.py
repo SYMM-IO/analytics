@@ -267,9 +267,6 @@ class RuntimeConfiguration(BaseModel):
     snapshotBlockLag = Column(Integer)
     deployTimestamp = Column(DateTime)
 
-    def __repr__(self):
-        return f"{self.name}, {self.tenant}"
-
 
 class AffiliateSnapshot(BaseModel):
     __tablename__ = "affiliate_snapshot"
@@ -431,9 +428,10 @@ class DailyHistoryAffiliate:
 
 
 class HealthMetric:
-    def __init__(self, last_block, snapshot_block, sync_block):
-        self.last_block = last_block
-        self.snapshot_block = snapshot_block
-        self.sync_block = sync_block
-        self.diff_snapshot_block = last_block - snapshot_block
-        self.diff_sync_block = last_block - sync_block
+    def __init__(self, latest_block, snapshot_block, sync_block, snapshot_block_lag):
+        self.latest_block = latest_block
+        self.snapshot_block = snapshot_block or 0
+        self.sync_block = sync_block or 0
+        self.snapshot_block_lag = snapshot_block_lag
+        self.diff_snapshot_block = latest_block - self.snapshot_block
+        self.diff_sync_block = latest_block - self.sync_block
