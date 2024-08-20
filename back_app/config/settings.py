@@ -84,7 +84,10 @@ class Context:
     historical_snapshot_step = 100
 
     def __post_init__(self):
-        self.w3 = web3.Web3(MultiEndpointHTTPProvider(self.rpcs))
+        self.w3 = web3.Web3(MultiEndpointHTTPProvider(
+            self.rpcs,
+            before_endpoint_update=lambda current_endpoint, next_endpoint, exception: logger.debug(
+                f'{current_endpoint=}, {next_endpoint=}, {exception=}') or True))
         self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def hedger_with_name(self, hedger_name: str):
@@ -99,7 +102,7 @@ SERVER_PORT = 7231
 
 # Intervals
 FETCH_STAT_DATA_INTERVAL = 5 * 5
-SNAPSHOT_INTERVAL = 2 * 15
+SNAPSHOT_INTERVAL = 2 * 60
 SNAPSHOT_BLOCK_LAG = 10
 SNAPSHOT_BLOCK_LAG_STEP = 25
 DEBUG_MODE = False

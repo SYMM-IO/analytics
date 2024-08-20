@@ -1,11 +1,14 @@
 import datetime
+import logging
 
 import web3
 from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 from web3_collections import MultiEndpointHTTPProvider
 
-from config.settings import ERC20_ABI, Context, SNAPSHOT_BLOCK_LAG
+from config.settings import ERC20_ABI, Context, SNAPSHOT_BLOCK_LAG, LOGGER
+
+logger = logging.getLogger(LOGGER)
 
 
 def load_config(session: Session, context: Context, name: str = "DefaultConfiguration"):
@@ -20,7 +23,10 @@ def load_config(session: Session, context: Context, name: str = "DefaultConfigur
         )
     ).first()
     if not config:
-        w3 = web3.Web3(MultiEndpointHTTPProvider(context.rpcs))
+        w3 = web3.Web3(MultiEndpointHTTPProvider(
+            context.rpcs,
+            before_endpoint_update=lambda current_endpoint, next_endpoint, exception: logger.debug(
+                f'{current_endpoint=}, {next_endpoint=}, {exception=}') or True))
         collateral_contract = w3.eth.contract(address=w3.to_checksum_address(context.symmio_collateral_address),
                                               abi=ERC20_ABI)
         decimals = collateral_contract.functions.decimals().call()
