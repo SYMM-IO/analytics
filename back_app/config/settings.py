@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -116,7 +115,6 @@ IGNORE_BINANCE_TRADE_VOLUME = True
 # JWT setting
 ACCESS_TOKEN_EXPIRE_TIME = 3 * 24 * 60 * 60  # 3 Days
 JWT_ALGORITHM = "HS256"
-
 
 CHAIN_ONLY = True
 
