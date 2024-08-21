@@ -25,4 +25,3 @@ ruff==0.3.4
 aioclock==0.2.0
 web3-collections==0.0.6b1
 binance-futures-connector==4.0.0
-traceback-with-variables==2.0.4

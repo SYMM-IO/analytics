@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.models import (
     BinanceIncome,
-    HedgerSnapshot,
+    HedgerBinanceSnapshot,
     StatsBotMessage,
 )
 from config.settings import (
@@ -152,7 +152,7 @@ def prepare_hedger_binance_snapshot(
     snapshot.tenant = context.tenant
     snapshot.block_number = block.number
     print(snapshot)
-    hedger_snapshot = HedgerSnapshot(**snapshot)
+    hedger_snapshot = HedgerBinanceSnapshot(**snapshot)
     hedger_snapshot_details = ", ".join(log_object_properties(hedger_snapshot))
     logger.debug(f'func={prepare_hedger_binance_snapshot.__name__} -->  {hedger_snapshot_details=}')
     hedger_snapshot.save(session)
