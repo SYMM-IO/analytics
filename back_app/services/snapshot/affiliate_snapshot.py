@@ -64,9 +64,7 @@ def prepare_affiliate_snapshot(
     # ------------------------------------------
     snapshot.earned_cva = Decimal(
         session.scalar(
-            select(func.sum(Quote.cva))
-                .join(Account)
-                .where(
+            select(func.sum(Quote.cva)).join(Account).where(
                 and_(
                     Account.accountSource == affiliate_context.symmio_multi_account,
                     Quote.partyB == hedger_context.hedger_address,
@@ -83,9 +81,7 @@ def prepare_affiliate_snapshot(
 
     snapshot.loss_cva = Decimal(
         session.scalar(
-            select(func.sum(Quote.cva))
-                .join(Account)
-                .where(
+            select(func.sum(Quote.cva)).join(Account).where(
                 and_(
                     Account.accountSource == affiliate_context.symmio_multi_account,
                     Quote.partyB == hedger_context.hedger_address,
@@ -123,9 +119,7 @@ def prepare_affiliate_snapshot(
 
     all_accounts_deposit = Decimal(
         session.scalar(
-            select(func.sum(BalanceChange.amount))
-                .join(Account)
-                .where(
+            select(func.sum(BalanceChange.amount)).join(Account).where(
                 and_(
                     Account.accountSource == affiliate_context.symmio_multi_account,
                     BalanceChange.blockNumber <= block.number,
@@ -141,9 +135,7 @@ def prepare_affiliate_snapshot(
 
     all_accounts_withdraw = Decimal(
         session.scalar(
-            select(func.sum(BalanceChange.amount))
-                .join(Account)
-                .where(
+            select(func.sum(BalanceChange.amount)).join(Account).where(
                 and_(
                     Account.accountSource == affiliate_context.symmio_multi_account,
                     BalanceChange.blockNumber <= block.number,
@@ -328,10 +320,7 @@ def calculate_hedger_upnl(
         prices_map[p["symbol"]] = p["price"]
 
     party_b_opened_quotes = session.scalars(
-        select(
-            Quote,
-        )
-            .options(
+        select(Quote).options(
             joinedload(Quote.symbol).load_only(Symbol.name),
             load_only(
                 Quote.id,
@@ -340,10 +329,7 @@ def calculate_hedger_upnl(
                 Quote.openedPrice,
                 Quote.positionType,
             ),
-        )
-            .join(Symbol)
-            .join(Account)
-            .where(
+        ).join(Symbol).join(Account).where(
             and_(
                 Quote.blockNumber <= block.number,
                 Account.accountSource == affiliate_context.symmio_multi_account,
@@ -381,17 +367,14 @@ def calculate_pnl_of_hedger(
         block: Block,
 ):
     party_b_quotes = session.scalars(
-        select(Quote)
-            .options(
+        select(Quote).options(
             load_only(
                 Quote.quantity,
                 Quote.averageClosedPrice,
                 Quote.openedPrice,
                 Quote.positionType,
             )
-        )
-            .join(Account)
-            .where(
+        ).join(Account).where(
             and_(
                 Account.accountSource == affiliate_context.symmio_multi_account,
                 Quote.partyB == hedger_context.hedger_address,

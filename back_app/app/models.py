@@ -373,6 +373,9 @@ class BinanceIncome(BaseModel):
     tenant = Column(String, nullable=False)
     hedger = Column(String, nullable=False)
 
+    def __eq__(self, other):
+        return self.amount == other.amount and self.timestamp == other.timestamp
+
 
 class BinanceTrade(BaseModel):
     __tablename__ = "binance_trade"

@@ -8,8 +8,6 @@ from web3_collections import MultiEndpointHTTPProvider
 
 from config.settings import ERC20_ABI, Context, SNAPSHOT_BLOCK_LAG, LOGGER
 
-logger = logging.getLogger(LOGGER)
-
 
 def load_config(session: Session, context: Context, name: str = "DefaultConfiguration"):
     from app.models import RuntimeConfiguration
@@ -23,6 +21,7 @@ def load_config(session: Session, context: Context, name: str = "DefaultConfigur
         )
     ).first()
     if not config:
+        logger = logging.getLogger(LOGGER)
         w3 = web3.Web3(MultiEndpointHTTPProvider(
             context.rpcs,
             before_endpoint_update=lambda current_endpoint, next_endpoint, exception: logger.debug(

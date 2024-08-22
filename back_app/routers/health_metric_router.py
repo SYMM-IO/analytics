@@ -14,7 +14,10 @@ async def get_health_metric():
     with db_session() as session:
         for context in contexts:
             runtime_config: RuntimeConfiguration = session.scalars(
-                select(RuntimeConfiguration).where(and_(RuntimeConfiguration.tenant == context.tenant))).first()
+                select(RuntimeConfiguration).where(
+                    and_(RuntimeConfiguration.tenant == context.tenant),
+                )
+            ).first()
             if runtime_config:
                 tenant_block[context.tenant] = HealthMetric(context.w3.eth.get_block("latest").number,
                                                             runtime_config.lastSnapshotBlock,
