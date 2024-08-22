@@ -10,7 +10,8 @@ from app.models import BinanceIncome
 directory_path = 'app/scripts/binance_archive_history'
 with db_session() as session:
     for file_name in listdir(directory_path):
-        tenant, hedger, _ = file_name.split('-')
+        tenant, hedger, *_ = file_name.split('-')
+        hedger = hedger.replace('.csv', '')
         binance_incomes = session.scalars(
             select(BinanceIncome).where(
                 and_(
