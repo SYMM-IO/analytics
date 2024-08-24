@@ -2,15 +2,16 @@ from fastapi import APIRouter
 from sqlalchemy import select, and_
 
 from app import db_session
-from app.models import RuntimeConfiguration, HealthMetric
+from app.models import RuntimeConfiguration
+from app.response_models import HealthMetric
 from config.local_settings import contexts
 
 router = APIRouter(prefix="/health-metric", tags=["Health Metric"])
 
 
-@router.get("/")
+@router.get("/", response_model=HealthMetric)
 async def get_health_metric():
-    tenant_block = {}
+    tenant_block = dict()
     with db_session() as session:
         for context in contexts:
             runtime_config: RuntimeConfiguration = session.scalars(

@@ -5,6 +5,7 @@ from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.exception_handlers import ExceptionHandlers, ErrorCodeResponse
+from app.response_models import ReadRoot
 from config.settings import (
     SERVER_PORT,
 )
@@ -45,9 +46,9 @@ app.include_router(heath_metric_router)
 app.include_router(auth_router)
 
 
-@app.get("/")
+@app.get("/", response_model=ReadRoot)
 def read_root():
-    return {"Hello": "World"}
+    return {"root_test": "Hello World"}
 
 
 if __name__ == "__main__":

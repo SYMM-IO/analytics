@@ -9,7 +9,7 @@ from app.models import (
     BalanceChange,
     BalanceChangeType,
     HedgerSnapshot,
-    RuntimeConfiguration,
+    RuntimeConfiguration, Quote,
 )
 from config.settings import (
     Context,
@@ -41,27 +41,25 @@ def prepare_hedger_snapshot(
     snapshot.gas = gas_used_by_hedger_wallets(snapshot_context, hedger_context)
     print(f"Total gas spent by all wallets of {hedger_context.name}: {snapshot.gas}")
 
-    snapshot.users_paid_funding_fee = 0  # FIXME
-    # snapshot.users_paid_funding_fee = session.execute(
-    #     select(func.coalesce(func.sum(Quote.fundingReceived), Decimal(0))).where(
-    #         and_(
-    #             Quote.blockNumber <= block.number,
-    #             Quote.partyB == hedger_context.hedger_address,
-    #             Quote.tenant == context.tenant,
-    #         )
-    #     )
-    # ).scalar_one()
+    snapshot.users_paid_funding_fee = session.execute(
+        select(func.coalesce(func.sum(Quote.userReceivedFunding), Decimal(0))).where(
+            and_(
+                Quote.blockNumber <= block.number,
+                Quote.partyB == hedger_context.hedger_address,
+                Quote.tenant == context.tenant,
+            )
+        )
+    ).scalar_one()
 
-    snapshot.users_received_funding_fee = 0  # FIXME
-    # snapshot.users_received_funding_fee = session.execute(
-    #     select(func.coalesce(func.sum(Quote.fundingPaid), Decimal(0))).where(
-    #         and_(
-    #             Quote.blockNumber <= block.number,
-    #             Quote.partyB == hedger_context.hedger_address,
-    #             Quote.tenant == context.tenant,
-    #         )
-    #     )
-    # ).scalar_one()
+    snapshot.users_received_funding_fee = session.execute(
+        select(func.coalesce(func.sum(Quote.userPaidFunding), Decimal(0))).where(
+            and_(
+                Quote.blockNumber <= block.number,
+                Quote.partyB == hedger_context.hedger_address,
+                Quote.tenant == context.tenant,
+            )
+        )
+    ).scalar_one()
 
     contract_multicallable = Multicallable(
         snapshot_context.context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, snapshot_context.context.w3

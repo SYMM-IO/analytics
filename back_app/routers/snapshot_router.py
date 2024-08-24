@@ -5,11 +5,13 @@ from sqlalchemy.sql.operators import eq, and_
 
 from app import get_db_session
 from app.models import AffiliateSnapshot, HedgerSnapshot, LiquidatorSnapshot, HedgerBinanceSnapshot
+from app.generated_response_models import AffiliateSnapshotModel, HedgerSnapshotModel, LiquidatorSnapshotModel, \
+    HedgerBinanceSnapshotModel
 
 router = APIRouter(prefix="/snapshots", tags=["Snapshot"])
 
 
-@router.get("/affiliate/{tenant}/{hedger}/{affiliate}")
+@router.get("/affiliate/{tenant}/{hedger}/{affiliate}", response_model=AffiliateSnapshotModel)
 async def get_affiliate_snapshot(
         tenant: str = Path(..., description="The tenant of this affiliate"),
         affiliate: str = Path(..., description="Name of the affiliate"),
@@ -31,7 +33,7 @@ async def get_affiliate_snapshot(
     return snapshot if snapshot else {}
 
 
-@router.get("/hedger/{tenant}/{hedger}")
+@router.get("/hedger/{tenant}/{hedger}", response_model=HedgerSnapshotModel)
 async def get_hedger_snapshot(
         tenant: str = Path(..., description="The tenant of this hedger"),
         hedger: str = Path(..., description="Name of the hedger"),
@@ -49,7 +51,7 @@ async def get_hedger_snapshot(
     return snapshot if snapshot else {}
 
 
-@router.get("/liquidator/{tenant}/{address}")
+@router.get("/liquidator/{tenant}/{address}", response_model=LiquidatorSnapshotModel)
 async def get_liquidator_snapshot(
         tenant: str = Path(..., description="The tenant of this liquidator"),
         address: str = Path(..., description="Address of the liquidator"),
@@ -69,7 +71,7 @@ async def get_liquidator_snapshot(
     return snapshot if snapshot else {}
 
 
-@router.get("/hedger-binance/{tenant}/{hedger}")
+@router.get("/hedger-binance/{tenant}/{hedger}", response_model=HedgerBinanceSnapshotModel)
 async def get_hedger_binance_snapshot(
         tenant: str = Path(..., description="The tenant of this hedger"),
         hedger: str = Path(..., description="Name of the hedger"),

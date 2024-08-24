@@ -49,6 +49,13 @@ class BaseModel(Base):
         session.add(self)
 
 
+class BalanceChangeType:
+    DEPOSIT = "DEPOSIT"
+    WITHDRAW = "WITHDRAW"
+    ALLOCATE_PARTY_A = "ALLOCATE_PARTY_A"
+    DEALLOCATE_PARTY_A = "DEALLOCATE_PARTY_A"
+
+
 class User(BaseModel):
     __tablename__ = "user"
     __is_timeseries__ = False
@@ -124,13 +131,6 @@ class BalanceChange(BaseModel):
     tenant = Column(String, nullable=False)
 
 
-class BalanceChangeType:
-    DEPOSIT = "DEPOSIT"
-    WITHDRAW = "WITHDRAW"
-    ALLOCATE_PARTY_A = "ALLOCATE_PARTY_A"
-    DEALLOCATE_PARTY_A = "DEALLOCATE_PARTY_A"
-
-
 class Symbol(BaseModel):
     __tablename__ = "symbol"
     __is_timeseries__ = False
@@ -167,13 +167,11 @@ class Quote(BaseModel):
     averageClosedPrice = Column(Numeric(40, 0))
     blockNumber = Column(Numeric(40, 0))
     closeDeadline = Column(Numeric(40, 0))
+    closePrice = Column(Numeric(40, 0))
     closedAmount = Column(Numeric(40, 0))
     closedPrice = Column(Numeric(40, 0))
-    closePrice = Column(Numeric(40, 0))
     cva = Column(Numeric(40, 0))
     fillAmount = Column(Numeric(40, 0))
-    fundingRateFee = Column(Numeric(40, 0))
-    fundingRateOpenedPrice = Column(Numeric(40, 0))
     initialOpenedPrice = Column(Numeric(40, 0))
     lf = Column(Numeric(40, 0))
     liquidateAmount = Column(Numeric(40, 0))
@@ -201,6 +199,8 @@ class Quote(BaseModel):
     timeStamp = Column(DateTime)
     trade_histories = relationship("TradeHistory", back_populates="quote")
     tradingFee = Column(Numeric(40, 0))
+    userPaidFunding = Column(Numeric(40, 0))
+    userReceivedFunding = Column(Numeric(40, 0))
 
 
 class TradeHistory(BaseModel):
@@ -411,30 +411,3 @@ class GasHistory(BaseModel):
     initial_block = Column(Integer)
     tx_count = Column(Integer)
     tenant = Column(String, primary_key=True)
-
-
-class DailyHistoryAffiliate:
-    def __init__(self, quotesCount=0, newUsers=0, newAccounts=0, activeUsers=0, tradeVolume=0, deposit=0, withdraw=0,
-                 allocate=0, deallocate=0, platformFee=0, openInterest=0, start_date=None):
-        self.quotesCount = quotesCount
-        self.newUsers = newUsers
-        self.newAccounts = newAccounts
-        self.activeUsers = activeUsers
-        self.tradeVolume = tradeVolume
-        self.deposit = deposit
-        self.withdraw = withdraw
-        self.allocate = allocate
-        self.deallocate = deallocate
-        self.platformFee = platformFee
-        self.openInterest = openInterest
-        self.start_date = start_date
-
-
-class HealthMetric:
-    def __init__(self, latest_block, snapshot_block, sync_block, snapshot_block_lag):
-        self.latest_block = latest_block
-        self.snapshot_block = snapshot_block or 0
-        self.sync_block = sync_block or 0
-        self.snapshot_block_lag = snapshot_block_lag
-        self.diff_snapshot_block = latest_block - self.snapshot_block
-        self.diff_sync_block = latest_block - self.sync_block

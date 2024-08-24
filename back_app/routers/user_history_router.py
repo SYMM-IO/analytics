@@ -4,15 +4,16 @@ from sqlalchemy.orm import Session, aliased
 
 from app import get_db_session
 from app.models import User, Account, TradeHistory
+from app.response_models import UserTradingVolume
 
 router = APIRouter(prefix="/user-history", tags=["User History"])
 
 
-@router.get("/trading-volume/{tenant}/{address}")
+@router.get("/trading-volume/{tenant}/{address}", response_model=UserTradingVolume)
 async def get_user_trading_volume(
-    tenant: str = Path(..., description="The tenant of this user"),
-    address: str = Path(..., description="Address of the user"),
-    session: Session = Depends(get_db_session),
+        tenant: str = Path(..., description="The tenant of this user"),
+        address: str = Path(..., description="Address of the user"),
+        session: Session = Depends(get_db_session),
 ):
     # Construct the user ID
     user_id = f"{tenant}_{address}"
@@ -24,11 +25,18 @@ async def get_user_trading_volume(
 
     # Construct the query
     query = (
-        select(func.sum(trade_history_alias.volume).label("total_volume"))
-        .select_from(user_alias)
-        .join(account_alias, user_alias.id == account_alias.user_id)
-        .join(trade_history_alias, account_alias.id == trade_history_alias.account_id)
-        .where(and_(user_alias.tenant == tenant, user_alias.id == user_id))
+        select(
+            func.sum(trade_history_alias.volume).label("total_volume")
+        ).select_from(user_alias).join(
+            account_alias,
+            user_alias.id == account_alias.user_id
+        ).join(trade_history_alias,
+               account_alias.id == trade_history_alias.account_id
+               ).where(
+            and_(
+                user_alias.tenant == tenant,
+                user_alias.id == user_id,
+            ))
     )
 
     # Execute the query
