@@ -34,6 +34,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 	chart: any;
 	loadedResults?: AffiliateHistory[];
 	groupedByMonth = false;
+	showPartyBVolume = true;
 	viewOptions: string[] = ['Daily'];
 	selectedView = new FormControl('Daily');
 	intervalOptions: readonly any[] = [
@@ -77,6 +78,11 @@ export class ChartComponent implements OnInit, OnDestroy {
 
 	onGroupByMonthChanged() {
 		this.groupedByMonth = !this.groupedByMonth;
+		this.updateChartIfDataAvailable();
+	}
+
+	onShowPartyBVolumeChanged() {
+		this.showPartyBVolume = !this.showPartyBVolume;
 		this.updateChartIfDataAvailable();
 	}
 
@@ -320,6 +326,16 @@ export class ChartComponent implements OnInit, OnDestroy {
 			this.maxTime = Math.max(this.maxTime, time);
 			return time > this.startTime && time <= this.endTime;
 		}).map((history) => ({...history}));
+
+		if (!this.showPartyBVolume) {
+			data = data.map(h => {
+				const time = this.getTimeByView(h, this.selectedView.value!);
+				if (time > 1723852800000) {
+					h[fieldName] = h[fieldName].div(BigNumber(2))
+				}
+				return h
+			})
+		}
 
 		if (this.groupedByMonth) {
 			data = this.groupDataByMonth(data, fieldName);

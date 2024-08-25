@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app import get_db_session
 from app.exception_handlers import ErrorCodeResponse, ErrorInfoContainer
 from app.models import AdminUser
+from app.response_models import Login, ReadMe
 from utils.security_utils import (
     get_jwt_token,
     get_current_user,
@@ -17,10 +18,10 @@ from utils.security_utils import (
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-@router.post("/login")
+@router.post("/login", response_model=Login)
 async def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    session: Session = Depends(get_db_session),
+        form_data: OAuth2PasswordRequestForm = Depends(),
+        session: Session = Depends(get_db_session),
 ):
     user = session.scalar(select(AdminUser).where(AdminUser.username == form_data.username))
     if not user or not verify_password(form_data.password, user.password):
@@ -31,7 +32,7 @@ async def login(
     return {"access_token": get_jwt_token(user.username)}
 
 
-@router.get("/me")
+@router.get("/me", response_model=ReadMe)
 async def read_me(current_user: Annotated[AdminUser, Depends(get_current_user)]):
     return {
         "username": current_user.username,

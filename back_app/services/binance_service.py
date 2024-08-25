@@ -9,8 +9,8 @@ from app.models import (
     BinanceIncome,
 )
 from config.settings import HedgerContext
-from services.snapshot.snapshot_context import SnapshotContext
 from services.config_service import load_config
+from services.snapshot.snapshot_context import SnapshotContext
 
 # Cache dictionary to store the symbol, funding rate, and last update time
 cache = {}
@@ -37,23 +37,22 @@ def real_time_funding_rate(symbol: str) -> Decimal:
 
 
 def fetch_binance_income_histories_of_type(
-    snapshot_context: SnapshotContext,
-    hedger_context: HedgerContext,
-    income_type,
-    limit_days=30,
-    asset_field="asset",
+        snapshot_context: SnapshotContext,
+        hedger_context: HedgerContext,
+        income_type,
+        limit_days=30,
+        asset_field="asset",
 ):
     # Get the latest timestamp from the database for the respective model
     latest_record = snapshot_context.session.scalar(
-        select(BinanceIncome)
-        .where(
+        select(BinanceIncome).where(
             and_(
                 BinanceIncome.tenant == snapshot_context.context.tenant,
                 BinanceIncome.type == income_type,
             )
-        )
-        .order_by(BinanceIncome.timestamp.desc())
-        .limit(1)
+        ).order_by(
+            BinanceIncome.timestamp.desc()
+        ).limit(1)
     )
 
     # If there's a record in the database, use its timestamp as the starting point
@@ -64,9 +63,18 @@ def fetch_binance_income_histories_of_type(
 
     end_time = start_time + timedelta(days=limit_days)
     current_time = datetime.utcnow()
-
+    binance_incomes = snapshot_context.session.scalars(
+        select(BinanceIncome).where(
+            and_(
+                BinanceIncome.tenant == snapshot_context.context.tenant,
+                BinanceIncome.hedger == hedger_context.name,
+            )
+        )
+    ).all()
     while start_time < current_time:
-        print(f"{snapshot_context.context.tenant}: Fetching binance {income_type} income histories between {start_time} and {end_time}: ", end="")
+        print(
+            f"{snapshot_context.context.tenant}: Fetching binance {income_type} income histories between {start_time} and {end_time}: ",
+            end="")
         time.sleep(7)  # Prevents binance rate limit
         data = hedger_context.utils.binance_client.futures_income_history(
             startTime=int(start_time.timestamp() * 1000),
@@ -81,14 +89,16 @@ def fetch_binance_income_histories_of_type(
             continue
 
         for item in data:
-            BinanceIncome(
+            rec = BinanceIncome(
                 tenant=snapshot_context.context.tenant,
                 asset=item[asset_field],
                 amount=item["income"],
                 type=item["incomeType"],
                 hedger=hedger_context.name,
                 timestamp=datetime.fromtimestamp(item["time"] / 1000),  # Convert from milliseconds
-            ).save(snapshot_context.session)
+            )
+            if rec not in binance_incomes:
+                rec.save(snapshot_context.session)
         if len(data) == 1000:
             start_time = datetime.fromtimestamp(data[-1]["time"] / 1000)
         else:

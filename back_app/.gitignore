@@ -7,3 +7,4 @@ cache
 config/contexts
 *venv
 log_file*.log
+app/scripts/binance_archive_history
