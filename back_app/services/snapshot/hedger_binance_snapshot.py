@@ -89,18 +89,19 @@ def prepare_hedger_binance_snapshot(
                 )
             )
         )
-        if not stat_message:
-            raise Exception(f"{context.tenant}: StatBot message not found for date: {block.datetime()}")
+        # FIXME  begin{
+        # if not stat_message:
+        #     raise Exception(f"{context.tenant}: StatBot message not found for date: {block.datetime()}")
 
-        snapshot.binance_maintenance_margin = stat_message.content["Total Maint. Margin"]
-        snapshot.binance_total_balance = stat_message.content["Total Margin Balance"]
-        snapshot.binance_account_health_ratio = stat_message.content["Health Ratio"]
-        snapshot.binance_cross_upnl = stat_message.content["Total Cross UnPnl"]
-        snapshot.binance_av_balance = stat_message.content["Available Balance"]
-        snapshot.binance_total_initial_margin = stat_message.content["Total Initial Margin"]
-        snapshot.binance_max_withdraw_amount = stat_message.content["Max Withdraw Amount"]
-        snapshot.max_open_interest = Decimal(
-            hedger_context.hedger_max_open_interest_ratio * snapshot.binance_max_withdraw_amount)
+        snapshot.binance_maintenance_margin = 0  # stat_message.content["Total Maint. Margin"]
+        snapshot.binance_total_balance = 0  # stat_message.content["Total Margin Balance"]
+        snapshot.binance_account_health_ratio = 0  # stat_message.content["Health Ratio"]
+        snapshot.binance_cross_upnl = 0  # stat_message.content["Total Cross UnPnl"]
+        snapshot.binance_av_balance = 0  # stat_message.content["Available Balance"]
+        snapshot.binance_total_initial_margin = 0  # stat_message.content["Total Initial Margin"]
+        snapshot.binance_max_withdraw_amount = 0  # stat_message.content["Max Withdraw Amount"]
+        snapshot.max_open_interest = 0  # Decimal(hedger_context.hedger_max_open_interest_ratio * snapshot.binance_max_withdraw_amount)
+        # FIXME  }end
 
     snapshot.binance_profit = snapshot.binance_total_balance - (snapshot.binance_deposit or Decimal(0))
     snapshot.binance_trade_volume = (
