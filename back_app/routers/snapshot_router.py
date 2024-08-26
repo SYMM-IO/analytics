@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Path, Depends
-from sqlalchemy import select
+from fastapi import APIRouter, Path, Depends, HTTPException
+from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.operators import eq, and_
+from sqlalchemy.sql.operators import eq
 
 from app import get_db_session
-from app.models import AffiliateSnapshot, HedgerSnapshot, LiquidatorSnapshot, HedgerBinanceSnapshot
 from app.generated_response_models import AffiliateSnapshotModel, HedgerSnapshotModel, LiquidatorSnapshotModel, \
     HedgerBinanceSnapshotModel
+from app.models import AffiliateSnapshot, HedgerSnapshot, LiquidatorSnapshot, HedgerBinanceSnapshot
 
 router = APIRouter(prefix="/snapshots", tags=["Snapshot"])
 
@@ -30,7 +30,9 @@ async def get_affiliate_snapshot(
         ).limit(1)
     )
     snapshot = session.scalar(query)
-    return snapshot if snapshot else {}
+    if snapshot:
+        return snapshot
+    raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.get("/hedger/{tenant}/{hedger}", response_model=HedgerSnapshotModel)
@@ -48,7 +50,9 @@ async def get_hedger_snapshot(
                    ).limit(1)
     )
     snapshot = session.scalar(query)
-    return snapshot if snapshot else {}
+    if snapshot:
+        return snapshot
+    raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.get("/liquidator/{tenant}/{address}", response_model=LiquidatorSnapshotModel)
@@ -68,7 +72,9 @@ async def get_liquidator_snapshot(
         ).limit(1)
     )
     snapshot = session.scalar(query)
-    return snapshot if snapshot else {}
+    if snapshot:
+        return snapshot
+    raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.get("/hedger-binance/{tenant}/{hedger}", response_model=HedgerBinanceSnapshotModel)
@@ -88,4 +94,6 @@ async def get_hedger_binance_snapshot(
         ).limit(1)
     )
     snapshot = session.scalar(query)
-    return snapshot if snapshot else {}
+    if snapshot:
+        return snapshot
+    raise HTTPException(status_code=404, detail="Not found")

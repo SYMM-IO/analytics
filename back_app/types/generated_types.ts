@@ -1,18 +1,19 @@
-export interface HedgerSnapshotModel {
-  hedger_contract_balance: number;
-  hedger_contract_deposit: number;
-  hedger_contract_withdraw: number;
-  users_paid_funding_fee: number;
-  users_received_funding_fee: number;
-  contract_profit: number;
-  total_deposit: number;
-  earned_cva: number;
-  loss_cva: number;
-  gas: number;
-  block_number: number;
-  name: string;
+export interface LiquidatorSnapshotModel {
+  address: string;
+  withdraw: number;
+  balance: number;
+  allocated: number;
   tenant: string;
   timestamp: number;
+}
+
+export interface ReadMe {
+  username: string;
+  createTimestamp: number;
+}
+
+export interface ReadRoot {
+  root_test: string;
 }
 
 export interface UserTradingVolume {
@@ -20,6 +21,10 @@ export interface UserTradingVolume {
   tenant: string;
   address: string;
   total_trading_volume: number;
+}
+
+export interface Login {
+  access_token: string;
 }
 
 export interface AffiliateSnapshotModel {
@@ -49,52 +54,6 @@ export interface AffiliateSnapshotModel {
   tenant: string;
 }
 
-export interface DailyHistoryAffiliate {
-  quotesCount: number;
-  newUsers: number;
-  newAccounts: number;
-  activeUsers: number;
-  tradeVolume: number;
-  deposit: number;
-  withdraw: number;
-  allocate: number;
-  deallocate: number;
-  platformFee: number;
-  openInterest: number;
-  start_date: number;
-}
-
-export interface Login {
-  access_token: string;
-}
-
-export interface ReadRoot {
-  root_test: string;
-}
-
-export interface LiquidatorSnapshotModel {
-  address: string;
-  withdraw: number;
-  balance: number;
-  allocated: number;
-  tenant: string;
-  timestamp: number;
-}
-
-export interface HealthMetric {
-  latest_block: number;
-  snapshot_block: number;
-  sync_block: number;
-  snapshot_block_lag: number;
-  diff_snapshot_block: number;
-  diff_sync_block: number;
-}
-
-export interface ReadMe {
-  username: string;
-  createTimestamp: number;
-}
-
 export interface HedgerBinanceSnapshotModel {
   max_open_interest: number;
   binance_maintenance_margin: number;
@@ -113,6 +72,23 @@ export interface HedgerBinanceSnapshotModel {
   binance_next_funding_fee: number;
   binance_profit: number;
   total_deposit: number;
+  block_number: number;
+  name: string;
+  tenant: string;
+  timestamp: number;
+}
+
+export interface HedgerSnapshotModel {
+  hedger_contract_balance: number;
+  hedger_contract_deposit: number;
+  hedger_contract_withdraw: number;
+  users_paid_funding_fee: number;
+  users_received_funding_fee: number;
+  contract_profit: number;
+  total_deposit: number;
+  earned_cva: number;
+  loss_cva: number;
+  gas: number;
   block_number: number;
   name: string;
   tenant: string;

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Dict
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, and_
 
 from app import db_session
@@ -12,8 +12,10 @@ from config.local_settings import contexts
 router = APIRouter(prefix="/history", tags=["Daily History"])
 
 
-@router.get("/daily/{group_by}", response_model=List[DailyHistoryAffiliate])
+@router.get("/daily/{group_by}", response_model=Dict[str, List[DailyHistoryAffiliate]])
 async def get_affiliate_history(group_by='day'):
+    if group_by not in ['day', 'week', 'month']:
+        raise HTTPException(status_code=404, detail="Not found")
     daily_history = dict()
     daily_history_affiliate = dict()
     base_date = (datetime.today() - timedelta(days=3 * 365)).date()
@@ -72,13 +74,15 @@ async def get_affiliate_history(group_by='day'):
         return daily_history_affiliate
 
 
-@router.get("/daily", response_model=List[DailyHistoryAffiliate])
+@router.get("/daily", response_model=Dict[str, List[DailyHistoryAffiliate]])
 async def get_affiliate_daily_history():
     return await get_affiliate_history()
 
 
-@router.get("/full/{until}", response_model=DailyHistoryAffiliate)
+@router.get("/full/{until}", response_model=Dict[str, DailyHistoryAffiliate])
 async def _get_affiliate_full_history(until='today'):
+    if until not in ['today', 'yesterday']:
+        raise HTTPException(status_code=404, detail="Not found")
     daily_history_affiliate = await get_affiliate_history()
     affiliate_full_history = {
         affiliate: DailyHistoryAffiliate(start_date=daily_history_affiliate[affiliate][0].start_date) for affiliate in
@@ -99,6 +103,6 @@ async def _get_affiliate_full_history(until='today'):
     return affiliate_full_history
 
 
-@router.get("/full", response_model=DailyHistoryAffiliate)
+@router.get("/full", response_model=Dict[str, DailyHistoryAffiliate])
 async def get_affiliate_full_history():
     return await _get_affiliate_full_history()

@@ -139,13 +139,12 @@ class Symbol(BaseModel):
         method_name="symbols",
         pagination_field="timestamp",
         tenant_needed_fields=["id"],
-        ignore_columns=["tenant", "main_market"],
+        ignore_columns=["tenant"],
     )
     id = Column(String, primary_key=True)
     name = Column(String)
     tradingFee = Column(Numeric(40, 0))
     timestamp = Column(DateTime)
-    main_market = Column(Boolean, default=False)
     updateTimestamp = Column(DateTime)
     tenant = Column(String, nullable=False)
     quotes = relationship("Quote", back_populates="symbol")

@@ -1,24 +1,24 @@
-from datetime import datetime
+from datetime import datetime, date
 
 from pydantic import BaseModel
 
 
 class DailyHistoryAffiliate(BaseModel):
-    quotesCount: int
-    newUsers: int
-    newAccounts: int
-    activeUsers: int
-    tradeVolume: int
-    deposit: int
-    withdraw: int
-    allocate: int
-    deallocate: int
-    platformFee: int
-    openInterest: int
-    start_date: int
+    quotesCount: int = 0
+    newUsers: int = 0
+    newAccounts: int = 0
+    activeUsers: int = 0
+    tradeVolume: int = 0
+    deposit: int = 0
+    withdraw: int = 0
+    allocate: int = 0
+    deallocate: int = 0
+    platformFee: int = 0
+    openInterest: int = 0
+    start_date: date
 
-    def __post_init__(self, quotesCount=0, newUsers=0, newAccounts=0, activeUsers=0, tradeVolume=0, deposit=0,
-                      withdraw=0, allocate=0, deallocate=0, platformFee=0, openInterest=0, start_date=None):
+    def __post_init__(self, quotesCount, newUsers, newAccounts, activeUsers, tradeVolume, deposit, withdraw, allocate,
+                      deallocate, platformFee, openInterest, start_date):
         self.quotesCount = quotesCount
         self.newUsers = newUsers
         self.newAccounts = newAccounts
@@ -41,13 +41,14 @@ class HealthMetric(BaseModel):
     diff_snapshot_block: int
     diff_sync_block: int
 
-    def __post_init__(self, latest_block, snapshot_block, sync_block, snapshot_block_lag):
+    def __post_init__(self, latest_block, snapshot_block, sync_block, snapshot_block_lag, diff_snapshot_block,
+                      diff_sync_block):
         self.latest_block = latest_block
-        self.snapshot_block = snapshot_block or 0
-        self.sync_block = sync_block or 0
+        self.snapshot_block = snapshot_block
+        self.sync_block = sync_block
         self.snapshot_block_lag = snapshot_block_lag
-        self.diff_snapshot_block = latest_block - self.snapshot_block
-        self.diff_sync_block = latest_block - self.sync_block
+        self.diff_snapshot_block = diff_snapshot_block
+        self.diff_sync_block = diff_sync_block
 
 
 class ReadRoot(BaseModel):
