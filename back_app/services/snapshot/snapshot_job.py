@@ -86,7 +86,7 @@ async def sync_data(context, session):
     return sync_block
 
 
-def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block):
+def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block, historical_mode=False):
     config: RuntimeConfiguration = load_config(session, context)
     config_details = ", ".join(log_object_properties(config))
     logger.debug(f'func={do_fetch_snapshot.__name__} -->  {config_details=}')
@@ -94,7 +94,7 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block)
     multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
     snapshot_context = SnapshotContext(context, session, config, multicallable)
 
-    if Block(context.w3, config.lastSnapshotBlock).timestamp() >= snapshot_block.timestamp():
+    if not historical_mode and Block(context.w3, config.lastSnapshotBlock).timestamp() >= snapshot_block.timestamp():
         return
 
     for affiliate_context in context.affiliates:
