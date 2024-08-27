@@ -403,9 +403,7 @@ def count_quotes_per_status(
         block: Block,
 ):
     q_counts = session.execute(
-        select(Quote.quoteStatus, func.count(Quote.id).label("count"))
-            .join(Account)
-            .where(
+        select(Quote.quoteStatus, func.count(Quote.id).label("count")).join(Account).where(
             and_(
                 Quote.timeStamp > from_time,
                 Quote.blockNumber <= block.number,
@@ -413,8 +411,7 @@ def count_quotes_per_status(
                 Quote.tenant == context.tenant,
                 Quote.partyB == hedger_context.hedger_address,
             )
-        )
-            .group_by(Quote.quoteStatus)
+        ).group_by(Quote.quoteStatus)
     ).all()
     status_quotes = {}
     for item in q_counts:

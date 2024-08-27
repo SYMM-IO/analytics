@@ -1,17 +1,20 @@
+import asyncio
 from datetime import datetime, timedelta
 
 from app import db_session
 from app.models import RuntimeConfiguration
 from app.tasks.snapshot import get_context
 from services.config_service import load_config
-from services.snapshot.snapshot_job import do_fetch_snapshot
+from services.snapshot.snapshot_job import do_fetch_snapshot, sync_data
 from utils.block import Block
 
 
-def prepare_historical_snapshots():
+async def prepare_historical_snapshots():
     context = get_context()
     snapshot_block = Block.latest(context.w3)
     last_snapshot_block = None
+    with db_session() as session:
+        await sync_data(context, session)
     begin_timestamp = (datetime.now() - timedelta(days=30)).timestamp()
 
     with db_session() as session:
@@ -22,11 +25,10 @@ def prepare_historical_snapshots():
             last_snapshot_block = snapshot_block.backward(context.historical_snapshot_step)
             print(
                 f"{context.tenant}: Historical snapshot for snapshot_block {snapshot_block.number} - {snapshot_block.datetime()}")
-            if context.get_snapshot:
-                do_fetch_snapshot(context, session, snapshot_block, historical_mode=True)
+            do_fetch_snapshot(context, session, snapshot_block, historical_mode=True)
             config.lastHistoricalSnapshotBlock = snapshot_block.number
             session.commit()
 
 
 if __name__ == '__main__':
-    prepare_historical_snapshots()
+    asyncio.run(prepare_historical_snapshots())
