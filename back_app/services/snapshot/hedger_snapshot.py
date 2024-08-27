@@ -38,7 +38,7 @@ def prepare_hedger_snapshot(
     config: RuntimeConfiguration = snapshot_context.config
 
     snapshot = AttrDict()
-    snapshot.gas = gas_used_by_hedger_wallets(snapshot_context, hedger_context)
+    snapshot.gas = gas_used_by_hedger_wallets(snapshot_context, hedger_context, block.number)
     print(f"Total gas spent by all wallets of {hedger_context.name}: {snapshot.gas}")
 
     snapshot.users_paid_funding_fee = session.execute(
