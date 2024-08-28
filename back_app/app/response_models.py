@@ -17,8 +17,21 @@ class DailyHistoryAffiliate(BaseModel):
     openInterest: int = 0
     start_date: date
 
-    def __post_init__(self, quotesCount, newUsers, newAccounts, activeUsers, tradeVolume, deposit, withdraw, allocate,
-                      deallocate, platformFee, openInterest, start_date):
+    def __post_init__(
+        self,
+        quotesCount,
+        newUsers,
+        newAccounts,
+        activeUsers,
+        tradeVolume,
+        deposit,
+        withdraw,
+        allocate,
+        deallocate,
+        platformFee,
+        openInterest,
+        start_date,
+    ):
         self.quotesCount = quotesCount
         self.newUsers = newUsers
         self.newAccounts = newAccounts
@@ -41,8 +54,7 @@ class HealthMetric(BaseModel):
     diff_snapshot_block: int
     diff_sync_block: int
 
-    def __post_init__(self, latest_block, snapshot_block, sync_block, snapshot_block_lag, diff_snapshot_block,
-                      diff_sync_block):
+    def __post_init__(self, latest_block, snapshot_block, sync_block, snapshot_block_lag, diff_snapshot_block, diff_sync_block):
         self.latest_block = latest_block
         self.snapshot_block = snapshot_block
         self.sync_block = sync_block

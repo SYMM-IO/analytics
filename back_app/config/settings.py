@@ -84,10 +84,15 @@ class Context:
     historical_snapshot_step = 100
 
     def __post_init__(self):
-        self.w3 = web3.Web3(MultiEndpointHTTPProvider(
-            self.rpcs,
-            before_endpoint_update=lambda current_endpoint, next_endpoint, exception: logger.debug(
-                f'{current_endpoint=}, {next_endpoint=}, {exception=}') or True))
+        self.w3 = web3.Web3(
+            MultiEndpointHTTPProvider(
+                self.rpcs,
+                before_endpoint_update=lambda current_endpoint, next_endpoint, exception: logger.debug(
+                    f"{current_endpoint=}, {next_endpoint=}, {exception=}"
+                )
+                or True,
+            )
+        )
         self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     def hedger_with_name(self, hedger_name: str):
@@ -122,7 +127,7 @@ JWT_ALGORITHM = "HS256"
 CHAIN_ONLY = True
 
 # logging
-LOGGER = 'analytics'
-FORMATTER = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+LOGGER = "analytics"
+FORMATTER = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(LOGGER)
 logger.setLevel(logging.DEBUG)

@@ -21,16 +21,21 @@ def load_config(session: Session, context: Context):
     ).first()
     if not config:
         logger = logging.getLogger(LOGGER)
-        w3 = web3.Web3(MultiEndpointHTTPProvider(
-            context.rpcs,
-            before_endpoint_update=lambda current_endpoint, next_endpoint, exception: logger.debug(
-                f'{current_endpoint=}, {next_endpoint=}, {exception=}') or True))
-        collateral_contract = w3.eth.contract(address=w3.to_checksum_address(context.symmio_collateral_address),
-                                              abi=ERC20_ABI)
+        w3 = web3.Web3(
+            MultiEndpointHTTPProvider(
+                context.rpcs,
+                before_endpoint_update=lambda current_endpoint, next_endpoint, exception: logger.debug(
+                    f"{current_endpoint=}, {next_endpoint=}, {exception=}"
+                )
+                or True,
+            )
+        )
+        collateral_contract = w3.eth.contract(address=w3.to_checksum_address(context.symmio_collateral_address), abi=ERC20_ABI)
         decimals = collateral_contract.functions.decimals().call()
         start_time = datetime.datetime.utcfromtimestamp(context.deploy_timestamp // 1000) - datetime.timedelta(days=5)
-        config = RuntimeConfiguration(decimals=decimals, tenant=context.tenant, deployTimestamp=start_time,
-                                      lastSnapshotBlock=0, snapshotBlockLag=SNAPSHOT_BLOCK_LAG)
+        config = RuntimeConfiguration(
+            decimals=decimals, tenant=context.tenant, deployTimestamp=start_time, lastSnapshotBlock=0, snapshotBlockLag=SNAPSHOT_BLOCK_LAG
+        )
         config.upsert(session)
         session.flush()
     return config

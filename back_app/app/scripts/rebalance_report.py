@@ -11,8 +11,7 @@ from config.settings import Context
 from services.config_service import load_config
 
 
-def write_balance_changes(session: Session, context: Context, writer, _balance_changes: List[BalanceChange],
-                          account_type: str):
+def write_balance_changes(session: Session, context: Context, writer, _balance_changes: List[BalanceChange], account_type: str):
     conf = load_config(session, context)
     for item in _balance_changes:
         item: BalanceChange
@@ -21,7 +20,7 @@ def write_balance_changes(session: Session, context: Context, writer, _balance_c
             [
                 item.transaction,
                 human_readable_timestamp,
-                int(item.amount) / (10 ** conf.decimals),
+                int(item.amount) / (10**conf.decimals),
                 item.type,
                 f"Contract {context.tenant}",
                 account_type,
@@ -63,20 +62,23 @@ def get_rebalance_report():
                 print(f"Going for {context.tenant}")
                 for hedger in context.hedgers:
                     balance_changes = session.scalars(
-                        select(BalanceChange).where(
+                        select(BalanceChange)
+                        .where(
                             and_(
                                 BalanceChange.collateral == context.symmio_collateral_address,
                                 BalanceChange.account_id == hedger.hedger_address,
                                 BalanceChange.tenant == context.tenant,
                             )
-                        ).order_by(BalanceChange.timestamp)
+                        )
+                        .order_by(BalanceChange.timestamp)
                     ).all()
                     print(f"Found {len(balance_changes)} hedger balance changes")
                     write_balance_changes(session, context, writer, balance_changes, hedger.name)
 
                     incomes = (
                         session.execute(
-                            select(BinanceIncome).where(
+                            select(BinanceIncome)
+                            .where(
                                 and_(
                                     BinanceIncome.tenant == context.tenant,
                                     or_(
@@ -86,22 +88,29 @@ def get_rebalance_report():
                                     BinanceIncome.asset == "USDT",
                                     BinanceIncome.hedger == hedger.name,
                                 )
-                            ).order_by(BinanceIncome.timestamp)
-                        ).scalars().all()
+                            )
+                            .order_by(BinanceIncome.timestamp)
+                        )
+                        .scalars()
+                        .all()
                     )
                     write_incomes(context, writer, incomes, hedger.name)
 
                 for liq in context.liquidators:
                     balance_changes = (
                         session.execute(
-                            select(BalanceChange).where(
+                            select(BalanceChange)
+                            .where(
                                 and_(
                                     BalanceChange.collateral == context.symmio_collateral_address,
                                     BalanceChange.account_id == liq,
                                     BalanceChange.tenant == context.tenant,
                                 )
-                            ).order_by(BalanceChange.timestamp)
-                        ).scalars().all()
+                            )
+                            .order_by(BalanceChange.timestamp)
+                        )
+                        .scalars()
+                        .all()
                     )
                     write_balance_changes(session, context, writer, balance_changes, "Liquidator")
 

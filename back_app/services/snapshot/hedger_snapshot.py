@@ -9,7 +9,8 @@ from app.models import (
     BalanceChange,
     BalanceChangeType,
     HedgerSnapshot,
-    RuntimeConfiguration, Quote,
+    RuntimeConfiguration,
+    Quote,
 )
 from config.settings import (
     Context,
@@ -28,9 +29,9 @@ logger = logging.getLogger(LOGGER)
 
 
 def prepare_hedger_snapshot(
-        snapshot_context: SnapshotContext,
-        hedger_context: HedgerContext,
-        block: Block,
+    snapshot_context: SnapshotContext,
+    hedger_context: HedgerContext,
+    block: Block,
 ):
     print(f"----------------Prepare Hedger Snapshot Of {hedger_context.name}")
     context: Context = snapshot_context.context
@@ -81,8 +82,7 @@ def prepare_hedger_snapshot(
         )
     ).scalar_one()
 
-    snapshot.hedger_contract_deposit = hedger_deposit * 10 ** (
-            18 - config.decimals) + hedger_context.contract_deposit_diff
+    snapshot.hedger_contract_deposit = hedger_deposit * 10 ** (18 - config.decimals) + hedger_context.contract_deposit_diff
 
     hedger_withdraw = session.execute(
         select(func.coalesce(func.sum(BalanceChange.amount), Decimal(0))).where(
@@ -105,11 +105,11 @@ def prepare_hedger_snapshot(
             affiliates_snapshots.append(s)
 
     snapshot.contract_profit = (
-            snapshot.hedger_contract_balance
-            + sum([snapshot.hedger_contract_allocated for snapshot in affiliates_snapshots])
-            + sum([snapshot.hedger_upnl for snapshot in affiliates_snapshots])
-            - snapshot.hedger_contract_deposit
-            + snapshot.hedger_contract_withdraw
+        snapshot.hedger_contract_balance
+        + sum([snapshot.hedger_contract_allocated for snapshot in affiliates_snapshots])
+        + sum([snapshot.hedger_upnl for snapshot in affiliates_snapshots])
+        - snapshot.hedger_contract_deposit
+        + snapshot.hedger_contract_withdraw
     )
 
     snapshot.earned_cva = sum([snapshot.earned_cva for snapshot in affiliates_snapshots])
@@ -121,6 +121,6 @@ def prepare_hedger_snapshot(
     snapshot.block_number = block.number
     hedger_snapshot = HedgerSnapshot(**snapshot)
     hedger_snapshot_details = ", ".join(log_object_properties(hedger_snapshot))
-    logger.debug(f'func={prepare_hedger_snapshot.__name__} -->  {hedger_snapshot_details=}\n')
+    logger.debug(f"func={prepare_hedger_snapshot.__name__} -->  {hedger_snapshot_details=}\n")
     hedger_snapshot.save(session)
     return hedger_snapshot

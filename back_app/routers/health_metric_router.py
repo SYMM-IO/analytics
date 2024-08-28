@@ -31,7 +31,7 @@ async def get_health_metric():
                     sync_block=sync_block,
                     snapshot_block_lag=runtime_config.snapshotBlockLag,
                     diff_snapshot_block=latest_block - snapshot_block,
-                    diff_sync_block=latest_block - sync_block
+                    diff_sync_block=latest_block - sync_block,
                 )
             else:
                 tenant_block[context.tenant] = None

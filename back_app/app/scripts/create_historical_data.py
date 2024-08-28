@@ -23,12 +23,11 @@ async def prepare_historical_snapshots():
             if config.lastHistoricalSnapshotBlock:
                 snapshot_block = Block(context.w3, config.lastHistoricalSnapshotBlock, last_snapshot_block)
             last_snapshot_block = snapshot_block.backward(context.historical_snapshot_step)
-            print(
-                f"{context.tenant}: Historical snapshot for snapshot_block {snapshot_block.number} - {snapshot_block.datetime()}")
+            print(f"{context.tenant}: Historical snapshot for snapshot_block {snapshot_block.number} - {snapshot_block.datetime()}")
             do_fetch_snapshot(context, session, snapshot_block, historical_mode=True)
             config.lastHistoricalSnapshotBlock = snapshot_block.number
             session.commit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(prepare_historical_snapshots())

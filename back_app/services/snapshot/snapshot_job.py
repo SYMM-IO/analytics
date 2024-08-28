@@ -40,7 +40,7 @@ logger = logging.getLogger(LOGGER)
 async def fetch_snapshot(context: Context):
     with db_session() as session:
         sync_block = await sync_data(context, session)
-        logger.debug(f'func={fetch_snapshot.__name__} -->  {sync_block=}')
+        logger.debug(f"func={fetch_snapshot.__name__} -->  {sync_block=}")
         if context.get_snapshot:
             do_fetch_snapshot(context, session, snapshot_block=sync_block)
 
@@ -48,10 +48,10 @@ async def fetch_snapshot(context: Context):
 async def sync_data(context, session):
     config: RuntimeConfiguration = load_config(session, context)
     config_details = ", ".join(log_object_properties(config))
-    logger.debug(f'func={sync_data.__name__} -->  {config_details=}')
+    logger.debug(f"func={sync_data.__name__} -->  {config_details=}")
     sync_block = Block.latest(context.w3)
-    logger.debug(f'func={sync_data.__name__} -->  {sync_block=}')
-    logger.debug(f'func={sync_data.__name__} -->  {sync_block.backward(config.snapshotBlockLag) = }')
+    logger.debug(f"func={sync_data.__name__} -->  {sync_block=}")
+    logger.debug(f"func={sync_data.__name__} -->  {sync_block.backward(config.snapshotBlockLag) = }")
     try:
         SubgraphClient(context, User).sync(session, sync_block)
         SubgraphClient(context, Symbol).sync(session, sync_block)
@@ -71,8 +71,8 @@ async def sync_data(context, session):
         config = load_config(session, context)
         context.w3.provider.sort_endpoints()
         lag = Block.latest(context.w3).number - last_synced_block
-        logger.debug(f'func={sync_data.__name__} -->  {last_synced_block=}')
-        logger.debug(f'func={sync_data.__name__} -->  {lag=}')
+        logger.debug(f"func={sync_data.__name__} -->  {last_synced_block=}")
+        logger.debug(f"func={sync_data.__name__} -->  {lag=}")
         print(f"Last Synced Block is {last_synced_block} => Increasing snapshotBlockLag to {lag}")
         config.snapshotBlockLag = lag
         config.upsert(session)
@@ -89,8 +89,8 @@ async def sync_data(context, session):
 def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block, historical_mode=False):
     config: RuntimeConfiguration = load_config(session, context)
     config_details = ", ".join(log_object_properties(config))
-    logger.debug(f'func={do_fetch_snapshot.__name__} -->  {config_details=}')
-    logger.debug(f'func={do_fetch_snapshot.__name__} -->  {snapshot_block=}')
+    logger.debug(f"func={do_fetch_snapshot.__name__} -->  {config_details=}")
+    logger.debug(f"func={do_fetch_snapshot.__name__} -->  {snapshot_block=}")
     multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
     snapshot_context = SnapshotContext(context, session, config, multicallable)
 

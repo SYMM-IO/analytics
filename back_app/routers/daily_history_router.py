@@ -13,8 +13,8 @@ router = APIRouter(prefix="/history", tags=["Daily History"])
 
 
 @router.get("/daily/{group_by}", response_model=Dict[str, List[DailyHistoryAffiliate]])
-async def get_affiliate_history(group_by='day'):
-    if group_by not in ['day', 'week', 'month']:
+async def get_affiliate_history(group_by="day"):
+    if group_by not in ["day", "week", "month"]:
         raise HTTPException(status_code=404, detail="Not found")
     daily_history = dict()
     daily_history_affiliate = dict()
@@ -30,31 +30,42 @@ async def get_affiliate_history(group_by='day'):
                                 DailyHistory.accountSource == affiliate.symmio_multi_account,
                                 DailyHistory.tenant == context.tenant,
                                 DailyHistory.timestamp >= base_date,
-                            ))).all())
+                            )
+                        )
+                    ).all()
+                )
         for affiliate in daily_history:
             daily_history[affiliate].sort(key=lambda rec: rec.timestamp)
             try:
                 rec = daily_history[affiliate][0]
                 daily_history_affiliate[affiliate] = [
-                    DailyHistoryAffiliate(quotesCount=rec.quotesCount, newUsers=rec.newUsers,
-                                          newAccounts=rec.newAccounts, activeUsers=rec.activeUsers,
-                                          tradeVolume=rec.tradeVolume,
-                                          deposit=rec.deposit * 10 ** (18 - decimals[rec.tenant]),
-                                          withdraw=rec.withdraw, allocate=rec.allocate,
-                                          deallocate=rec.deallocate, platformFee=rec.platformFee,
-                                          openInterest=rec.openInterest,
-                                          start_date=rec.timestamp.date())]
+                    DailyHistoryAffiliate(
+                        quotesCount=rec.quotesCount,
+                        newUsers=rec.newUsers,
+                        newAccounts=rec.newAccounts,
+                        activeUsers=rec.activeUsers,
+                        tradeVolume=rec.tradeVolume,
+                        deposit=rec.deposit * 10 ** (18 - decimals[rec.tenant]),
+                        withdraw=rec.withdraw,
+                        allocate=rec.allocate,
+                        deallocate=rec.deallocate,
+                        platformFee=rec.platformFee,
+                        openInterest=rec.openInterest,
+                        start_date=rec.timestamp.date(),
+                    )
+                ]
                 for rec in daily_history[affiliate][1:]:
-                    if rec.timestamp.date() == daily_history_affiliate[affiliate][-1].start_date or (
-                            group_by == 'week' and rec.timestamp.weekday()) or (
-                            group_by == 'month' and rec.timestamp.day != 1):
+                    if (
+                        rec.timestamp.date() == daily_history_affiliate[affiliate][-1].start_date
+                        or (group_by == "week" and rec.timestamp.weekday())
+                        or (group_by == "month" and rec.timestamp.day != 1)
+                    ):
                         daily_history_affiliate[affiliate][-1].quotesCount += rec.quotesCount
                         daily_history_affiliate[affiliate][-1].newUsers += rec.newUsers
                         daily_history_affiliate[affiliate][-1].newAccounts += rec.newAccounts
                         daily_history_affiliate[affiliate][-1].activeUsers += rec.activeUsers
                         daily_history_affiliate[affiliate][-1].tradeVolume += rec.tradeVolume
-                        daily_history_affiliate[affiliate][-1].deposit += rec.deposit * 10 ** (
-                                    18 - decimals[rec.tenant])
+                        daily_history_affiliate[affiliate][-1].deposit += rec.deposit * 10 ** (18 - decimals[rec.tenant])
                         daily_history_affiliate[affiliate][-1].withdraw += rec.withdraw
                         daily_history_affiliate[affiliate][-1].allocate += rec.allocate
                         daily_history_affiliate[affiliate][-1].deallocate += rec.deallocate
@@ -62,13 +73,21 @@ async def get_affiliate_history(group_by='day'):
                         daily_history_affiliate[affiliate][-1].openInterest += rec.openInterest
                     else:
                         daily_history_affiliate[affiliate].append(
-                            DailyHistoryAffiliate(quotesCount=rec.quotesCount, newUsers=rec.newUsers,
-                                                  newAccounts=rec.newAccounts, activeUsers=rec.activeUsers,
-                                                  tradeVolume=rec.tradeVolume,
-                                                  deposit=rec.deposit * 10 ** (18 - decimals[rec.tenant]),
-                                                  withdraw=rec.withdraw, allocate=rec.allocate,
-                                                  deallocate=rec.deallocate, platformFee=rec.platformFee,
-                                                  openInterest=rec.openInterest, start_date=rec.timestamp.date()))
+                            DailyHistoryAffiliate(
+                                quotesCount=rec.quotesCount,
+                                newUsers=rec.newUsers,
+                                newAccounts=rec.newAccounts,
+                                activeUsers=rec.activeUsers,
+                                tradeVolume=rec.tradeVolume,
+                                deposit=rec.deposit * 10 ** (18 - decimals[rec.tenant]),
+                                withdraw=rec.withdraw,
+                                allocate=rec.allocate,
+                                deallocate=rec.deallocate,
+                                platformFee=rec.platformFee,
+                                openInterest=rec.openInterest,
+                                start_date=rec.timestamp.date(),
+                            )
+                        )
             except IndexError:
                 pass
         return daily_history_affiliate
@@ -80,15 +99,15 @@ async def get_affiliate_daily_history():
 
 
 @router.get("/full/{until}", response_model=Dict[str, DailyHistoryAffiliate])
-async def _get_affiliate_full_history(until='today'):
-    if until not in ['today', 'yesterday']:
+async def _get_affiliate_full_history(until="today"):
+    if until not in ["today", "yesterday"]:
         raise HTTPException(status_code=404, detail="Not found")
     daily_history_affiliate = await get_affiliate_history()
     affiliate_full_history = {
-        affiliate: DailyHistoryAffiliate(start_date=daily_history_affiliate[affiliate][0].start_date) for affiliate in
-        daily_history_affiliate}
+        affiliate: DailyHistoryAffiliate(start_date=daily_history_affiliate[affiliate][0].start_date) for affiliate in daily_history_affiliate
+    }
     for affiliate in daily_history_affiliate:
-        if until == 'yesterday' and daily_history_affiliate[affiliate][-1].start_date == datetime.today().date():
+        if until == "yesterday" and daily_history_affiliate[affiliate][-1].start_date == datetime.today().date():
             daily_history_affiliate[affiliate].pop()
         for rec in daily_history_affiliate[affiliate]:
             affiliate_full_history[affiliate].quotesCount += rec.quotesCount

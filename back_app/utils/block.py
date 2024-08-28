@@ -32,4 +32,4 @@ class Block:
         return self.timestamp() < datetime.datetime.now().timestamp() - (60 * 10)
 
     def __repr__(self):
-        return f'{self.w3.provider}, {self.number=}'
+        return f"{self.w3.provider}, {self.number=}"

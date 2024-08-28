@@ -20,8 +20,8 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/login", response_model=Login)
 async def login(
-        form_data: OAuth2PasswordRequestForm = Depends(),
-        session: Session = Depends(get_db_session),
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_db_session),
 ):
     user = session.scalar(select(AdminUser).where(AdminUser.username == form_data.username))
     if not user or not verify_password(form_data.password, user.password):

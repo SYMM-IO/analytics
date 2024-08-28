@@ -19,7 +19,7 @@ app = AioClock()
 app.include_group(group)
 
 logger = logging.getLogger(LOGGER)
-log_file = logging.FileHandler(f'log_file_{os.environ["TENANT"]}.log', 'w')
+log_file = logging.FileHandler(f'log_file_{os.environ["TENANT"]}.log', "w")
 log_file.setFormatter(FORMATTER)
 logger.addHandler(log_file)
 
@@ -39,13 +39,13 @@ async def run_snapshot():
         await fetch_snapshot(get_context())
     except Exception as e:
         logger.error(traceback.format_exc())
-        logger.error(e.__class__.__name__ + ': ' + str(e) + '\n')
+        logger.error(e.__class__.__name__ + ": " + str(e) + "\n")
         traceback.print_exc()
         send_alert(escape_markdown_v1(f"Snapshot task of {get_context().tenant} raised {e.__class__.__name__}\n {e}"))
     finally:
         tenant = get_context().tenant
-        os.remove(LOG_PATH + f'/log_file_{tenant}.log')
-        log_file = logging.FileHandler(f'log_file_{tenant}.log', 'w')
+        os.remove(LOG_PATH + f"/log_file_{tenant}.log")
+        log_file = logging.FileHandler(f"log_file_{tenant}.log", "w")
         log_file.setFormatter(FORMATTER)
         logger.handlers.clear()
         logger.addHandler(log_file)
