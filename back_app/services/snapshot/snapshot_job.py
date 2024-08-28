@@ -117,6 +117,7 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block,
             fetch_binance_income_histories(snapshot_context, hedger_context)
             prepare_hedger_binance_snapshot(snapshot_context, hedger_context, snapshot_block)
 
-    config.lastSnapshotBlock = snapshot_block.number
-    config.upsert(session)
+    if not historical_mode:
+        config.lastSnapshotBlock = snapshot_block.number
+        config.upsert(session)
     session.commit()
