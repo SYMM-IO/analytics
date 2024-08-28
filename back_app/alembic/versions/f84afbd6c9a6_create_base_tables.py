@@ -118,7 +118,6 @@ def upgrade() -> None:
         sa.Column("tenant", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("timestamp"),
     )
-
     op.create_table(
         "hedger_snapshot",
         sa.Column("hedger_contract_balance", sa.Numeric(precision=40, scale=0), nullable=True),
@@ -140,7 +139,6 @@ def upgrade() -> None:
         sa.Column("tenant", sa.String(), nullable=False, primary_key=True),
         sa.Column("timestamp", sa.DateTime(), nullable=False, primary_key=True),
     )
-
     op.create_table(
         "hedger_binance_snapshot",
         sa.Column("max_open_interest", sa.Numeric(precision=40, scale=0), nullable=True),
@@ -165,19 +163,16 @@ def upgrade() -> None:
         sa.Column("tenant", sa.String(), nullable=False, primary_key=True),
         sa.Column("timestamp", sa.DateTime(), nullable=False, primary_key=True),
     )
-
     op.create_table(
         "runtime_configuration",
-        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("name", sa.String()),
+        sa.Column("tenant", sa.String(), nullable=False, primary_key=True),
         sa.Column("decimals", sa.Integer(), nullable=True),
         sa.Column("lastHistoricalSnapshotBlock", sa.Integer(), nullable=True),
         sa.Column("lastSnapshotBlock", sa.Integer(), nullable=True),
         sa.Column("lastSyncBlock", sa.Integer()),
         sa.Column("snapshotBlockLag", sa.Integer()),
         sa.Column("deployTimestamp", sa.DateTime(), nullable=True),
-        sa.Column("tenant", sa.String(), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
+        sa.PrimaryKeyConstraint("tenant"),
     )
     op.create_table(
         "stats_bot_message",

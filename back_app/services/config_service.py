@@ -9,13 +9,12 @@ from web3_collections import MultiEndpointHTTPProvider
 from config.settings import ERC20_ABI, Context, SNAPSHOT_BLOCK_LAG, LOGGER
 
 
-def load_config(session: Session, context: Context, name: str = "DefaultConfiguration"):
+def load_config(session: Session, context: Context):
     from app.models import RuntimeConfiguration
 
     config: RuntimeConfiguration = session.scalars(
         select(RuntimeConfiguration).where(
             and_(
-                RuntimeConfiguration.name == name,
                 RuntimeConfiguration.tenant == context.tenant,
             )
         )
@@ -30,8 +29,8 @@ def load_config(session: Session, context: Context, name: str = "DefaultConfigur
                                               abi=ERC20_ABI)
         decimals = collateral_contract.functions.decimals().call()
         start_time = datetime.datetime.utcfromtimestamp(context.deploy_timestamp // 1000) - datetime.timedelta(days=5)
-        config = RuntimeConfiguration(name=name, decimals=decimals, tenant=context.tenant, deployTimestamp=start_time,
+        config = RuntimeConfiguration(decimals=decimals, tenant=context.tenant, deployTimestamp=start_time,
                                       lastSnapshotBlock=0, snapshotBlockLag=SNAPSHOT_BLOCK_LAG)
-        config.save(session)
+        config.upsert(session)
         session.flush()
     return config

@@ -255,10 +255,8 @@ class DailyHistory(BaseModel):
 class RuntimeConfiguration(BaseModel):
     __tablename__ = "runtime_configuration"
     __is_timeseries__ = False
-    __pk_name__ = "id"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String, nullable=False)
-    tenant = Column(String, nullable=False)
+    __pk_name__ = "tenant"
+    tenant = Column(String, nullable=False, primary_key=True)
     decimals = Column(Integer)
     lastHistoricalSnapshotBlock = Column(Integer, nullable=True)
     lastSnapshotBlock = Column(Integer)
