@@ -407,3 +407,28 @@ class GasHistory(BaseModel):
     initial_block = Column(Integer)
     tx_count = Column(Integer)
     tenant = Column(String, primary_key=True)
+
+
+class LogTransaction(BaseModel):
+    __tablename__ = "log_transaction"
+    __is_timeseries__ = False
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    label = Column(String)
+    data = Column(JSON)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
+    spans = relationship("LogSpan", back_populates="transaction",
+                         primaryjoin="LogSpan.transaction_id == LogTransaction.id")
+
+
+class LogSpan(BaseModel):
+    __tablename__ = "log_span"
+    __is_timeseries__ = False
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    transaction = relationship("LogTransaction", back_populates="spans",
+                               primaryjoin="LogSpan.transaction_id == LogTransaction.id")
+    transaction_id = Column(Integer, ForeignKey("log_transaction.id"))
+    label = Column(String)
+    data = Column(JSON)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)

@@ -1,5 +1,5 @@
-import datetime
 import enum
+from datetime import datetime
 from typing import List, Type
 
 import requests
@@ -67,17 +67,17 @@ class SubgraphClient:
         return obj
 
     def load(
-        self,
-        method: str,
-        fields: List[str],
-        first: int,
-        create_function,
-        block: Block = None,
-        conditions: List[GraphQlCondition] = None,
-        order_by: str = None,
-        order_direction: OrderDirection = OrderDirection.DESCENDING,
-        change_block_gte: int = None,
-        log_prefix="",
+            self,
+            method: str,
+            fields: List[str],
+            first: int,
+            create_function,
+            block: Block = None,
+            conditions: List[GraphQlCondition] = None,
+            order_by: str = None,
+            order_direction: OrderDirection = OrderDirection.DESCENDING,
+            change_block_gte: int = None,
+            log_prefix="",
     ):
         if conditions is None:
             conditions = []
@@ -127,14 +127,14 @@ class SubgraphClient:
         return items
 
     def load_all(
-        self,
-        fields: List[str],
-        create_function,
-        block: Block = None,
-        conditions: List[GraphQlCondition] = None,
-        page_limit: int = None,
-        change_block_gte: int = None,
-        log_prefix="",
+            self,
+            fields: List[str],
+            create_function,
+            block: Block = None,
+            conditions: List[GraphQlCondition] = None,
+            page_limit: int = None,
+            change_block_gte: int = None,
+            log_prefix="",
     ):
         if not conditions:
             conditions = []
@@ -145,19 +145,21 @@ class SubgraphClient:
         while page_limit is None or page_limit > 0:
             if page_limit is not None:
                 page_limit -= 1
-            if isinstance(pagination_value, datetime.datetime):
+            if isinstance(pagination_value, datetime):
                 formatted_pv = str(int(pagination_value.timestamp()))
             elif pagination_value:
                 formatted_pv = str(pagination_value)
             else:
                 formatted_pv = None
-            pagination_field_name = self.config.name_maps.get(self.config.pagination_field) or self.config.pagination_field
+            pagination_field_name = self.config.name_maps.get(
+                self.config.pagination_field) or self.config.pagination_field
             temp = self.load(
                 method=self.config.method_name,
                 fields=fields,
                 create_function=create_function,
                 first=limit,
-                conditions=([GraphQlCondition(pagination_field_name, "gte", formatted_pv)] if formatted_pv else []) + conditions,
+                conditions=([GraphQlCondition(pagination_field_name, "gte",
+                                              formatted_pv)] if formatted_pv else []) + conditions,
                 log_prefix=log_prefix,
                 change_block_gte=change_block_gte,
                 block=block,

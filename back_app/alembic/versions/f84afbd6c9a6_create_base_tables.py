@@ -317,7 +317,29 @@ def upgrade() -> None:
         sa.Column("tenant", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("address", "tenant"),
     )
-
+    op.create_table(
+        "log_transaction",
+        sa.Column("id", sa.Integer()),
+        sa.Column("label", sa.String()),
+        sa.Column("data", sa.JSON()),
+        sa.Column("start_time", sa.DateTime()),
+        sa.Column("end_time", sa.DateTime()),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "log_span",
+        sa.Column("id", sa.Integer()),
+        sa.Column("transaction_id", sa.Integer()),
+        sa.Column("label", sa.String()),
+        sa.Column("data", sa.JSON()),
+        sa.Column("start_time", sa.DateTime()),
+        sa.Column("end_time", sa.DateTime()),
+        sa.PrimaryKeyConstraint("id"),
+        sa.ForeignKeyConstraint(
+            ["transaction_id"],
+            ["log_transaction.id"],
+        ),
+    )
 
 # ### end Alembic commands ###
 
@@ -341,4 +363,6 @@ def downgrade() -> None:
     op.drop_table("affiliate_snapshot")
     op.drop_table("admin_user")
     op.drop_table("gas_history")
+    op.drop_table("log_span")
+    op.drop_table("log_transaction")
     # ### end Alembic commands ###

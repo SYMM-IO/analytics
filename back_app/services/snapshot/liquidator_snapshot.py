@@ -7,7 +7,7 @@ from services.snapshot.snapshot_context import SnapshotContext
 from utils.block import Block
 
 
-def prepare_liquidator_snapshot(snapshot_context: SnapshotContext, liquidator: str, block: Block):
+def prepare_liquidator_snapshot(snapshot_context: SnapshotContext, liquidator: str, block: Block, transaction_id):
     account_withdraw = snapshot_context.session.scalar(
         select(func.sum(BalanceChange.amount)).where(
             and_(
