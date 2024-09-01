@@ -82,16 +82,17 @@ def gas_used_by_hedger_wallets(snapshot_context: SnapshotContext, hedger_context
         gas_history_details = ", ".join(log_object_properties(gas_history))
         logger.debug(f"func={gas_used_by_hedger_wallets.__name__} -->  {gas_history_details=}")
         if gas_history:
-            tx_count, gas_used = fetch_native_transferred(snapshot_context, address, last_block, gas_history.initial_block)
-            gas_history.tx_count += tx_count
-            gas_history.gas_amount += gas_used
-            gas_history.initial_block = last_block
+            if last_block > gas_history.initial_block:
+                tx_count, gas_used = fetch_native_transferred(snapshot_context, address, last_block, gas_history.initial_block)
+                gas_history.tx_count += tx_count
+                gas_history.gas_amount += gas_used
+                gas_history.initial_block = last_block + 1
         else:
             tx_count, gas_used = fetch_native_transferred(snapshot_context, address, last_block)
             gas_history = GasHistory(
                 address=address, gas_amount=gas_used, initial_block=last_block, tx_count=tx_count, tenant=snapshot_context.context.tenant
             )
-            gas_history.save(snapshot_context.session)
+            gas_history.upsert(snapshot_context.session)
         logger.debug(f"func={gas_used_by_hedger_wallets.__name__} -->  {gas_history.gas_amount=}")
         print(
             f"Loaded {gas_history.tx_count} transactions for wallet {address} with total gas of",
