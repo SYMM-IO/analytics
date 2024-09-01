@@ -27,3 +27,4 @@ web3-collections==0.0.6b1
 binance-futures-connector==4.0.0
 python-dateutil~=2.9.0.post0
 pandas~=2.2.2
+telegramify-markdown==0.1.11

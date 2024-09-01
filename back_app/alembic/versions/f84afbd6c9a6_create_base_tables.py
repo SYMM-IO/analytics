@@ -321,6 +321,7 @@ def upgrade() -> None:
         "log_transaction",
         sa.Column("id", sa.Integer()),
         sa.Column("label", sa.String()),
+        sa.Column("tenant", sa.String()),
         sa.Column("data", sa.JSON()),
         sa.Column("start_time", sa.DateTime()),
         sa.Column("end_time", sa.DateTime()),
@@ -340,6 +341,7 @@ def upgrade() -> None:
             ["log_transaction.id"],
         ),
     )
+
 
 # ### end Alembic commands ###
 

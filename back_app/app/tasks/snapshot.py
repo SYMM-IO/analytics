@@ -1,13 +1,14 @@
 import asyncio
-import logging
 import os
 import traceback
 
 from aioclock import AioClock, OnStartUp, OnShutDown, Every
 from aioclock.group import Group
 
-from config.local_settings import contexts, LOG_PATH
-from config.settings import SNAPSHOT_INTERVAL, LOGGER, FORMATTER
+from config.local_settings import contexts
+
+from app import db_session, log_transaction_context
+from config.settings import SNAPSHOT_INTERVAL
 from services.snapshot.snapshot_job import fetch_snapshot
 from services.telegram_service import send_alert, escape_markdown_v1
 
@@ -17,11 +18,6 @@ group = Group()
 # app.py
 app = AioClock()
 app.include_group(group)
-
-logger = logging.getLogger(LOGGER)
-log_file = logging.FileHandler(f'log_file_{os.environ["TENANT"]}.log', "w")
-log_file.setFormatter(FORMATTER)
-logger.addHandler(log_file)
 
 
 def get_context():
@@ -35,20 +31,17 @@ def get_context():
 @group.task(trigger=Every(seconds=SNAPSHOT_INTERVAL))
 async def run_snapshot():
     print("----------------- Running Snapshot ------------------")
-    try:
-        await fetch_snapshot(get_context())
-    except Exception as e:
-        logger.error(traceback.format_exc())
-        logger.error(e.__class__.__name__ + ": " + str(e) + "\n")
-        traceback.print_exc()
-        send_alert(escape_markdown_v1(f"Snapshot task of {get_context().tenant} raised {e.__class__.__name__}\n {e}"))
-    finally:
-        tenant = get_context().tenant
-        os.remove(LOG_PATH + f"/log_file_{tenant}.log")
-        log_file = logging.FileHandler(f"log_file_{tenant}.log", "w")
-        log_file.setFormatter(FORMATTER)
-        logger.handlers.clear()
-        logger.addHandler(log_file)
+    with db_session() as session:
+        with log_transaction_context(session, fetch_snapshot.__name__) as log_tx:
+            try:
+                await fetch_snapshot(get_context(), session, log_tx)
+            except Exception as e:
+                traceback.print_exc()
+                print(e)
+                log_tx.add_data("traceback", traceback.format_exc())
+                log_tx.add_data("error", str(e))
+
+                send_alert(escape_markdown_v1(f"Snapshot task of {get_context().tenant} raised {e.__class__.__name__}\n {e}"))
 
 
 @app.task(trigger=OnStartUp())

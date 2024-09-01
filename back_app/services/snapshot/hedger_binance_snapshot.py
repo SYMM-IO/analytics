@@ -24,12 +24,7 @@ from utils.model_utils import log_object_properties
 logger = logging.getLogger(LOGGER)
 
 
-def prepare_hedger_binance_snapshot(
-        snapshot_context: SnapshotContext,
-        hedger_context: HedgerContext,
-        block: Block,
-        transaction_id
-):
+def prepare_hedger_binance_snapshot(snapshot_context: SnapshotContext, hedger_context: HedgerContext, block: Block, transaction_id):
     print(f"----------------Prepare Hedger Binance Snapshot Of {hedger_context.name}")
     context: Context = snapshot_context.context
     session: Session = snapshot_context.session
@@ -62,22 +57,19 @@ def prepare_hedger_binance_snapshot(
 
     is_negative = total_transfers < 0
     snapshot.binance_deposit = (
-            Decimal(-(
-                        abs(total_transfers) * 10 ** 18) if is_negative else total_transfers * 10 ** 18) + hedger_context.binance_deposit_diff
+        Decimal(-(abs(total_transfers) * 10**18) if is_negative else total_transfers * 10**18) + hedger_context.binance_deposit_diff
     )
 
     if not block.is_for_past():
         binance_account = hedger_context.utils.binance_client.futures_account(version=2)
-        snapshot.binance_maintenance_margin = Decimal(float(binance_account["totalMaintMargin"]) * 10 ** 18)
-        snapshot.binance_total_balance = Decimal(float(binance_account["totalMarginBalance"]) * 10 ** 18)
-        snapshot.binance_account_health_ratio = 100 - (
-                    snapshot.binance_maintenance_margin / snapshot.binance_total_balance) * 100
-        snapshot.binance_cross_upnl = Decimal(binance_account["totalCrossUnPnl"]) * 10 ** 18
-        snapshot.binance_av_balance = Decimal(binance_account["availableBalance"]) * 10 ** 18
-        snapshot.binance_total_initial_margin = Decimal(binance_account["totalInitialMargin"]) * 10 ** 18
-        snapshot.binance_max_withdraw_amount = Decimal(binance_account["maxWithdrawAmount"]) * 10 ** 18
-        snapshot.max_open_interest = Decimal(
-            hedger_context.hedger_max_open_interest_ratio * snapshot.binance_max_withdraw_amount)
+        snapshot.binance_maintenance_margin = Decimal(float(binance_account["totalMaintMargin"]) * 10**18)
+        snapshot.binance_total_balance = Decimal(float(binance_account["totalMarginBalance"]) * 10**18)
+        snapshot.binance_account_health_ratio = 100 - (snapshot.binance_maintenance_margin / snapshot.binance_total_balance) * 100
+        snapshot.binance_cross_upnl = Decimal(binance_account["totalCrossUnPnl"]) * 10**18
+        snapshot.binance_av_balance = Decimal(binance_account["availableBalance"]) * 10**18
+        snapshot.binance_total_initial_margin = Decimal(binance_account["totalInitialMargin"]) * 10**18
+        snapshot.binance_max_withdraw_amount = Decimal(binance_account["maxWithdrawAmount"]) * 10**18
+        snapshot.max_open_interest = Decimal(hedger_context.hedger_max_open_interest_ratio * snapshot.binance_max_withdraw_amount)
     else:
         ...
         # stat_message = session.scalar(
@@ -105,8 +97,7 @@ def prepare_hedger_binance_snapshot(
 
     snapshot.binance_profit = snapshot.binance_total_balance - (snapshot.binance_deposit or Decimal(0))
     snapshot.binance_trade_volume = (
-        0 if IGNORE_BINANCE_TRADE_VOLUME else Decimal(
-            calculate_binance_trade_volume(context, session, hedger_context, block) * 10 ** 18)
+        0 if IGNORE_BINANCE_TRADE_VOLUME else Decimal(calculate_binance_trade_volume(context, session, hedger_context, block) * 10**18)
     )
 
     # ------------------------------------------
@@ -144,7 +135,7 @@ def prepare_hedger_binance_snapshot(
             )
             funding_rate = pos["fundingRate"] = real_time_funding_rate(symbol=symbol)
             funding_rate_fee = -1 * notional * funding_rate
-            binance_next_funding_fee += funding_rate_fee * 10 ** 18
+            binance_next_funding_fee += funding_rate_fee * 10**18
 
         snapshot.binance_next_funding_fee = binance_next_funding_fee
 
