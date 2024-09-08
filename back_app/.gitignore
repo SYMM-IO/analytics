@@ -6,5 +6,7 @@ app/user_client.session-journal
 cache
 config/contexts
 *venv
-log_file*.log
 app/scripts/binance_archive_history
+log_file*.log
+log_file*.txt
+*quotes.csv

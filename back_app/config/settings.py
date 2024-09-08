@@ -1,5 +1,4 @@
 import json
-import logging
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -87,10 +86,7 @@ class Context:
         self.w3 = web3.Web3(
             MultiEndpointHTTPProvider(
                 self.rpcs,
-                before_endpoint_update=lambda current_endpoint, next_endpoint, exception: logger.debug(
-                    f"{current_endpoint=}, {next_endpoint=}, {exception=}"
-                )
-                or True,
+                before_endpoint_update=None  # fixme: comment code below
             )
         )
         self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -102,12 +98,19 @@ class Context:
         raise RuntimeError("Invalid Configuration")
 
 
+"""
+lambda current_endpoint, next_endpoint, exception: logger.debug(
+                    f"{current_endpoint=}, {next_endpoint=}, {exception=}"
+                )
+                                                                                          or True,
+"""
+
 PROXIES = {}
 SERVER_PORT = 7231
 
 # Intervals
 FETCH_STAT_DATA_INTERVAL = 5 * 5
-SNAPSHOT_INTERVAL = 2 * 60
+SNAPSHOT_INTERVAL = 2 * 2
 SNAPSHOT_BLOCK_LAG = 10
 SNAPSHOT_BLOCK_LAG_STEP = 25
 DEBUG_MODE = False
@@ -126,8 +129,8 @@ JWT_ALGORITHM = "HS256"
 
 CHAIN_ONLY = True
 
-# logging
-LOGGER = "analytics"
-FORMATTER = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(LOGGER)
-logger.setLevel(logging.DEBUG)
+# # logging
+# LOGGER = "analytics"
+# FORMATTER = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+# logger = logging.getLogger(LOGGER)
+# logger.setLevel(logging.DEBUG)

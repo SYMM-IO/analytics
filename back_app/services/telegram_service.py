@@ -19,7 +19,7 @@ def _send_message(msg: str, group_id, retrying):
         for _ in range(retrying):
             url = f"https://api.telegram.org/bot{telegram_bot_token}/sendDocument"
 
-            with open(LOG_PATH + f"/log_file_{tenant}.log", "rb") as f:
+            with open(LOG_PATH + f"/log_file_{tenant}.txt", "rb") as f:
                 data = {"chat_id": group_id, "caption": msg, "parse_mode": "Markdown", "disable_web_page_preview": True}
                 files = {"document": f}
 

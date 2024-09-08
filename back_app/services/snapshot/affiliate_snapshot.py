@@ -1,5 +1,4 @@
 import json
-import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -7,6 +6,7 @@ from binance.um_futures import UMFutures
 from sqlalchemy import func, and_, or_, select
 from sqlalchemy.orm import Session, load_only, joinedload
 
+from app import log_span_context
 from app.models import (
     Account,
     AffiliateSnapshot,
@@ -23,14 +23,11 @@ from config.settings import (
     HedgerContext,
     Context,
     DEBUG_MODE,
-    LOGGER,
 )
 from services.snapshot.snapshot_context import SnapshotContext
 from utils.attr_dict import AttrDict
 from utils.block import Block
 from utils.model_utils import log_object_properties
-
-logger = logging.getLogger(LOGGER)
 
 
 def prepare_affiliate_snapshot(
@@ -266,8 +263,9 @@ def prepare_affiliate_snapshot(
     snapshot.tenant = context.tenant
     snapshot.block_number = block.number
     affiliate_snapshot = AffiliateSnapshot(**snapshot)
-    affiliate_snapshot_details = ", ".join(log_object_properties(affiliate_snapshot))
-    logger.debug(f"func={prepare_affiliate_snapshot.__name__} -->  {affiliate_snapshot_details=}")
+    with log_span_context(session, "Prepare Affiliate Snapshot Details", transaction_id) as log_span:
+        affiliate_snapshot_details = log_object_properties(affiliate_snapshot)
+        log_span.add_data("prepare_affiliate_snapshot_details", affiliate_snapshot_details)
     affiliate_snapshot.save(session)
     return affiliate_snapshot
 

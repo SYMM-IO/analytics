@@ -1,9 +1,9 @@
-import logging
 from decimal import Decimal
 
 from sqlalchemy import select, func, and_
 from sqlalchemy.orm import Session
 
+from app import log_span_context
 from app.models import (
     BinanceIncome,
     HedgerBinanceSnapshot,
@@ -12,7 +12,6 @@ from config.settings import (
     Context,
     HedgerContext,
     IGNORE_BINANCE_TRADE_VOLUME,
-    LOGGER,
 )
 from services.binance_service import real_time_funding_rate
 from services.binance_trade_volume_service import calculate_binance_trade_volume
@@ -20,8 +19,6 @@ from services.snapshot.snapshot_context import SnapshotContext
 from utils.attr_dict import AttrDict
 from utils.block import Block
 from utils.model_utils import log_object_properties
-
-logger = logging.getLogger(LOGGER)
 
 
 def prepare_hedger_binance_snapshot(snapshot_context: SnapshotContext, hedger_context: HedgerContext, block: Block, transaction_id):
@@ -144,8 +141,9 @@ def prepare_hedger_binance_snapshot(snapshot_context: SnapshotContext, hedger_co
     snapshot.tenant = context.tenant
     snapshot.block_number = block.number
     print(snapshot)
-    hedger_snapshot = HedgerBinanceSnapshot(**snapshot)
-    hedger_snapshot_details = ", ".join(log_object_properties(hedger_snapshot))
-    logger.debug(f"func={prepare_hedger_binance_snapshot.__name__} -->  {hedger_snapshot_details=}")
-    hedger_snapshot.save(session)
-    return hedger_snapshot
+    hedger_binance_snapshot = HedgerBinanceSnapshot(**snapshot)
+    with log_span_context(session, "Prepare Hedger Binance Snapshot Details", transaction_id) as log_span:
+        hedger_binance_snapshot_details = log_object_properties(hedger_binance_snapshot)
+        log_span.add_data("prepare_hedger_binance_snapshot_details", hedger_binance_snapshot_details)
+    hedger_binance_snapshot.save(session)
+    return hedger_binance_snapshot

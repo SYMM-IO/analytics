@@ -1,4 +1,5 @@
 import json
+import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -428,7 +429,7 @@ class LogTransaction(BaseModel):
             self.data = {}
         self.data[f"{len(self.data) + 1}::{key}"] = {
             "value": value,
-            "time": datetime.now(tz=timezone.utc),
+            "time": int(time.time()),
         }
 
 
@@ -449,5 +450,5 @@ class LogSpan(BaseModel):
             self.data = {}
         self.data[f"{len(self.data) + 1}::{key}"] = {
             "value": value,
-            "time": datetime.now(tz=timezone.utc),
+            "time": int(time.time()),
         }

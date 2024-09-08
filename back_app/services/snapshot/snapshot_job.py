@@ -1,4 +1,3 @@
-import logging
 import re
 
 from multicallable import Multicallable
@@ -21,7 +20,6 @@ from config.settings import (
     SNAPSHOT_BLOCK_LAG,
     SNAPSHOT_BLOCK_LAG_STEP,
     CHAIN_ONLY,
-    LOGGER,
 )
 from services.binance_service import fetch_binance_income_histories
 from services.config_service import load_config
@@ -34,24 +32,22 @@ from utils.block import Block
 from utils.model_utils import log_object_properties
 from utils.subgraph.subgraph_client import SubgraphClient
 
-logger = logging.getLogger(LOGGER)
-
 
 async def fetch_snapshot(context: Context, session: Session, log_tx: LogTransaction):
     sync_block = await sync_data(context, session, log_tx.id)
-    log_tx.data = dict(sync_block=sync_block.number, get_snapshot=context.get_snapshot)
     log_tx.add_data("sync_block", sync_block.number)
+    log_tx.add_data("get_snapshot", context.get_snapshot)
     log_tx.add_data("sync_only", not context.get_snapshot)
     if context.get_snapshot:
         do_fetch_snapshot(context, session, snapshot_block=sync_block, transaction_id=log_tx.id)
 
 
 async def sync_data(context, session, log_tx_id):
-    successful = False
+    successful = True
     with log_span_context(session, "Sync Data With Subgraph", log_tx_id) as log_span:
         config: RuntimeConfiguration = load_config(session, context)
-        config_details = ", ".join(log_object_properties(config))
-        logger.debug(f"{sync_data.__name__} :: {config_details=}")
+        config_details = log_object_properties(config)
+        # logger.debug(f"{sync_data.__name__} :: {config_details=}")
         log_span.add_data("runtime_config", config_details)
         sync_block = Block.latest(context.w3)
         log_span.add_data("latest_block", sync_block.number)
@@ -67,7 +63,6 @@ async def sync_data(context, session, log_tx_id):
             SubgraphClient(context, DailyHistory).sync(session, sync_block)
         except Exception as e:
             log_span.add_data("error", str(e))
-            logger.error(e)
             if "only indexed up to block number" in str(e):
                 last_synced_block = int(re.search(r"indexed up to block number (\d+)", str(e)).group(1))
             elif "only has data starting at block number" in str(e):
@@ -99,13 +94,14 @@ async def sync_data(context, session, log_tx_id):
 def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block, transaction_id, historical_mode=False):
     with log_span_context(session, "Fetch Snapshot", transaction_id) as log_span:
         config: RuntimeConfiguration = load_config(session, context)
-        config_details = ", ".join(log_object_properties(config))
+        config_details = log_object_properties(config)
         log_span.add_data("runtime_config", config_details)
-        log_span.add_data("snapshot_block", snapshot_block)
+        log_span.add_data("snapshot_block", snapshot_block.number)
         multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
         snapshot_context = SnapshotContext(context, session, config, multicallable)
 
-        if not historical_mode and Block(context.w3, config.lastSnapshotBlock).timestamp() >= snapshot_block.timestamp():
+        if not historical_mode and Block(context.w3,
+                                         config.lastSnapshotBlock).timestamp() >= snapshot_block.timestamp():
             # TODO: go to next rpc and try again
             return
 
@@ -115,7 +111,8 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block,
                     with log_span_context(session, "Prepare Affiliate Snapshot", transaction_id) as span:
                         span.add_data("affiliate", affiliate_context.name)
                         span.add_data("hedger", hedger_context.name)
-                        prepare_affiliate_snapshot(snapshot_context, affiliate_context, hedger_context, snapshot_block, transaction_id)
+                        prepare_affiliate_snapshot(snapshot_context, affiliate_context, hedger_context, snapshot_block,
+                                                   transaction_id)
 
         with log_span_context(session, "Prepare Liquidators Snapshots", transaction_id):
             for liquidator in context.liquidators:
@@ -136,8 +133,8 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block,
                         fetch_binance_income_histories(snapshot_context, hedger_context, transaction_id)
                     with log_span_context(session, "Prepare Hedger Binance Snapshot", transaction_id) as sp:
                         sp.add_data("hedger", hedger_context.name)
-                        prepare_hedger_binance_snapshot(snapshot_context, hedger_context, snapshot_block, transaction_id)
-
+                        prepare_hedger_binance_snapshot(snapshot_context, hedger_context, snapshot_block,
+                                                        transaction_id)
         if not historical_mode:
             config.lastSnapshotBlock = snapshot_block.number
             config.upsert(session)

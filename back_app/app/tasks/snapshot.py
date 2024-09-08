@@ -1,6 +1,7 @@
 import asyncio
 import os
 import traceback
+from datetime import datetime
 
 from aioclock import AioClock, OnStartUp, OnShutDown, Every
 from aioclock.group import Group
@@ -13,6 +14,8 @@ from services.snapshot.snapshot_job import fetch_snapshot
 from services.telegram_service import send_alert, escape_markdown_v1
 
 # groups.py
+from utils.log_formatter import print_gantt_transaction
+
 group = Group()
 
 # app.py
@@ -32,14 +35,16 @@ def get_context():
 async def run_snapshot():
     print("----------------- Running Snapshot ------------------")
     with db_session() as session:
-        with log_transaction_context(session, fetch_snapshot.__name__) as log_tx:
+        with log_transaction_context(session, fetch_snapshot.__name__, get_context().tenant) as log_tx:
             try:
                 await fetch_snapshot(get_context(), session, log_tx)
+                log_tx.end_time = datetime.now()
             except Exception as e:
                 traceback.print_exc()
-                print(e)
                 log_tx.add_data("traceback", traceback.format_exc())
                 log_tx.add_data("error", str(e))
+                log_tx.end_time = datetime.now()
+                print_gantt_transaction(log_tx, f'log_file_{get_context().tenant}.txt')
 
                 send_alert(escape_markdown_v1(f"Snapshot task of {get_context().tenant} raised {e.__class__.__name__}\n {e}"))
 

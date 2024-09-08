@@ -39,13 +39,13 @@ def log_span_context(session: Session, label: str, transaction_id: int):
     finally:
         span.end_time = datetime.now()
         span.save(session)
-        session.commit()
 
 
 @contextmanager
-def log_transaction_context(session: Session, label: str):
-    tx = LogTransaction(start_time=datetime.now(), label=label)
+def log_transaction_context(session: Session, label: str, tenant: str):
+    tx = LogTransaction(start_time=datetime.now(), label=label, tenant=tenant)
     tx.save(session)
+    session.commit()
     try:
         yield tx
     finally:
