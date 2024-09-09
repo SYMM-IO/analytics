@@ -25,7 +25,8 @@ from utils.block import Block
 from utils.model_utils import log_object_properties
 
 
-def prepare_hedger_snapshot(snapshot_context: SnapshotContext, hedger_context: HedgerContext, block: Block, transaction_id):
+def prepare_hedger_snapshot(snapshot_context: SnapshotContext, hedger_context: HedgerContext, block: Block,
+                            transaction_id):
     print(f"----------------Prepare Hedger Snapshot Of {hedger_context.name}")
     context: Context = snapshot_context.context
     session: Session = snapshot_context.session
@@ -75,7 +76,8 @@ def prepare_hedger_snapshot(snapshot_context: SnapshotContext, hedger_context: H
         )
     ).scalar_one()
 
-    snapshot.hedger_contract_deposit = hedger_deposit * 10 ** (18 - config.decimals) + hedger_context.contract_deposit_diff
+    snapshot.hedger_contract_deposit = hedger_deposit * 10 ** (
+                18 - config.decimals) + hedger_context.contract_deposit_diff
 
     hedger_withdraw = session.execute(
         select(func.coalesce(func.sum(BalanceChange.amount), Decimal(0))).where(
@@ -98,11 +100,11 @@ def prepare_hedger_snapshot(snapshot_context: SnapshotContext, hedger_context: H
             affiliates_snapshots.append(s)
 
     snapshot.contract_profit = (
-        snapshot.hedger_contract_balance
-        + sum([snapshot.hedger_contract_allocated for snapshot in affiliates_snapshots])
-        + sum([snapshot.hedger_upnl for snapshot in affiliates_snapshots])
-        - snapshot.hedger_contract_deposit
-        + snapshot.hedger_contract_withdraw
+            snapshot.hedger_contract_balance
+            + sum([snapshot.hedger_contract_allocated for snapshot in affiliates_snapshots])
+            + sum([snapshot.hedger_upnl for snapshot in affiliates_snapshots])
+            - snapshot.hedger_contract_deposit
+            + snapshot.hedger_contract_withdraw
     )
 
     snapshot.earned_cva = sum([snapshot.earned_cva for snapshot in affiliates_snapshots])
@@ -113,8 +115,8 @@ def prepare_hedger_snapshot(snapshot_context: SnapshotContext, hedger_context: H
     snapshot.tenant = context.tenant
     snapshot.block_number = block.number
     hedger_snapshot = HedgerSnapshot(**snapshot)
-    with log_span_context(session, "Prepare Hedger Snapshot Details", transaction_id) as log_span:
-        hedger_snapshot_details = ", ".join(log_object_properties(hedger_snapshot))
-        log_span.add_data("prepare_hedger_snapshot_details", hedger_snapshot_details)
+    with log_span_context(session, "Prepare Hedger Snapshot", transaction_id) as log_span:
+        hedger_snapshot_details = log_object_properties(hedger_snapshot)
+        log_span.add_data("hedger_snapshot", hedger_snapshot_details)
     hedger_snapshot.save(session)
     return hedger_snapshot

@@ -39,6 +39,7 @@ def log_span_context(session: Session, label: str, transaction_id: int):
     finally:
         span.end_time = datetime.now()
         span.save(session)
+        session.commit()
 
 
 @contextmanager

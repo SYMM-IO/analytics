@@ -21,9 +21,9 @@ def fetch_native_transferred(snapshot_context: SnapshotContext, wallet_address, 
         current_balance = snapshot_context.context.w3.eth.get_balance(
             snapshot_context.context.w3.to_checksum_address(wallet_address), block_identifier=to_block
         )
-        log_span.add_data("fetch_native_transferred", f'{wallet_address=}')
-        log_span.add_data("fetch_native_transferred", f'{to_block=}')
-        log_span.add_data("fetch_native_transferred", f'{page_size=}')
+        log_span.add_data("wallet_address", f'{wallet_address}')
+        log_span.add_data("to_block", f'{to_block}')
+        log_span.add_data("page_size", f'{page_size}')
         while explorer_api_keys:
             url = (
                 f"{snapshot_context.context.explorer}/api?module=account&action=txlist&address={wallet_address}"
@@ -32,10 +32,10 @@ def fetch_native_transferred(snapshot_context: SnapshotContext, wallet_address, 
             )
             response = requests.get(url)
 
-            log_span.add_data("fetch_native_transferred", f'{from_block=}')
-            log_span.add_data("fetch_native_transferred", f'{explorer_api_keys[0]=}')
+            log_span.add_data("from_block", f'{from_block}')
+            log_span.add_data("explorer_api_keys", f'{explorer_api_keys[0]}')
             if response.status_code != 200:
-                log_span.add_data("fetch_native_transferred", f'{response.status_code=}')
+                log_span.add_data("status_code", f'{response.status_code}')
                 explorer_api_keys.pop(0)
                 continue
 
@@ -45,8 +45,8 @@ def fetch_native_transferred(snapshot_context: SnapshotContext, wallet_address, 
                 if data["message"] == "No transactions found":
                     print(f"All transactions fetched for wallet {wallet_address}")
                     break
-                log_span.add_data("fetch_native_transferred", f'{data["message"]=}')
-                log_span.add_data("fetch_native_transferred", f'{data["result"]=}')
+                log_span.add_data("response message", f'{data["message"]}')
+                log_span.add_data("response result", f'{data["result"]}')
                 explorer_api_keys.pop(0)
                 continue
 
@@ -82,7 +82,7 @@ def gas_used_by_hedger_wallets(snapshot_context: SnapshotContext, hedger_context
                     and_(GasHistory.address == address, GasHistory.tenant == snapshot_context.context.tenant))
             )
             gas_history_details = log_object_properties(gas_history)
-            log_span.add_data("gas_used_by_hedger_wallets", gas_history_details)
+            log_span.add_data("gas history before", gas_history_details)
             if gas_history:
                 if last_block > gas_history.initial_block:
                     tx_count, gas_used = fetch_native_transferred(snapshot_context, address, last_block, transaction_id,
@@ -97,13 +97,13 @@ def gas_used_by_hedger_wallets(snapshot_context: SnapshotContext, hedger_context
                     tenant=snapshot_context.context.tenant
                 )
                 gas_history.upsert(snapshot_context.session)
-            log_span.add_data("gas_used_by_hedger_wallets", gas_history.gas_amount)
+            log_span.add_data("gas_amount", f'{gas_history.gas_amount}')
             print(
                 f"Loaded {gas_history.tx_count} transactions for wallet {address} with total gas of",
                 snapshot_context.context.w3.from_wei(gas_history.gas_amount, "ether"),
             )
             total_gas_spent_by_all_wallets += gas_history.gas_amount
             gas_history_details = log_object_properties(gas_history)
-            log_span.add_data("gas_used_by_hedger_wallets", gas_history_details)
-            log_span.add_data("gas_used_by_hedger_wallets", total_gas_spent_by_all_wallets)
+            log_span.add_data("gas history after", gas_history_details)
+            log_span.add_data("total_gas_spent_by_all_wallets", f'{total_gas_spent_by_all_wallets}')
     return snapshot_context.context.w3.from_wei(total_gas_spent_by_all_wallets, "ether")
