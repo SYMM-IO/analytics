@@ -42,10 +42,10 @@ async def fetch_snapshot(context: Context, session: Session, log_tx: LogTransact
         do_fetch_snapshot(context, session, snapshot_block=sync_block, transaction_id=log_tx.id)
 
 
-async def sync_data(context, session, log_tx_id):
+async def sync_data(context, session, transaction_id):
     successful = True
-    with log_span_context(session, "Sync Data With Subgraph", log_tx_id) as log_span:
-        config: RuntimeConfiguration = load_config(session, context)
+    with log_span_context(session, "Sync Data With Subgraph", transaction_id) as log_span:
+        config: RuntimeConfiguration = load_config(session, context, transaction_id)
         config_details = log_object_properties(config)
         # logger.debug(f"{sync_data.__name__} :: {config_details=}")
         log_span.add_data("runtime_config", config_details)
@@ -54,13 +54,13 @@ async def sync_data(context, session, log_tx_id):
         sync_block.backward(config.snapshotBlockLag)
         log_span.add_data("sync_block", sync_block.number)
         try:
-            SubgraphClient(context, User).sync(session, sync_block)
-            SubgraphClient(context, Symbol).sync(session, sync_block)
-            SubgraphClient(context, Account).sync(session, sync_block)
-            SubgraphClient(context, BalanceChange).sync(session, sync_block)
-            SubgraphClient(context, Quote).sync(session, sync_block)
-            SubgraphClient(context, TradeHistory).sync(session, sync_block)
-            SubgraphClient(context, DailyHistory).sync(session, sync_block)
+            SubgraphClient(context, User).sync(session, sync_block, transaction_id)
+            SubgraphClient(context, Symbol).sync(session, sync_block, transaction_id)
+            SubgraphClient(context, Account).sync(session, sync_block, transaction_id)
+            SubgraphClient(context, BalanceChange).sync(session, sync_block, transaction_id)
+            SubgraphClient(context, Quote).sync(session, sync_block, transaction_id)
+            SubgraphClient(context, TradeHistory).sync(session, sync_block, transaction_id)
+            SubgraphClient(context, DailyHistory).sync(session, sync_block, transaction_id)
         except Exception as e:
             log_span.add_data("error", str(e))
             if "only indexed up to block number" in str(e):
@@ -69,7 +69,7 @@ async def sync_data(context, session, log_tx_id):
                 last_synced_block = int(re.search(r"has data starting at block number (\d+)", str(e)).group(1))
             else:
                 raise e
-            config = load_config(session, context)
+            config = load_config(session, context, transaction_id)
             context.w3.provider.sort_endpoints()
             lag = Block.latest(context.w3).number - last_synced_block
             log_span.add_data("last_synced_block", last_synced_block)
@@ -81,7 +81,7 @@ async def sync_data(context, session, log_tx_id):
             successful = False  # To end the current span
     log_span.add_data("successful", successful)
     if not successful:
-        return await sync_data(context, session, log_tx_id)
+        return await sync_data(context, session, transaction_id)
     else:
         print(f"{context.tenant}: =====> SYNC COMPLETED <=====")
         config.lastSyncBlock = sync_block.number
@@ -93,7 +93,7 @@ async def sync_data(context, session, log_tx_id):
 
 def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block, transaction_id, historical_mode=False):
     with log_span_context(session, "Fetch Snapshot", transaction_id) as log_span:
-        config: RuntimeConfiguration = load_config(session, context)
+        config: RuntimeConfiguration = load_config(session, context, transaction_id)
         config_details = log_object_properties(config)
         log_span.add_data("runtime_config", config_details)
         log_span.add_data("snapshot_block", snapshot_block.number)

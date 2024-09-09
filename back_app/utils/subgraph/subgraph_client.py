@@ -177,8 +177,8 @@ class SubgraphClient:
             if is_done or len(temp) < limit:
                 break
 
-    def sync(self, session, block: Block):
-        runtime_config: RuntimeConfiguration = load_config(session, self.context)
+    def sync(self, session, block: Block, transaction_id):
+        runtime_config: RuntimeConfiguration = load_config(session, self.context, transaction_id)
         fields = []
         for f in get_model_fields(self.model):
             if f in self.config.ignore_columns:

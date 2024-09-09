@@ -40,27 +40,25 @@ def fetch_binance_income_histories_of_type(
     snapshot_context: SnapshotContext,
     hedger_context: HedgerContext,
     income_type,
+    transaction_id,
     limit_days=30,
     asset_field="asset",
 ):
     # Get the latest timestamp from the database for the respective model
     latest_record = snapshot_context.session.scalar(
-        select(BinanceIncome)
-        .where(
+        select(BinanceIncome).where(
             and_(
                 BinanceIncome.tenant == snapshot_context.context.tenant,
                 BinanceIncome.type == income_type,
             )
-        )
-        .order_by(BinanceIncome.timestamp.desc())
-        .limit(1)
+        ).order_by(BinanceIncome.timestamp.desc()).limit(1)
     )
 
     # If there's a record in the database, use its timestamp as the starting point
     if latest_record:
         start_time = latest_record.timestamp + timedelta(minutes=1)
     else:
-        start_time = load_config(snapshot_context.session, snapshot_context.context).deployTimestamp
+        start_time = load_config(snapshot_context.session, snapshot_context.context, transaction_id).deployTimestamp
 
     end_time = start_time + timedelta(days=limit_days)
     current_time = datetime.utcnow()
@@ -110,14 +108,17 @@ def fetch_binance_income_histories(snapshot_context: SnapshotContext, hedger_con
         snapshot_context,
         hedger_context,
         "FUNDING_FEE",
+        transaction_id,
     )
     fetch_binance_income_histories_of_type(
         snapshot_context,
         hedger_context,
         "TRANSFER",
+        transaction_id,
     )
     fetch_binance_income_histories_of_type(
         snapshot_context,
         hedger_context,
         "INTERNAL_TRANSFER",
+        transaction_id,
     )

@@ -6,13 +6,11 @@ from datetime import datetime
 from aioclock import AioClock, OnStartUp, OnShutDown, Every
 from aioclock.group import Group
 
+from app import db_session, log_transaction_context, log_span_context
 from config.local_settings import contexts
-
-from app import db_session, log_transaction_context
 from config.settings import SNAPSHOT_INTERVAL
 from services.snapshot.snapshot_job import fetch_snapshot
 from services.telegram_service import send_alert, escape_markdown_v1
-
 # groups.py
 from utils.log_formatter import print_gantt_transaction
 
@@ -35,18 +33,30 @@ def get_context():
 async def run_snapshot():
     print("----------------- Running Snapshot ------------------")
     with db_session() as session:
-        with log_transaction_context(session, fetch_snapshot.__name__, get_context().tenant) as log_tx:
+        context = get_context()
+        with log_transaction_context(session, fetch_snapshot.__name__, context.tenant) as log_tx:
+            transaction_id = log_tx.id
+
+            def update_endpoint(current_endpoint, next_endpoint, exception):
+                with log_span_context(session, 'Update Endpoint', transaction_id) as span:
+                    span.add_data('current_endpoint', f'{current_endpoint}')
+                    span.add_data('next_endpoint', f'{next_endpoint}')
+                    span.add_data('exception', f'{exception}')
+                return True
+
+            if not context.w3.provider.before_endpoint_update:
+                context.w3.provider.before_endpoint_update = update_endpoint
             try:
-                await fetch_snapshot(get_context(), session, log_tx)
+                await fetch_snapshot(context, session, log_tx)
                 log_tx.end_time = datetime.now()
             except Exception as e:
                 traceback.print_exc()
                 log_tx.add_data("traceback", traceback.format_exc())
                 log_tx.add_data("error", str(e))
                 log_tx.end_time = datetime.now()
-                print_gantt_transaction(log_tx, f'log_file_{get_context().tenant}.txt')
+                print_gantt_transaction(log_tx, f'log_file_{context.tenant}.txt')
 
-                send_alert(escape_markdown_v1(f"Snapshot task of {get_context().tenant} raised {e.__class__.__name__}\n {e}"))
+                send_alert(escape_markdown_v1(f"Snapshot task of {context.tenant} raised {e.__class__.__name__}\n {e}"))
 
 
 @app.task(trigger=OnStartUp())

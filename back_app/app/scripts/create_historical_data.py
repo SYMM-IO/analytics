@@ -17,12 +17,12 @@ async def prepare_historical_snapshots():
         session.commit()
         snapshot_block = Block.latest(context.w3)
         last_snapshot_block = None
-        await sync_data(context, session, log_tx_id=transaction.id)
+        await sync_data(context, session, transaction_id=transaction.id)
         begin_timestamp = (datetime.now() - timedelta(days=30)).timestamp()
 
         while snapshot_block.timestamp() > begin_timestamp:
             with log_span_context(session, prepare_historical_snapshots.__name__, transaction.id) as span:
-                config: RuntimeConfiguration = load_config(session, context)
+                config: RuntimeConfiguration = load_config(session, context, transaction.id)
                 if config.lastHistoricalSnapshotBlock:
                     snapshot_block = Block(context.w3, config.lastHistoricalSnapshotBlock, last_snapshot_block)
                 last_snapshot_block = snapshot_block.backward(context.historical_snapshot_step)

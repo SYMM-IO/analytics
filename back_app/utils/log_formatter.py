@@ -1,3 +1,4 @@
+from datetime import datetime
 from random import choice
 
 from app import LogTransaction
@@ -89,6 +90,8 @@ def print_data(item, level, label_width, r, g, b, file):
     padding = "    " * level
     res = [f"{padding}{item.__class__.__name__}: {item.label}"]
     if item.data:
+        for k, v in item.data.items():
+            v['time'] = datetime.fromtimestamp(v['time'])
         sorted_items = sorted(item.data.items(), key=lambda i: i[1]['time'])
         for key, value in sorted_items:
             try:

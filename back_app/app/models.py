@@ -1,6 +1,6 @@
 import json
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import (
@@ -422,7 +422,8 @@ class LogTransaction(BaseModel):
     start_time = Column(DateTime)
     end_time = Column(DateTime)
     tenant = Column(String, nullable=False)
-    spans = relationship("LogSpan", back_populates="transaction", primaryjoin="LogSpan.transaction_id == LogTransaction.id")
+    spans = relationship("LogSpan", back_populates="transaction",
+                         primaryjoin="LogSpan.transaction_id == LogTransaction.id")
 
     def add_data(self, key: str, value):
         if self.data is None:
@@ -438,7 +439,8 @@ class LogSpan(BaseModel):
     __is_timeseries__ = False
     __pk_names__ = ["id"]
     id = Column(Integer, autoincrement=True, primary_key=True)
-    transaction = relationship("LogTransaction", back_populates="spans", primaryjoin="LogSpan.transaction_id == LogTransaction.id")
+    transaction = relationship("LogTransaction", back_populates="spans",
+                               primaryjoin="LogSpan.transaction_id == LogTransaction.id")
     transaction_id = Column(Integer, ForeignKey("log_transaction.id"))
     label = Column(String)
     data = Column(JSON)

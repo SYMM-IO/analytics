@@ -86,7 +86,6 @@ class Context:
         self.w3 = web3.Web3(
             MultiEndpointHTTPProvider(
                 self.rpcs,
-                before_endpoint_update=None  # fixme: comment code below
             )
         )
         self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
@@ -97,13 +96,6 @@ class Context:
                 return hedger
         raise RuntimeError("Invalid Configuration")
 
-
-"""
-lambda current_endpoint, next_endpoint, exception: logger.debug(
-                    f"{current_endpoint=}, {next_endpoint=}, {exception=}"
-                )
-                                                                                          or True,
-"""
 
 PROXIES = {}
 SERVER_PORT = 7231
