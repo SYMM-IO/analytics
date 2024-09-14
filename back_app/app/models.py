@@ -157,7 +157,7 @@ class Quote(BaseModel):
     __pk_names__ = ["id"]
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="quotes",
-        pagination_field="timeStamp",
+        pagination_field="timestamp",
         tenant_needed_fields=["id", "symbolId"],
         name_maps={"account_id": "partyA", "symbol_id": "symbolId"},
     )
@@ -172,7 +172,11 @@ class Quote(BaseModel):
     closedPrice = Column(Numeric(40, 0))
     cva = Column(Numeric(40, 0))
     fillAmount = Column(Numeric(40, 0))
+    initialCva = Column(Numeric(40, 0))
+    initialLf = Column(Numeric(40, 0))
     initialOpenedPrice = Column(Numeric(40, 0))
+    initialPartyAmm = Column(Numeric(40, 0))
+    initialPartyBmm = Column(Numeric(40, 0))
     lf = Column(Numeric(40, 0))
     liquidateAmount = Column(Numeric(40, 0))
     liquidatedSide = Column(Integer, nullable=True)
@@ -183,7 +187,6 @@ class Quote(BaseModel):
     openedPrice = Column(Numeric(40, 0), nullable=True)
     orderTypeClose = Column(String)
     orderTypeOpen = Column(String)
-    partyA = Column(String)
     partyAmm = Column(Numeric(40, 0))
     partyB = Column(String)
     partyBmm = Column(Numeric(40, 0))
@@ -196,7 +199,27 @@ class Quote(BaseModel):
     symbol = relationship("Symbol", back_populates="quotes")
     symbol_id = Column(String, ForeignKey("symbol.id"))
     tenant = Column(String, nullable=False)
-    timeStamp = Column(DateTime)
+    timestamp = Column(DateTime)
+    timestampAcceptCancelCloseRequest = Column(DateTime)
+    timestampAcceptCancelRequest = Column(DateTime)
+    timestampChargeFundingRate = Column(DateTime)
+    timestampEmergencyClosePosition = Column(DateTime)
+    timestampExpireQuote = Column(DateTime)
+    timestampFillCloseRequest = Column(DateTime)
+    timestampForceCancelCloseRequest = Column(DateTime)
+    timestampForceCancelQuote = Column(DateTime)
+    timestampForceClosePosition = Column(DateTime)
+    timestampLastFundingPayment = Column(DateTime)
+    timestampLiquidatePositionsPartyA = Column(DateTime)
+    timestampLiquidatePositionsPartyB = Column(DateTime)
+    timestampLockQuote = Column(DateTime)
+    timestampOpenPosition = Column(DateTime)
+    timestampRequestToCancelCloseRequest = Column(DateTime)
+    timestampRequestToCancelQuote = Column(DateTime)
+    timestampRequestToClosePosition = Column(DateTime)
+    timestampRequestToLimitClosePosition = Column(DateTime)
+    timestampSendQuote = Column(DateTime)
+    timestampUnlockQuote = Column(DateTime)
     trade_histories = relationship("TradeHistory", back_populates="quote")
     tradingFee = Column(Numeric(40, 0))
     userPaidFunding = Column(Numeric(40, 0))

@@ -63,7 +63,7 @@ def prepare_affiliate_snapshot(snapshot_context: SnapshotContext, affiliate_cont
                     Quote.partyB == hedger_context.hedger_address,
                     Quote.quoteStatus == 8,
                     Quote.liquidatedSide == 0,
-                    Quote.timeStamp > from_time,
+                    Quote.timestamp > from_time,
                     Quote.blockNumber <= block.number,
                     Quote.tenant == context.tenant,
                 )
@@ -80,7 +80,7 @@ def prepare_affiliate_snapshot(snapshot_context: SnapshotContext, affiliate_cont
                     Quote.partyB == hedger_context.hedger_address,
                     Quote.quoteStatus == 8,
                     Quote.liquidatedSide == 1,
-                    Quote.timeStamp > from_time,
+                    Quote.timestamp > from_time,
                     Quote.blockNumber <= block.number,
                     Quote.tenant == context.tenant,
                 )
@@ -324,7 +324,7 @@ def calculate_hedger_upnl(
             and_(
                 Quote.blockNumber <= block.number,
                 Account.accountSource == affiliate_context.symmio_multi_account,
-                Quote.timeStamp > from_time,
+                Quote.timestamp > from_time,
                 Quote.partyB == hedger_context.hedger_address,
                 or_(
                     Quote.quoteStatus == 4,
@@ -370,7 +370,7 @@ def calculate_pnl_of_hedger(
                 Account.accountSource == affiliate_context.symmio_multi_account,
                 Quote.partyB == hedger_context.hedger_address,
                 Quote.quoteStatus == quote_status,
-                Quote.timeStamp > from_time,
+                Quote.timestamp > from_time,
                 Quote.blockNumber <= block.number,
                 Quote.tenant == context.tenant,
             )
@@ -396,7 +396,7 @@ def count_quotes_per_status(
     q_counts = session.execute(
         select(Quote.quoteStatus, func.count(Quote.id).label("count")).join(Account).where(
             and_(
-                Quote.timeStamp > from_time,
+                Quote.timestamp > from_time,
                 Quote.blockNumber <= block.number,
                 Account.accountSource == affiliate_context.symmio_multi_account,
                 Quote.tenant == context.tenant,
