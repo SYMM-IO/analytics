@@ -9,4 +9,4 @@ config/contexts
 app/scripts/binance_archive_history
 log_file*.log
 log_file*.txt
-*quotes.csv
+*.csv
