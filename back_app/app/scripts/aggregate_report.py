@@ -23,7 +23,7 @@ with db_session() as session:
                ).join(Account).group_by(Account.user_id)
     ).all()
     for i in res:
-        v = result.setdefault(i[0].split('_')[-1], [0, timedelta(weeks=100000), 0])
+        v = result.setdefault(i[0].split('_')[-1], [0, dt - datetime(1, 1, 1), 0])
         v[0] += i[1] or 0
         v[1] = min(v[1], i[2])
         v[2] += i[3]
