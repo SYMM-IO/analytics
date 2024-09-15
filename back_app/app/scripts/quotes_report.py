@@ -115,7 +115,7 @@ for chain in contexts:
                 )))
         for quote in quotes:
             df_dict['Chain'].append(chain)
-            df_dict['Front-end'].append(affiliates[accounts[quote.account_id]])
+            df_dict['Front-end'].append(affiliates.get(accounts.get(quote.account_id)))
             df_dict['Symbol'].append(symbols[quote.symbol_id])
             df_dict['Quote id'].append(quote.id.split('_')[-1])
             df_dict['Account'].append(quote.account_id)
@@ -148,9 +148,9 @@ for chain in contexts:
             df_dict['Close price'].append(quote.averageClosedPrice / DEC18)
             df_dict['Open quantity'].append(quote.quantity / DEC18)
             df_dict['Close quantity'].append(quote.closedAmount / DEC18)
-            if quote.quoteStatus == 7:
+            if quote.quoteStatus == 7 and quote.averageClosedPrice:
                 df_dict['Price change (%)'].append(100 * quote.initialOpenedPrice / quote.averageClosedPrice)
-            elif quote.quoteStatus == 8:
+            elif quote.quoteStatus == 8 and quote.liquidatePrice:
                 df_dict['Price change (%)'].append(100 * quote.initialOpenedPrice / quote.liquidatePrice)
             else:
                 df_dict['Price change (%)'].append(None)
@@ -167,6 +167,6 @@ for chain in contexts:
             df_dict['PartyA MM'].append(quote.initialPartyAmm / DEC18)
             df_dict['LF'].append(quote.initialLf / DEC18)
             df_dict['Block number'].append(quote.blockNumber)
-            df_dict['Multi account'].append(accounts[quote.account_id])
+            df_dict['Multi account'].append(accounts.get(quote.account_id))
     main_df = main_df._append(DataFrame(df_dict))
     main_df.to_csv(chain + '_quotes.csv', index=False)
