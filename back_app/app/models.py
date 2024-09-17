@@ -1,4 +1,5 @@
 import json
+import time
 from datetime import datetime
 from typing import Any
 
@@ -9,7 +10,6 @@ from sqlalchemy import (
     String,
     DateTime,
     Numeric,
-    Boolean,
     Text,
     Float,
     inspect,
@@ -37,12 +37,13 @@ class BaseModel(Base):
 
     def upsert(self, session):
         conflict_less_dict = self.to_dict()
-        if not conflict_less_dict[self.__pk_name__]:
-            del conflict_less_dict[self.__pk_name__]
+        for pk in self.__pk_names__:
+            if not conflict_less_dict[pk]:
+                del conflict_less_dict[pk]
 
         insert_stmt = insert(self.__table__).values(**conflict_less_dict)
         update_dict = self.to_dict()
-        do_update_stmt = insert_stmt.on_conflict_do_update(index_elements=[self.__pk_name__], set_=update_dict)
+        do_update_stmt = insert_stmt.on_conflict_do_update(index_elements=self.__pk_names__, set_=update_dict)
         session.execute(do_update_stmt)
 
     def save(self, session: Session):
@@ -59,7 +60,7 @@ class BalanceChangeType:
 class User(BaseModel):
     __tablename__ = "user"
     __is_timeseries__ = False
-    __pk_name__ = "id"
+    __pk_names__ = ["id"]
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="users",
         pagination_field="timestamp",
@@ -76,7 +77,7 @@ class User(BaseModel):
 class AdminUser(BaseModel):
     __tablename__ = "admin_user"
     __is_timeseries__ = False
-    __pk_name__ = "username"
+    __pk_names__ = ["username"]
     username = Column(String, primary_key=True)
     password = Column(String)
     createTimestamp = Column(DateTime, default=datetime.now)
@@ -85,7 +86,7 @@ class AdminUser(BaseModel):
 class Account(BaseModel):
     __tablename__ = "account"
     __is_timeseries__ = False
-    __pk_name__ = "id"
+    __pk_names__ = ["id"]
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="accounts",
         pagination_field="timestamp",
@@ -113,7 +114,7 @@ class Account(BaseModel):
 class BalanceChange(BaseModel):
     __tablename__ = "balance_change"
     __is_timeseries__ = False
-    __pk_name__ = "id"
+    __pk_names__ = ["id"]
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="balanceChanges",
         pagination_field="timestamp",
@@ -134,18 +135,17 @@ class BalanceChange(BaseModel):
 class Symbol(BaseModel):
     __tablename__ = "symbol"
     __is_timeseries__ = False
-    __pk_name__ = "id"
+    __pk_names__ = ["id"]
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="symbols",
         pagination_field="timestamp",
         tenant_needed_fields=["id"],
-        ignore_columns=["tenant", "main_market"],
+        ignore_columns=["tenant"],
     )
     id = Column(String, primary_key=True)
     name = Column(String)
     tradingFee = Column(Numeric(40, 0))
     timestamp = Column(DateTime)
-    main_market = Column(Boolean, default=False)
     updateTimestamp = Column(DateTime)
     tenant = Column(String, nullable=False)
     quotes = relationship("Quote", back_populates="symbol")
@@ -154,10 +154,10 @@ class Symbol(BaseModel):
 class Quote(BaseModel):
     __tablename__ = "quote"
     __is_timeseries__ = False
-    __pk_name__ = "id"
+    __pk_names__ = ["id"]
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="quotes",
-        pagination_field="timeStamp",
+        pagination_field="timestamp",
         tenant_needed_fields=["id", "symbolId"],
         name_maps={"account_id": "partyA", "symbol_id": "symbolId"},
     )
@@ -172,7 +172,11 @@ class Quote(BaseModel):
     closedPrice = Column(Numeric(40, 0))
     cva = Column(Numeric(40, 0))
     fillAmount = Column(Numeric(40, 0))
+    initialCva = Column(Numeric(40, 0))
+    initialLf = Column(Numeric(40, 0))
     initialOpenedPrice = Column(Numeric(40, 0))
+    initialPartyAmm = Column(Numeric(40, 0))
+    initialPartyBmm = Column(Numeric(40, 0))
     lf = Column(Numeric(40, 0))
     liquidateAmount = Column(Numeric(40, 0))
     liquidatedSide = Column(Integer, nullable=True)
@@ -183,7 +187,6 @@ class Quote(BaseModel):
     openedPrice = Column(Numeric(40, 0), nullable=True)
     orderTypeClose = Column(String)
     orderTypeOpen = Column(String)
-    partyA = Column(String)
     partyAmm = Column(Numeric(40, 0))
     partyB = Column(String)
     partyBmm = Column(Numeric(40, 0))
@@ -196,7 +199,27 @@ class Quote(BaseModel):
     symbol = relationship("Symbol", back_populates="quotes")
     symbol_id = Column(String, ForeignKey("symbol.id"))
     tenant = Column(String, nullable=False)
-    timeStamp = Column(DateTime)
+    timestamp = Column(DateTime)
+    timestampAcceptCancelCloseRequest = Column(DateTime)
+    timestampAcceptCancelRequest = Column(DateTime)
+    timestampChargeFundingRate = Column(DateTime)
+    timestampEmergencyClosePosition = Column(DateTime)
+    timestampExpireQuote = Column(DateTime)
+    timestampFillCloseRequest = Column(DateTime)
+    timestampForceCancelCloseRequest = Column(DateTime)
+    timestampForceCancelQuote = Column(DateTime)
+    timestampForceClosePosition = Column(DateTime)
+    timestampLastFundingPayment = Column(DateTime)
+    timestampLiquidatePositionsPartyA = Column(DateTime)
+    timestampLiquidatePositionsPartyB = Column(DateTime)
+    timestampLockQuote = Column(DateTime)
+    timestampOpenPosition = Column(DateTime)
+    timestampRequestToCancelCloseRequest = Column(DateTime)
+    timestampRequestToCancelQuote = Column(DateTime)
+    timestampRequestToClosePosition = Column(DateTime)
+    timestampRequestToLimitClosePosition = Column(DateTime)
+    timestampSendQuote = Column(DateTime)
+    timestampUnlockQuote = Column(DateTime)
     trade_histories = relationship("TradeHistory", back_populates="quote")
     tradingFee = Column(Numeric(40, 0))
     userPaidFunding = Column(Numeric(40, 0))
@@ -206,7 +229,7 @@ class Quote(BaseModel):
 class TradeHistory(BaseModel):
     __tablename__ = "trade_history"
     __is_timeseries__ = False
-    __pk_name__ = "id"
+    __pk_names__ = ["id"]
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="tradeHistories",
         pagination_field="timestamp",
@@ -230,7 +253,7 @@ class TradeHistory(BaseModel):
 class DailyHistory(BaseModel):
     __tablename__ = "daily_history"
     __is_timeseries__ = True
-    __pk_name__ = "timestamp"
+    __pk_names__ = ["timestamp"]
     __subgraph_client_config__ = SubgraphClientConfig(
         method_name="dailyHistories",
         pagination_field="timestamp",
@@ -256,10 +279,8 @@ class DailyHistory(BaseModel):
 class RuntimeConfiguration(BaseModel):
     __tablename__ = "runtime_configuration"
     __is_timeseries__ = False
-    __pk_name__ = "id"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String, nullable=False)
-    tenant = Column(String, nullable=False)
+    __pk_names__ = ["tenant"]
+    tenant = Column(String, nullable=False, primary_key=True)
     decimals = Column(Integer)
     lastHistoricalSnapshotBlock = Column(Integer, nullable=True)
     lastSnapshotBlock = Column(Integer)
@@ -271,7 +292,7 @@ class RuntimeConfiguration(BaseModel):
 class AffiliateSnapshot(BaseModel):
     __tablename__ = "affiliate_snapshot"
     __is_timeseries__ = True
-    __pk_name__ = "timestamp"
+    __pk_names__ = ["timestamp", "name", "hedger_name", "tenant"]
     status_quotes = Column(Text)
     pnl_of_closed = Column(Numeric(40, 0))
     pnl_of_liquidated = Column(Numeric(40, 0))
@@ -304,7 +325,7 @@ class AffiliateSnapshot(BaseModel):
 class LiquidatorSnapshot(BaseModel):
     __tablename__ = "liquidator_snapshot"
     __is_timeseries__ = True
-    __pk_name__ = "timestamp"
+    __pk_names__ = ["address", "tenant", "timestamp"]
 
     address = Column(String, nullable=False, primary_key=True)
     withdraw = Column(Numeric(40, 0))
@@ -317,7 +338,7 @@ class LiquidatorSnapshot(BaseModel):
 class HedgerSnapshot(BaseModel):
     __tablename__ = "hedger_snapshot"
     __is_timeseries__ = True
-    __pk_name__ = "timestamp"
+    __pk_names__ = ["name", "tenant", "timestamp"]
     hedger_contract_balance = Column(Numeric(40, 0))
     hedger_contract_deposit = Column(Numeric(40, 0))
     hedger_contract_withdraw = Column(Numeric(40, 0))
@@ -337,7 +358,7 @@ class HedgerSnapshot(BaseModel):
 class HedgerBinanceSnapshot(BaseModel):
     __tablename__ = "hedger_binance_snapshot"
     __is_timeseries__ = True
-    __pk_name__ = "timestamp"
+    __pk_names__ = ["name", "tenant", "timestamp"]
     max_open_interest = Column(Numeric(40, 0), nullable=True)
     binance_maintenance_margin = Column(Numeric(40, 0), nullable=True)
     binance_total_balance = Column(Numeric(40, 0), nullable=True)
@@ -364,7 +385,7 @@ class HedgerBinanceSnapshot(BaseModel):
 class BinanceIncome(BaseModel):
     __tablename__ = "binance_income"
     __is_timeseries__ = False
-    __pk_name__ = "id"
+    __pk_names__ = ["id"]
     id = Column(Integer, primary_key=True)
     asset = Column(String)
     type = Column(String)
@@ -380,7 +401,7 @@ class BinanceIncome(BaseModel):
 class BinanceTrade(BaseModel):
     __tablename__ = "binance_trade"
     __is_timeseries__ = False
-    __pk_name__ = "id"
+    __pk_names__ = ["id"]
     id = Column(String, primary_key=True)
     symbol = Column(String)
     order_id = Column(String)
@@ -396,7 +417,7 @@ class BinanceTrade(BaseModel):
 class StatsBotMessage(BaseModel):
     __tablename__ = "stats_bot_message"
     __is_timeseries__ = False
-    __pk_name__ = "message_id"
+    __pk_names__ = ["message_id", "tenant"]
     message_id = Column(Integer, primary_key=True)
     timestamp = Column(DateTime)
     content = Column(JSON)
@@ -406,8 +427,53 @@ class StatsBotMessage(BaseModel):
 class GasHistory(BaseModel):
     __tablename__ = "gas_history"
     __is_timeseries__ = False
+    __pk_names__ = ["address", "tenant"]
     address = Column(String, primary_key=True)
     gas_amount = Column(Numeric(40, 0))
     initial_block = Column(Integer)
     tx_count = Column(Integer)
     tenant = Column(String, primary_key=True)
+
+
+class LogTransaction(BaseModel):
+    __tablename__ = "log_transaction"
+    __is_timeseries__ = False
+    __pk_names__ = ["id"]
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    label = Column(String)
+    data = Column(JSON)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
+    tenant = Column(String, nullable=False)
+    spans = relationship("LogSpan", back_populates="transaction",
+                         primaryjoin="LogSpan.transaction_id == LogTransaction.id")
+
+    def add_data(self, key: str, value):
+        if self.data is None:
+            self.data = {}
+        self.data[f"{len(self.data) + 1}::{key}"] = {
+            "value": value,
+            "time": int(time.time()),
+        }
+
+
+class LogSpan(BaseModel):
+    __tablename__ = "log_span"
+    __is_timeseries__ = False
+    __pk_names__ = ["id"]
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    transaction = relationship("LogTransaction", back_populates="spans",
+                               primaryjoin="LogSpan.transaction_id == LogTransaction.id")
+    transaction_id = Column(Integer, ForeignKey("log_transaction.id"))
+    label = Column(String)
+    data = Column(JSON)
+    start_time = Column(DateTime)
+    end_time = Column(DateTime)
+
+    def add_data(self, key: str, value):
+        if self.data is None:
+            self.data = {}
+        self.data[f"{len(self.data) + 1}::{key}"] = {
+            "value": value,
+            "time": int(time.time()),
+        }

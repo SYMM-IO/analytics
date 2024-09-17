@@ -1,9 +1,10 @@
 from contextlib import contextmanager
+from datetime import datetime
 
 from sqlalchemy import create_engine, text, bindparam, String
 from sqlalchemy.orm import sessionmaker, Session
 
-from app.models import BaseModel
+from app.models import BaseModel, LogSpan, LogTransaction
 from config.local_settings import DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
 
 # Define the database connection URL
@@ -28,6 +29,30 @@ def db_session():
         raise e
     finally:
         session.close()
+
+
+@contextmanager
+def log_span_context(session: Session, label: str, transaction_id: int):
+    span = LogSpan(start_time=datetime.now(), label=label, transaction_id=transaction_id)
+    try:
+        yield span
+    finally:
+        span.end_time = datetime.now()
+        span.save(session)
+        session.commit()
+
+
+@contextmanager
+def log_transaction_context(session: Session, label: str, tenant: str):
+    tx = LogTransaction(start_time=datetime.now(), label=label, tenant=tenant)
+    tx.save(session)
+    session.commit()
+    try:
+        yield tx
+    finally:
+        tx.end_time = datetime.now()
+        tx.save(session)
+        session.commit()
 
 
 def get_db_session():

@@ -1,5 +1,4 @@
 import json
-import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
 
@@ -7,6 +6,7 @@ from binance.um_futures import UMFutures
 from sqlalchemy import func, and_, or_, select
 from sqlalchemy.orm import Session, load_only, joinedload
 
+from app import log_span_context
 from app.models import (
     Account,
     AffiliateSnapshot,
@@ -23,22 +23,15 @@ from config.settings import (
     HedgerContext,
     Context,
     DEBUG_MODE,
-    LOGGER,
 )
 from services.snapshot.snapshot_context import SnapshotContext
 from utils.attr_dict import AttrDict
 from utils.block import Block
 from utils.model_utils import log_object_properties
 
-logger = logging.getLogger(LOGGER)
 
-
-def prepare_affiliate_snapshot(
-        snapshot_context: SnapshotContext,
-        affiliate_context: AffiliateContext,
-        hedger_context: HedgerContext,
-        block: Block,
-):
+def prepare_affiliate_snapshot(snapshot_context: SnapshotContext, affiliate_context: AffiliateContext,
+                               hedger_context: HedgerContext, block: Block, transaction_id):
     print(f"----------------Prepare Affiliate Snapshot Of {hedger_context.name} -> {affiliate_context.name}")
     context: Context = snapshot_context.context
     session: Session = snapshot_context.session
@@ -69,8 +62,8 @@ def prepare_affiliate_snapshot(
                     Account.accountSource == affiliate_context.symmio_multi_account,
                     Quote.partyB == hedger_context.hedger_address,
                     Quote.quoteStatus == 8,
-                    Quote.liquidatedSide == 1,
-                    Quote.timeStamp > from_time,
+                    Quote.liquidatedSide == 0,
+                    Quote.timestamp > from_time,
                     Quote.blockNumber <= block.number,
                     Quote.tenant == context.tenant,
                 )
@@ -86,8 +79,8 @@ def prepare_affiliate_snapshot(
                     Account.accountSource == affiliate_context.symmio_multi_account,
                     Quote.partyB == hedger_context.hedger_address,
                     Quote.quoteStatus == 8,
-                    Quote.liquidatedSide == 0,
-                    Quote.timeStamp > from_time,
+                    Quote.liquidatedSide == 1,
+                    Quote.timestamp > from_time,
                     Quote.blockNumber <= block.number,
                     Quote.tenant == context.tenant,
                 )
@@ -270,8 +263,9 @@ def prepare_affiliate_snapshot(
     snapshot.tenant = context.tenant
     snapshot.block_number = block.number
     affiliate_snapshot = AffiliateSnapshot(**snapshot)
-    affiliate_snapshot_details = ", ".join(log_object_properties(affiliate_snapshot))
-    logger.debug(f"func={prepare_affiliate_snapshot.__name__} -->  {affiliate_snapshot_details=}")
+    with log_span_context(session, "Prepare Affiliate Snapshot", transaction_id) as log_span:
+        affiliate_snapshot_details = log_object_properties(affiliate_snapshot)
+        log_span.add_data("affiliate_snapshot", affiliate_snapshot_details)
     affiliate_snapshot.save(session)
     return affiliate_snapshot
 
@@ -286,12 +280,9 @@ def calculate_notional_value(
         block: Block,
 ):
     return (
-            session.scalar(
-                select(func.sum(TradeHistory.volume))
-                    .join(Account)  # Implicitly joins TradeHistory to Account
-                    .join(
-                    TradeHistory.quote)  # Assumes there's a relationship set on TradeHistory named 'quote' to join with Quote
-                    .where(
+            session.scalar(  # Implicitly joins TradeHistory to Account
+                select(func.sum(TradeHistory.volume)).join(Account).join(TradeHistory.quote).where(
+                    # Assumes there's a relationship set on TradeHistory named 'quote' to join with Quote
                     and_(
                         TradeHistory.blockNumber <= block.number,
                         Account.accountSource == affiliate_context.symmio_multi_account,
@@ -333,7 +324,7 @@ def calculate_hedger_upnl(
             and_(
                 Quote.blockNumber <= block.number,
                 Account.accountSource == affiliate_context.symmio_multi_account,
-                Quote.timeStamp > from_time,
+                Quote.timestamp > from_time,
                 Quote.partyB == hedger_context.hedger_address,
                 or_(
                     Quote.quoteStatus == 4,
@@ -379,7 +370,7 @@ def calculate_pnl_of_hedger(
                 Account.accountSource == affiliate_context.symmio_multi_account,
                 Quote.partyB == hedger_context.hedger_address,
                 Quote.quoteStatus == quote_status,
-                Quote.timeStamp > from_time,
+                Quote.timestamp > from_time,
                 Quote.blockNumber <= block.number,
                 Quote.tenant == context.tenant,
             )
@@ -403,18 +394,15 @@ def count_quotes_per_status(
         block: Block,
 ):
     q_counts = session.execute(
-        select(Quote.quoteStatus, func.count(Quote.id).label("count"))
-            .join(Account)
-            .where(
+        select(Quote.quoteStatus, func.count(Quote.id).label("count")).join(Account).where(
             and_(
-                Quote.timeStamp > from_time,
+                Quote.timestamp > from_time,
                 Quote.blockNumber <= block.number,
                 Account.accountSource == affiliate_context.symmio_multi_account,
                 Quote.tenant == context.tenant,
                 Quote.partyB == hedger_context.hedger_address,
             )
-        )
-            .group_by(Quote.quoteStatus)
+        ).group_by(Quote.quoteStatus)
     ).all()
     status_quotes = {}
     for item in q_counts:

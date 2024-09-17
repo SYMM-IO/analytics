@@ -37,11 +37,12 @@ def real_time_funding_rate(symbol: str) -> Decimal:
 
 
 def fetch_binance_income_histories_of_type(
-        snapshot_context: SnapshotContext,
-        hedger_context: HedgerContext,
-        income_type,
-        limit_days=30,
-        asset_field="asset",
+    snapshot_context: SnapshotContext,
+    hedger_context: HedgerContext,
+    income_type,
+    transaction_id,
+    limit_days=30,
+    asset_field="asset",
 ):
     # Get the latest timestamp from the database for the respective model
     latest_record = snapshot_context.session.scalar(
@@ -50,16 +51,14 @@ def fetch_binance_income_histories_of_type(
                 BinanceIncome.tenant == snapshot_context.context.tenant,
                 BinanceIncome.type == income_type,
             )
-        ).order_by(
-            BinanceIncome.timestamp.desc()
-        ).limit(1)
+        ).order_by(BinanceIncome.timestamp.desc()).limit(1)
     )
 
     # If there's a record in the database, use its timestamp as the starting point
     if latest_record:
         start_time = latest_record.timestamp + timedelta(minutes=1)
     else:
-        start_time = load_config(snapshot_context.session, snapshot_context.context).deployTimestamp
+        start_time = load_config(snapshot_context.session, snapshot_context.context, transaction_id).deployTimestamp
 
     end_time = start_time + timedelta(days=limit_days)
     current_time = datetime.utcnow()
@@ -72,9 +71,7 @@ def fetch_binance_income_histories_of_type(
         )
     ).all()
     while start_time < current_time:
-        print(
-            f"{snapshot_context.context.tenant}: Fetching binance {income_type} income histories between {start_time} and {end_time}: ",
-            end="")
+        print(f"{snapshot_context.context.tenant}: Fetching binance {income_type} income histories between {start_time} and {end_time}: ", end="")
         time.sleep(7)  # Prevents binance rate limit
         data = hedger_context.utils.binance_client.futures_income_history(
             startTime=int(start_time.timestamp() * 1000),
@@ -106,19 +103,22 @@ def fetch_binance_income_histories_of_type(
         end_time = start_time + timedelta(days=limit_days)
 
 
-def fetch_binance_income_histories(snapshot_context: SnapshotContext, hedger_context):
+def fetch_binance_income_histories(snapshot_context: SnapshotContext, hedger_context, transaction_id):
     fetch_binance_income_histories_of_type(
         snapshot_context,
         hedger_context,
         "FUNDING_FEE",
+        transaction_id,
     )
     fetch_binance_income_histories_of_type(
         snapshot_context,
         hedger_context,
         "TRANSFER",
+        transaction_id,
     )
     fetch_binance_income_histories_of_type(
         snapshot_context,
         hedger_context,
         "INTERNAL_TRANSFER",
+        transaction_id,
     )

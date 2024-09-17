@@ -52,8 +52,7 @@ def view_logs(services, follow):
 def main():
     parser = argparse.ArgumentParser(description="Manage Analytics Services")
     parser.add_argument("action", choices=["start", "stop", "restart", "logs"], help="Action to perform")
-    parser.add_argument("--services", nargs="*", choices=SERVICES + ["all"], default="all",
-                        help="Services to manage (default: all)")
+    parser.add_argument("--services", nargs="*", choices=SERVICES + ["all"], default="all", help="Services to manage (default: all)")
     parser.add_argument("--follow", action="store_true", help="Follow logs in real-time")
 
     args = parser.parse_args()

@@ -66,9 +66,7 @@ async def get_current_user(token: str = Depends(reusable_oauth)):
     username: str = payload.get("username")
     try:
         with db_session() as session:
-            admin_user = session.scalar(select(AdminUser).where(
-                AdminUser.username == username
-            ))
+            admin_user = session.scalar(select(AdminUser).where(AdminUser.username == username))
             session.expunge(admin_user)
             return admin_user
     except Exception:

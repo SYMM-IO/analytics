@@ -59,14 +59,15 @@ def fetch_and_save_all_trades(
 
 def calculate_binance_trade_volume(context: Context, session: Session, hedger_context: HedgerContext, block: Block):
     last_bt = session.scalar(
-        select(BinanceTrade.timestamp).where(
+        select(BinanceTrade.timestamp)
+        .where(
             and_(
                 BinanceTrade.tenant == context.tenant,
                 BinanceTrade.timestamp <= block.datetime(),
             )
-        ).order_by(
-            BinanceTrade.timestamp.desc()
-        ).limit(1)
+        )
+        .order_by(BinanceTrade.timestamp.desc())
+        .limit(1)
     )
     if last_bt:
         start_time = datetime.timestamp(last_bt.timestamp) * 1000 + 1000

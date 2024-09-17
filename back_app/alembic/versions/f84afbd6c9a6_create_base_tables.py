@@ -118,7 +118,6 @@ def upgrade() -> None:
         sa.Column("tenant", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("timestamp"),
     )
-
     op.create_table(
         "hedger_snapshot",
         sa.Column("hedger_contract_balance", sa.Numeric(precision=40, scale=0), nullable=True),
@@ -140,7 +139,6 @@ def upgrade() -> None:
         sa.Column("tenant", sa.String(), nullable=False, primary_key=True),
         sa.Column("timestamp", sa.DateTime(), nullable=False, primary_key=True),
     )
-
     op.create_table(
         "hedger_binance_snapshot",
         sa.Column("max_open_interest", sa.Numeric(precision=40, scale=0), nullable=True),
@@ -165,19 +163,16 @@ def upgrade() -> None:
         sa.Column("tenant", sa.String(), nullable=False, primary_key=True),
         sa.Column("timestamp", sa.DateTime(), nullable=False, primary_key=True),
     )
-
     op.create_table(
         "runtime_configuration",
-        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("name", sa.String()),
+        sa.Column("tenant", sa.String(), nullable=False, primary_key=True),
         sa.Column("decimals", sa.Integer(), nullable=True),
         sa.Column("lastHistoricalSnapshotBlock", sa.Integer(), nullable=True),
         sa.Column("lastSnapshotBlock", sa.Integer(), nullable=True),
         sa.Column("lastSyncBlock", sa.Integer()),
         sa.Column("snapshotBlockLag", sa.Integer()),
         sa.Column("deployTimestamp", sa.DateTime(), nullable=True),
-        sa.Column("tenant", sa.String(), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
+        sa.PrimaryKeyConstraint("tenant"),
     )
     op.create_table(
         "stats_bot_message",
@@ -193,7 +188,6 @@ def upgrade() -> None:
         sa.Column("name", sa.String(), nullable=True),
         sa.Column("tradingFee", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("timestamp", sa.DateTime(), nullable=True),
-        sa.Column("main_market", sa.Boolean(), nullable=True),
         sa.Column("updateTimestamp", sa.DateTime(), nullable=True),
         sa.Column("tenant", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
@@ -250,25 +244,26 @@ def upgrade() -> None:
         sa.Column("averageClosedPrice", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("blockNumber", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("closeDeadline", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("closePrice", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("closedAmount", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("closedPrice", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("closePrice", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("cva", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("fillAmount", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("fundingRateFee", sa.Numeric(precision=40, scale=0), nullable=True),
-        sa.Column("fundingRateOpenedPrice", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("initialCva", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("initialLf", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("initialOpenedPrice", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("initialPartyAmm", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("initialPartyBmm", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("lf", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("liquidateAmount", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("liquidatedSide", sa.Integer(), nullable=True),
-        sa.Column("liquidatePrice", sa.Integer(), nullable=True),
+        sa.Column("liquidatePrice", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("marketPrice", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("maxFundingRate", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("openDeadline", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("openedPrice", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("orderTypeClose", sa.String(), nullable=True),
         sa.Column("orderTypeOpen", sa.String(), nullable=True),
-        sa.Column("partyA", sa.String(), nullable=True),
         sa.Column("partyAmm", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("partyB", sa.String(), nullable=True),
         sa.Column("partyBmm", sa.Numeric(precision=40, scale=0), nullable=True),
@@ -280,8 +275,30 @@ def upgrade() -> None:
         sa.Column("requestedOpenPrice", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.Column("symbol_id", sa.String(), nullable=True),
         sa.Column("tenant", sa.String(), nullable=False),
-        sa.Column("timeStamp", sa.DateTime(), nullable=True),
+        sa.Column("timestamp", sa.DateTime(), nullable=True),
+        sa.Column("timestampAcceptCancelCloseRequest", sa.DateTime(), nullable=True),
+        sa.Column("timestampAcceptCancelRequest", sa.DateTime(), nullable=True),
+        sa.Column("timestampChargeFundingRate", sa.DateTime(), nullable=True),
+        sa.Column("timestampEmergencyClosePosition", sa.DateTime(), nullable=True),
+        sa.Column("timestampExpireQuote", sa.DateTime(), nullable=True),
+        sa.Column("timestampFillCloseRequest", sa.DateTime(), nullable=True),
+        sa.Column("timestampForceCancelCloseRequest", sa.DateTime(), nullable=True),
+        sa.Column("timestampForceCancelQuote", sa.DateTime(), nullable=True),
+        sa.Column("timestampForceClosePosition", sa.DateTime(), nullable=True),
+        sa.Column("timestampLastFundingPayment", sa.DateTime(), nullable=True),
+        sa.Column("timestampLiquidatePositionsPartyA", sa.DateTime(), nullable=True),
+        sa.Column("timestampLiquidatePositionsPartyB", sa.DateTime(), nullable=True),
+        sa.Column("timestampLockQuote", sa.DateTime(), nullable=True),
+        sa.Column("timestampOpenPosition", sa.DateTime(), nullable=True),
+        sa.Column("timestampRequestToCancelCloseRequest", sa.DateTime(), nullable=True),
+        sa.Column("timestampRequestToCancelQuote", sa.DateTime(), nullable=True),
+        sa.Column("timestampRequestToClosePosition", sa.DateTime(), nullable=True),
+        sa.Column("timestampRequestToLimitClosePosition", sa.DateTime(), nullable=True),
+        sa.Column("timestampSendQuote", sa.DateTime(), nullable=True),
+        sa.Column("timestampUnlockQuote", sa.DateTime(), nullable=True),
         sa.Column("tradingFee", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("userPaidFunding", sa.Numeric(precision=40, scale=0), nullable=True),
+        sa.Column("userReceivedFunding", sa.Numeric(precision=40, scale=0), nullable=True),
         sa.ForeignKeyConstraint(
             ["account_id"],
             ["account.id"],
@@ -323,6 +340,30 @@ def upgrade() -> None:
         sa.Column("tenant", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("address", "tenant"),
     )
+    op.create_table(
+        "log_transaction",
+        sa.Column("id", sa.Integer()),
+        sa.Column("label", sa.String()),
+        sa.Column("tenant", sa.String()),
+        sa.Column("data", sa.JSON()),
+        sa.Column("start_time", sa.DateTime()),
+        sa.Column("end_time", sa.DateTime()),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "log_span",
+        sa.Column("id", sa.Integer()),
+        sa.Column("transaction_id", sa.Integer()),
+        sa.Column("label", sa.String()),
+        sa.Column("data", sa.JSON()),
+        sa.Column("start_time", sa.DateTime()),
+        sa.Column("end_time", sa.DateTime()),
+        sa.PrimaryKeyConstraint("id"),
+        sa.ForeignKeyConstraint(
+            ["transaction_id"],
+            ["log_transaction.id"],
+        ),
+    )
 
 
 # ### end Alembic commands ###
@@ -347,4 +388,6 @@ def downgrade() -> None:
     op.drop_table("affiliate_snapshot")
     op.drop_table("admin_user")
     op.drop_table("gas_history")
+    op.drop_table("log_span")
+    op.drop_table("log_transaction")
     # ### end Alembic commands ###

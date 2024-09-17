@@ -1,21 +1,21 @@
-import logging
 from decimal import Decimal
 
 from multicallable import Multicallable
 from sqlalchemy import select, func, and_
 from sqlalchemy.orm import Session
 
+from app import log_span_context
 from app.models import (
     BalanceChange,
     BalanceChangeType,
     HedgerSnapshot,
-    RuntimeConfiguration, Quote,
+    RuntimeConfiguration,
+    Quote,
 )
 from config.settings import (
     Context,
     SYMMIO_ABI,
     HedgerContext,
-    LOGGER,
 )
 from services.gas_checker_service import gas_used_by_hedger_wallets
 from services.snaphshot_service import get_last_affiliate_snapshot_for
@@ -24,21 +24,16 @@ from utils.attr_dict import AttrDict
 from utils.block import Block
 from utils.model_utils import log_object_properties
 
-logger = logging.getLogger(LOGGER)
 
-
-def prepare_hedger_snapshot(
-        snapshot_context: SnapshotContext,
-        hedger_context: HedgerContext,
-        block: Block,
-):
+def prepare_hedger_snapshot(snapshot_context: SnapshotContext, hedger_context: HedgerContext, block: Block,
+                            transaction_id):
     print(f"----------------Prepare Hedger Snapshot Of {hedger_context.name}")
     context: Context = snapshot_context.context
     session: Session = snapshot_context.session
     config: RuntimeConfiguration = snapshot_context.config
 
     snapshot = AttrDict()
-    snapshot.gas = gas_used_by_hedger_wallets(snapshot_context, hedger_context)
+    snapshot.gas = gas_used_by_hedger_wallets(snapshot_context, hedger_context, block.number, transaction_id)
     print(f"Total gas spent by all wallets of {hedger_context.name}: {snapshot.gas}")
 
     snapshot.users_paid_funding_fee = session.execute(
@@ -82,7 +77,7 @@ def prepare_hedger_snapshot(
     ).scalar_one()
 
     snapshot.hedger_contract_deposit = hedger_deposit * 10 ** (
-            18 - config.decimals) + hedger_context.contract_deposit_diff
+                18 - config.decimals) + hedger_context.contract_deposit_diff
 
     hedger_withdraw = session.execute(
         select(func.coalesce(func.sum(BalanceChange.amount), Decimal(0))).where(
@@ -120,7 +115,8 @@ def prepare_hedger_snapshot(
     snapshot.tenant = context.tenant
     snapshot.block_number = block.number
     hedger_snapshot = HedgerSnapshot(**snapshot)
-    hedger_snapshot_details = ", ".join(log_object_properties(hedger_snapshot))
-    logger.debug(f'func={prepare_hedger_snapshot.__name__} -->  {hedger_snapshot_details=}\n')
+    with log_span_context(session, "Prepare Hedger Snapshot", transaction_id) as log_span:
+        hedger_snapshot_details = log_object_properties(hedger_snapshot)
+        log_span.add_data("hedger_snapshot", hedger_snapshot_details)
     hedger_snapshot.save(session)
     return hedger_snapshot

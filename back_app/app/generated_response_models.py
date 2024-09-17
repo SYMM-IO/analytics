@@ -1,5 +1,4 @@
 from datetime import datetime
-
 from pydantic import BaseModel
 
 
@@ -227,7 +226,6 @@ class SymbolModel(BaseModel):
     name: str
     tradingFee: int
     timestamp: datetime
-    main_market: bool
     updateTimestamp: datetime
     tenant: str
 

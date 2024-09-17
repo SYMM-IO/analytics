@@ -1,20 +1,17 @@
-import datetime
-import logging
 from decimal import Decimal
 
 from sqlalchemy import select, func, and_
 from sqlalchemy.orm import Session
 
+from app import log_span_context
 from app.models import (
     BinanceIncome,
     HedgerBinanceSnapshot,
-    StatsBotMessage,
 )
 from config.settings import (
     Context,
     HedgerContext,
     IGNORE_BINANCE_TRADE_VOLUME,
-    LOGGER,
 )
 from services.binance_service import real_time_funding_rate
 from services.binance_trade_volume_service import calculate_binance_trade_volume
@@ -23,14 +20,9 @@ from utils.attr_dict import AttrDict
 from utils.block import Block
 from utils.model_utils import log_object_properties
 
-logger = logging.getLogger(LOGGER)
 
-
-def prepare_hedger_binance_snapshot(
-        snapshot_context: SnapshotContext,
-        hedger_context: HedgerContext,
-        block: Block,
-):
+def prepare_hedger_binance_snapshot(snapshot_context: SnapshotContext, hedger_context: HedgerContext, block: Block,
+                                    transaction_id):
     print(f"----------------Prepare Hedger Binance Snapshot Of {hedger_context.name}")
     context: Context = snapshot_context.context
     session: Session = snapshot_context.session
@@ -63,8 +55,9 @@ def prepare_hedger_binance_snapshot(
 
     is_negative = total_transfers < 0
     snapshot.binance_deposit = (
-            Decimal(-(
-                    abs(total_transfers) * 10 ** 18) if is_negative else total_transfers * 10 ** 18) + hedger_context.binance_deposit_diff
+            Decimal(
+                -(abs(total_transfers) * 10 ** 18) if is_negative else total_transfers * 10 ** 18)
+            + hedger_context.binance_deposit_diff
     )
 
     if not block.is_for_past():
@@ -80,27 +73,29 @@ def prepare_hedger_binance_snapshot(
         snapshot.max_open_interest = Decimal(
             hedger_context.hedger_max_open_interest_ratio * snapshot.binance_max_withdraw_amount)
     else:
-        stat_message = session.scalar(
-            select(StatsBotMessage).where(
-                and_(
-                    StatsBotMessage.timestamp <= block.datetime(),
-                    StatsBotMessage.timestamp >= block.datetime() - datetime.timedelta(minutes=3),
-                    StatsBotMessage.tenant == context.tenant,
-                )
-            )
-        )
-        if not stat_message:
-            raise Exception(f"{context.tenant}: StatBot message not found for date: {block.datetime()}")
+        ...
+        # stat_message = session.scalar(
+        #     select(StatsBotMessage).where(
+        #         and_(
+        #             StatsBotMessage.timestamp <= block.datetime(),
+        #             StatsBotMessage.timestamp >= block.datetime() - datetime.timedelta(minutes=3),
+        #             StatsBotMessage.tenant == context.tenant,
+        #         )
+        #     )
+        # )
+        # FIXME  begin{
+        # if not stat_message:
+        #     raise Exception(f"{context.tenant}: StatBot message not found for date: {block.datetime()}")
 
-        snapshot.binance_maintenance_margin = stat_message.content["Total Maint. Margin"]
-        snapshot.binance_total_balance = stat_message.content["Total Margin Balance"]
-        snapshot.binance_account_health_ratio = stat_message.content["Health Ratio"]
-        snapshot.binance_cross_upnl = stat_message.content["Total Cross UnPnl"]
-        snapshot.binance_av_balance = stat_message.content["Available Balance"]
-        snapshot.binance_total_initial_margin = stat_message.content["Total Initial Margin"]
-        snapshot.binance_max_withdraw_amount = stat_message.content["Max Withdraw Amount"]
-        snapshot.max_open_interest = Decimal(
-            hedger_context.hedger_max_open_interest_ratio * snapshot.binance_max_withdraw_amount)
+        snapshot.binance_maintenance_margin = 0  # stat_message.content["Total Maint. Margin"]
+        snapshot.binance_total_balance = 0  # stat_message.content["Total Margin Balance"]
+        snapshot.binance_account_health_ratio = 0  # stat_message.content["Health Ratio"]
+        snapshot.binance_cross_upnl = 0  # stat_message.content["Total Cross UnPnl"]
+        snapshot.binance_av_balance = 0  # stat_message.content["Available Balance"]
+        snapshot.binance_total_initial_margin = 0  # stat_message.content["Total Initial Margin"]
+        snapshot.binance_max_withdraw_amount = 0  # stat_message.content["Max Withdraw Amount"]
+        snapshot.max_open_interest = 0  # Decimal(hedger_context.hedger_max_open_interest_ratio * snapshot.binance_max_withdraw_amount)
+        # FIXME  }end
 
     snapshot.binance_profit = snapshot.binance_total_balance - (snapshot.binance_deposit or Decimal(0))
     snapshot.binance_trade_volume = (
@@ -152,8 +147,9 @@ def prepare_hedger_binance_snapshot(
     snapshot.tenant = context.tenant
     snapshot.block_number = block.number
     print(snapshot)
-    hedger_snapshot = HedgerBinanceSnapshot(**snapshot)
-    hedger_snapshot_details = ", ".join(log_object_properties(hedger_snapshot))
-    logger.debug(f'func={prepare_hedger_binance_snapshot.__name__} -->  {hedger_snapshot_details=}')
-    hedger_snapshot.save(session)
-    return hedger_snapshot
+    hedger_binance_snapshot = HedgerBinanceSnapshot(**snapshot)
+    with log_span_context(session, "Prepare Hedger Binance Snapshot", transaction_id) as log_span:
+        hedger_binance_snapshot_details = log_object_properties(hedger_binance_snapshot)
+        log_span.add_data("hedger_binance_snapshot", hedger_binance_snapshot_details)
+    hedger_binance_snapshot.save(session)
+    return hedger_binance_snapshot

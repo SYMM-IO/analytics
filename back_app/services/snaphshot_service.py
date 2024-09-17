@@ -9,14 +9,15 @@ def get_last_affiliate_snapshot_for(context: Context, session: Session, affiliat
     from app.models import AffiliateSnapshot
 
     return session.scalar(
-        select(AffiliateSnapshot).where(
+        select(AffiliateSnapshot)
+        .where(
             and_(
                 AffiliateSnapshot.tenant == context.tenant,
                 AffiliateSnapshot.name == affiliate,
                 AffiliateSnapshot.hedger_name == hedger,
                 AffiliateSnapshot.block_number <= block.number,
             )
-        ).order_by(
-            AffiliateSnapshot.timestamp.desc()
-        ).limit(1)
+        )
+        .order_by(AffiliateSnapshot.timestamp.desc())
+        .limit(1)
     )

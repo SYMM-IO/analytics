@@ -32,7 +32,7 @@ export class AppComponent {
 		this.aggregated = environmentService.environments.length > 1
 		this.panel = environmentService.getValue("panel")
 		let favIcon: HTMLLinkElement = document.querySelector('#favIcon')!
-		favIcon.href = `assets/${this.assetsFolder}/favicon.ico`
+		favIcon.href = `assets/${this.assetsFolder}/favicon.png`
 		night$.subscribe(value => stateService.nightMode.next(true))// should be value instead of true later
 		if (this.panel) {
 			this.environmentForm.setValue(this.environmentService.selectedEnvironment.value)
