@@ -13,7 +13,7 @@ from config.contexts.blast_8_2 import blast_8_2_contexts
 from config.contexts.bnb_8_2 import bnb_8_2_contexts
 from config.contexts.mantle_8_2 import mantle_8_2_contexts
 
-DEC18 = 10 ** 18
+DEC18 = Decimal(10 ** 18)
 columns = """Chain
 Front-end
 Symbol
@@ -79,15 +79,18 @@ with db_session() as session:
         symbols[_symbol.id] = _symbol.name
 quote_status = {0: 'PENDING', 1: 'LOCKED', 2: 'CANCEL_PENDING', 3: 'CANCELED', 4: 'OPENED', 5: 'CLOSE_PENDING',
                 6: 'CANCEL_CLOSE_PENDING', 7: 'CLOSED', 8: 'LIQUIDATED', 9: 'EXPIRED', 10: 'LIQUIDATED_PENDING'}
-
-for chain in contexts:
-    print(chain)
+for affiliate in set(affiliates.values()):
+    print(affiliate)
     main_df = DataFrame({k: [] for k in columns})
     df_dict = {k: [] for k in columns}
+    valid_account_ids = [acc_id for acc_id, acc_src in accounts.items() if affiliates.get(acc_src) == affiliate]
     with db_session() as session:
         quotes: List[Quote] = session.scalars(
-            select(Quote).where(Quote.tenant == chain).options(
+            select(Quote).where(
+                Quote.account_id.in_(valid_account_ids)
+            ).options(
                 load_only(
+                    Quote.tenant,
                     Quote.quoteStatus,
                     Quote.id,
                     Quote.symbol_id,
@@ -114,8 +117,8 @@ for chain in contexts:
                     Quote.timestamp,
                 )))
         for quote in quotes:
-            df_dict['Chain'].append(chain)
-            df_dict['Front-end'].append(affiliates.get(accounts.get(quote.account_id)))
+            df_dict['Chain'].append(quote.tenant)
+            df_dict['Front-end'].append(affiliate)
             df_dict['Symbol'].append(symbols[quote.symbol_id])
             df_dict['Quote id'].append(quote.id.split('_')[-1])
             df_dict['Account'].append(quote.account_id)
@@ -130,43 +133,47 @@ for chain in contexts:
                     quote.timestampFillCloseRequest - quote.timestampOpenPosition)
             else:
                 df_dict['Open duration'].append(None)
-            df_dict['Funding rate fees paid'].append(quote.userPaidFunding)
+            df_dict['Funding rate fees paid'].append(Decimal(quote.userPaidFunding) / DEC18)
             df_dict['Platform fees paid'].append(
-                (Decimal(quote.initialOpenedPrice or 0) / DEC18) * (quote.quantity / DEC18) * (
-                        quote.tradingFee / DEC18))
-            df_dict['Locked collateral'].append((quote.initialCva + quote.initialLf) / DEC18)
+                (Decimal(quote.initialOpenedPrice or 0) / DEC18) * (Decimal(quote.quantity) / DEC18) * (
+                        Decimal(quote.tradingFee) / DEC18))
+            df_dict['Locked collateral'].append(Decimal(quote.initialCva + quote.initialLf) / DEC18)
             df_dict['Leverage'].append(
-                ((Decimal(quote.initialOpenedPrice or 0) * Decimal(quote.quantity or 0)) / (
-                            quote.initialCva + quote.initialLf)) / DEC18)
-            df_dict['Direction'].append('long' if quote.positionType == 0 else 'short')
-            df_dict['Order type'].append('limit' if quote.orderTypeOpen == 0 else 'market')
-            df_dict['Open size'].append((Decimal(quote.initialOpenedPrice or 0) / DEC18) * (quote.quantity / DEC18))
-            df_dict['Close size'].append((quote.averageClosedPrice / DEC18) * (quote.closedAmount / DEC18))
-            df_dict['Open price'].append((quote.initialOpenedPrice or 0) / DEC18)
-            df_dict['Open price after funding'].append((quote.openedPrice or 0) / DEC18)
-            df_dict['Market price'].append(quote.marketPrice / DEC18)
-            df_dict['Close price'].append(quote.averageClosedPrice / DEC18)
-            df_dict['Open quantity'].append(quote.quantity / DEC18)
-            df_dict['Close quantity'].append(quote.closedAmount / DEC18)
+                ((Decimal(quote.initialOpenedPrice or 0) * Decimal(quote.quantity or 0)) / Decimal(
+                    quote.initialCva + quote.initialLf)) / DEC18)
+            df_dict['Direction'].append('long' if int(quote.positionType) == 0 else 'short')
+            df_dict['Order type'].append('limit' if int(quote.orderTypeOpen) == 0 else 'market')
+            df_dict['Open size'].append(
+                (Decimal(quote.initialOpenedPrice or 0) / DEC18) * (Decimal(quote.quantity) / DEC18))
+            df_dict['Close size'].append(
+                (Decimal(quote.averageClosedPrice) / DEC18) * (Decimal(quote.closedAmount) / DEC18))
+            df_dict['Open price'].append(Decimal(quote.initialOpenedPrice or 0) / DEC18)
+            df_dict['Open price after funding'].append(Decimal(quote.openedPrice or 0) / DEC18)
+            df_dict['Market price'].append(Decimal(quote.marketPrice) / DEC18)
+            df_dict['Close price'].append(Decimal(quote.averageClosedPrice) / DEC18)
+            df_dict['Open quantity'].append(Decimal(quote.quantity) / DEC18)
+            df_dict['Close quantity'].append(Decimal(quote.closedAmount) / DEC18)
             if quote.quoteStatus == 7 and quote.averageClosedPrice:
-                df_dict['Price change (%)'].append(100 * quote.initialOpenedPrice / quote.averageClosedPrice)
+                df_dict['Price change (%)'].append(
+                    100 * (quote.averageClosedPrice - quote.initialOpenedPrice) / quote.initialOpenedPrice)
             elif quote.quoteStatus == 8 and quote.liquidatePrice:
-                df_dict['Price change (%)'].append(100 * quote.initialOpenedPrice / quote.liquidatePrice)
+                df_dict['Price change (%)'].append(
+                    100 * (quote.liquidatePrice - quote.initialOpenedPrice) / quote.initialOpenedPrice)
             else:
                 df_dict['Price change (%)'].append(None)
             pl_usdGross_realized = (1 if quote.positionType == 0 else -1) * (
                     (Decimal(quote.averageClosedPrice or 0) - Decimal(quote.initialOpenedPrice or 0)) / DEC18) * (
-                                           quote.quantity / DEC18) - quote.userPaidFunding - (
+                                           Decimal(quote.quantity) / DEC18) - Decimal(quote.userPaidFunding) / DEC18 - (
                                            Decimal(quote.initialOpenedPrice or 0) / DEC18) * (
-                                           quote.quantity / DEC18) * (quote.tradingFee / DEC18)
+                                           Decimal(quote.quantity) / DEC18) * (Decimal(quote.tradingFee) / DEC18)
             df_dict['Profit'].append(pl_usdGross_realized)
             df_dict['Return'].append(
                 100 * pl_usdGross_realized / (
-                        (quote.initialLf + quote.initialCva + quote.initialPartyAmm) / DEC18))
-            df_dict['CVA'].append(quote.initialCva / DEC18)
-            df_dict['PartyA MM'].append(quote.initialPartyAmm / DEC18)
-            df_dict['LF'].append(quote.initialLf / DEC18)
+                        Decimal(quote.initialLf + quote.initialCva + quote.initialPartyAmm) / DEC18))
+            df_dict['CVA'].append(Decimal(quote.initialCva) / DEC18)
+            df_dict['PartyA MM'].append(Decimal(quote.initialPartyAmm) / DEC18)
+            df_dict['LF'].append(Decimal(quote.initialLf) / DEC18)
             df_dict['Block number'].append(quote.blockNumber)
             df_dict['Multi account'].append(accounts.get(quote.account_id))
     main_df = main_df._append(DataFrame(df_dict))
-    main_df.to_csv(chain + '_quotes.csv', index=False)
+    main_df.to_csv(affiliate + '_quotes.csv', index=False)
