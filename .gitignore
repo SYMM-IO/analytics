@@ -1,0 +1,11 @@
+app/__pycache__/
+app/namespaces/__pycache__/
+__pycache__
+dashboard/node_modules/
+dashboard/package-lock.json
+dashboard/.angular
+.vscode
+.idea/
+dashboard/dist/
+pnpm-lock.yaml
+app/config/local_settings.py

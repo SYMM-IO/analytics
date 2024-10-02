@@ -1,0 +1,85 @@
+<div tuiCardLarge size="l" textAlign="left" class="flex flex-column gap-2 affiliate_snapshot_island">
+    <h3 class="title"> {{ affiliate.name }} </h3>
+    <tui-accordion class="container" [closeOthers]="false">
+        <tui-accordion-item [open]="true">
+            Hedger state
+            <ng-template tuiAccordionItemContent>
+                <div>Contract
+                    Allocated: {{ affiliateSnapshot?.hedger_contract_allocated | bigNumberFormat }}
+                </div>
+                <div>UPnL: {{ affiliateSnapshot?.hedger_upnl | bigNumberFormat }}</div>
+            </ng-template>
+        </tui-accordion-item>
+        <tui-accordion-item [open]="true">
+            Stats
+            <ng-template tuiAccordionItemContent>
+                <div>Trade Volume: {{ affiliateSnapshot?.trade_volume | bigNumberFormat }}</div>
+                <div>Platform Fee: {{ affiliateSnapshot?.platform_fee | bigNumberFormat }}</div>
+            </ng-template>
+        </tui-accordion-item>
+        <tui-accordion-item>
+            Quotes States
+            <ng-template tuiAccordionItemContent>
+                <div class="flex flex-column" *tuiLet="getStatusQuotes() as status_quotes">
+                    <div>PENDING: {{ status_quotes["0"] || 0 }}</div>
+                    <div>LOCKED: {{ status_quotes["1"] || 0 }}</div>
+                    <div>CANCEL_PENDING: {{ status_quotes["2"] || 0 }}</div>
+                    <div>CANCELED: {{ status_quotes["3"] || 0 }}</div>
+                    <div>OPENED: {{ status_quotes["4"] || 0 }}</div>
+                    <div>CLOSE_PENDING: {{ status_quotes["5"] || 0 }}</div>
+                    <div>CANCEL_CLOSE_PENDING: {{ status_quotes["6"] || 0 }}</div>
+                    <div>CLOSED: {{ status_quotes["7"] || 0 }}</div>
+                    <div>LIQUIDATED: {{ status_quotes["8"] || 0 }}</div>
+                    <div>EXPIRED: {{ status_quotes["9"] || 0 }}</div>
+                </div>
+            </ng-template>
+        </tui-accordion-item>
+        <tui-accordion-item>
+            PNL
+            <ng-template tuiAccordionItemContent>
+                <div>Closed: {{ affiliateSnapshot?.pnl_of_closed | bigNumberFormat }}</div>
+                <div>Liquidated: {{ affiliateSnapshot?.pnl_of_liquidated | bigNumberFormat }}
+                </div>
+            </ng-template>
+        </tui-accordion-item>
+        <tui-accordion-item>
+            Notional Values
+            <ng-template tuiAccordionItemContent>
+                <div>Closed: {{ affiliateSnapshot?.closed_notional_value | bigNumberFormat }}
+                </div>
+                <div>
+                    Liquidated: {{ affiliateSnapshot?.liquidated_notional_value | bigNumberFormat }}
+                </div>
+                <div>Opened: {{ affiliateSnapshot?.opened_notional_value | bigNumberFormat }}
+                </div>
+            </ng-template>
+        </tui-accordion-item>
+        <tui-accordion-item>
+            CVA
+            <ng-template tuiAccordionItemContent>
+                <div>Earned: {{ affiliateSnapshot?.earned_cva | bigNumberFormat }}</div>
+                <div>Loss: {{ affiliateSnapshot?.loss_cva | bigNumberFormat }}</div>
+            </ng-template>
+        </tui-accordion-item>
+        <tui-accordion-item>
+            Users Activity
+            <ng-template tuiAccordionItemContent>
+                <div>Accounts Count: {{ affiliateSnapshot?.accounts_count }}</div>
+                <div>Active Accounts: {{ affiliateSnapshot?.active_accounts }}</div>
+                <div>Users Count: {{ affiliateSnapshot?.users_count }}</div>
+                <div>Active Users: {{ affiliateSnapshot?.active_users }}</div>
+            </ng-template>
+        </tui-accordion-item>
+        <tui-accordion-item>
+            Users Balances
+            <ng-template tuiAccordionItemContent>
+                <div>
+                    Deposit: {{ affiliateSnapshot?.all_contract_deposit | bigNumberFormat:18 }}
+                </div>
+                <div>
+                    Withdraw: {{ affiliateSnapshot?.all_contract_withdraw | bigNumberFormat:18 }}
+                </div>
+            </ng-template>
+        </tui-accordion-item>
+    </tui-accordion>
+</div>
