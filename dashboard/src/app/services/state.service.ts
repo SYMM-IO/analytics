@@ -5,8 +5,6 @@ import {BehaviorSubject, Subject} from "rxjs"
 	providedIn: 'root'
 })
 export class StateService {
-	public nightMode: Subject<boolean> = new BehaviorSubject<boolean>(true)
-
 	constructor() {
 	}
 }

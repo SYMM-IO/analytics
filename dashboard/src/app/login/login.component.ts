@@ -1,25 +1,29 @@
+import { TuiButtonLoading } from "@taiga-ui/kit";
+import { TuiIslandDirective, TuiTextfieldControllerModule, TuiInputModule, TuiInputNumberModule } from "@taiga-ui/legacy";
 import {Component, Inject} from '@angular/core'
 import {AsyncPipe} from "@angular/common"
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms"
-import {TuiAlertService, TuiButtonModule, TuiTextfieldControllerModule} from "@taiga-ui/core"
-import {TuiInputModule, TuiInputNumberModule, TuiIslandModule} from "@taiga-ui/kit"
+import { TuiAlertService, TuiButton } from "@taiga-ui/core"
 import {LoadingService} from "../services/Loading.service"
 import {AuthService} from "../services/auth.service"
 import {Router} from "@angular/router"
+import {TuiCardLarge} from "@taiga-ui/layout";
 
 @Component({
     selector: 'app-login',
     standalone: true,
-    imports: [
-        AsyncPipe,
-        FormsModule,
-        TuiButtonModule,
-        TuiInputNumberModule,
-        TuiIslandModule,
-        TuiTextfieldControllerModule,
-        ReactiveFormsModule,
-        TuiInputModule,
-    ],
+	imports: [
+		AsyncPipe,
+		FormsModule,
+		TuiButton,
+		TuiInputNumberModule,
+		TuiIslandDirective,
+		TuiTextfieldControllerModule,
+		ReactiveFormsModule,
+		TuiInputModule,
+		TuiButtonLoading,
+		TuiCardLarge
+	],
     templateUrl: './login.component.html',
     styleUrl: './login.component.scss',
 })

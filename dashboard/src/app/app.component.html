@@ -1,8 +1,6 @@
-<tui-root *tuiLet="stateService.nightMode | async as night"
-          [tuiMode]="night ? 'onDark' : null" class="h-full">
-    <tui-theme-night *ngIf="night"></tui-theme-night>
+<tui-root tuiTheme="dark" class="h-full">
     <div class="root flex flex-column h-full flex-grow p-2">
-        <tui-island class="flex flex-row align-content-center justify-content-between toolbar p-2">
+        <div tuiCardLarge class="flex flex-row align-content-center justify-content-between toolbar p-2">
             <div class="align-items-end flex flex-row gap-2">
                 <img [src]="'../assets/'+assetsFolder+'/logo.svg'" class="clover-logo">
                 @if (aggregated || panel) {
@@ -20,19 +18,19 @@
                 <div class="flex flex-row gap-2 align-items-center mx-2">
                     <form tuiGroup class="group" [collapsed]="true">
                         @for (env of environmentService.environments; track env.name) {
-                            <tui-radio-block contentAlign="right" [formControl]="environmentForm" [item]="env" size="s" style="min-width: 120px">
+                            <label tuiBlock="s"> <input tuiRadio type="radio" [formControl]="environmentForm"
+                                                        [value]="env" style="min-width: 120px">
                                 <span>
                                     {{ env.name }}
                                 </span>
-                            </tui-radio-block>
+                            </label>
                         }
                     </form>
                 </div>
             }
-        </tui-island>
+        </div>
         <div class="body flex-grow-1 w-full h-full pt-2">
             <router-outlet></router-outlet>
         </div>
     </div>
-
 </tui-root>

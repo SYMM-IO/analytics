@@ -1,7 +1,6 @@
-<div class="chart-container w-full h-full p-2" style="position: relative"
-     *tuiLet="stateService.nightMode | async as night">
+<div class="chart-container w-full h-full p-2" style="position: relative">
     <div class="flex flex-row align-items-center gap-2">
-        <span class="w-full tui-island__title">{{ chartTitle }}</span>
+        <span tuiTitle class="w-full text-xl pb-2" >{{ chartTitle }}</span>
         <div class="flex flex-row justify-content-end align-items-center gap-2 pr-4">
             <button tuiButton type="button" size="s" appearance="outline" (click)="onShowPartyBVolumeChanged()"
                     [ngClass]="{'selected-button': showPartyBVolume}" tuiHint="Show PartyB Volume"
@@ -13,7 +12,7 @@
                     *ngIf="hasGroupByMonthAction">
                 M
             </button>
-            <button tuiIconButton type="button" icon="tuiIconChevronLeft" size="s" appearance="outline"
+            <button tuiIconButton type="button" iconStart="@tui.chevron-left" size="s" appearance="outline"
                     (click)="goBack()" [disabled]="startTime < minTime" tuiHint="Back">
             </button>
             <tui-select
@@ -54,15 +53,15 @@
                     [min]="intervalRangeMin"
             >
                 Choose dates
-                <input placeholder="From - To" tuiTextfield/>
+                <input placeholder="From - To" tuiTextfieldLegacy/>
             </tui-input-date-range>
-            <button tuiIconButton type="button" icon="tuiIconChevronRight" size="s" appearance="outline"
+            <button tuiIconButton type="button" iconStart="@tui.chevron-right" size="s" appearance="outline"
                     (click)="goForward()" [disabled]="endTime > maxTime" tuiHint="Forward">
             </button>
         </div>
     </div>
-    <div echarts *ngIf="chartOption" [options]="chartOption" [theme]="night ? 'dark' : 'light'"
+    <div echarts *ngIf="chartOption" [options]="chartOption" theme="dark"
          [autoResize]="true" #chart (chartInit)="onChartInit($event)"
-         class="chart" appResizeObserver (resize)="onResize($event)">
+         class="chart">
     </div>
 </div>

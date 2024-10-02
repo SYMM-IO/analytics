@@ -1,23 +1,30 @@
-import {NgDompurifySanitizer} from "@tinkoff/ng-dompurify"
+import {TuiLet} from "@taiga-ui/cdk";
+import {TuiCardLarge} from '@taiga-ui/layout';
 import {
-    TUI_SANITIZER,
-    TuiAlertModule,
-    TuiButtonModule,
-    TuiDataListModule,
-    TuiDialogModule,
-    TuiDropdownModule,
-    TuiGroupModule,
-    TuiHintModule,
-    TuiModeModule,
-    TuiRootModule,
-    TuiSvgModule,
-    TuiTextfieldControllerModule,
-    TuiThemeNightModule,
+	TuiComboBoxModule,
+	TuiInputDateRangeModule,
+	TuiInputNumberModule,
+	TuiSelectModule,
+	TuiTextfieldControllerModule,
+	TuiUnfinishedValidator
+} from "@taiga-ui/legacy";
+import {NG_EVENT_PLUGINS} from "@taiga-ui/event-plugins";
+import {
+	TuiAlert,
+	TuiButton,
+	TuiDataList,
+	TuiDialog,
+	TuiDropdown,
+	TuiGroup,
+	TuiHint,
+	TuiIcon,
+	TuiRoot,
+	TuiSurface, TuiTitle
 } from "@taiga-ui/core"
 import {NgModule} from "@angular/core"
 import {BrowserModule} from "@angular/platform-browser"
 
-import { provideHttpClient, withInterceptors } from "@angular/common/http"
+import {provideHttpClient, withInterceptors} from "@angular/common/http"
 import {BrowserAnimationsModule} from "@angular/platform-browser/animations"
 import {Apollo} from "apollo-angular"
 import {NgxEchartsModule} from "ngx-echarts"
@@ -28,15 +35,8 @@ import {ENVIRONMENT} from "./services/enviroment.service"
 import {environment} from "../environments/environment"
 import {ChartComponent} from './chart/chart.component'
 import {HomeComponent} from './home/home.component'
-import {TuiLetModule} from "@taiga-ui/cdk"
 import {ResizeObserverDirective} from './resize-observer.directive'
-import {
-    TuiAccordionModule, TuiComboBoxModule, TuiDataListWrapperModule, TuiInputDateRangeModule,
-    TuiInputNumberModule,
-    TuiIslandModule,
-    TuiRadioBlockModule,
-    TuiSelectModule
-} from "@taiga-ui/kit"
+import {TuiAccordion, TuiBlock, TuiButtonLoading, TuiDataListWrapper, TuiRadio} from "@taiga-ui/kit"
 import {PanelHomeComponent} from "./panel-home/panel-home.component"
 import {ReactiveFormsModule} from "@angular/forms"
 import {NgxJsonViewerModule} from "ngx-json-viewer"
@@ -60,48 +60,46 @@ import {TimeAgoPipe} from "./panel-home/hedger-state-viewer/timeAgo.pipe"
 		HedgerStateViewerComponent,
 		AffiliateStateViewerComponent,
 		TimeAgoPipe,
-		ChartComponent
+		ChartComponent,
 	],
-    imports: [
-        BrowserModule,
-        BrowserAnimationsModule,
-        AppRoutingModule,
-        NgxEchartsModule.forRoot({
-            echarts: () => import("echarts"),
-        }),
-        TuiRootModule,
-        TuiDialogModule,
-        TuiAlertModule,
-        TuiThemeNightModule,
-        TuiModeModule,
-        TuiLetModule,
-        TuiIslandModule,
-        TuiInputNumberModule,
-        ReactiveFormsModule,
-        TuiTextfieldControllerModule,
-        TuiButtonModule,
-        TuiGroupModule,
-        TuiRadioBlockModule,
-        NgxJsonViewerModule,
-        TuiHintModule,
-        TuiAccordionModule,
-        TuiDropdownModule,
-        TuiDataListModule,
-        TuiSvgModule,
-        TuiSelectModule,
-        TuiDataListWrapperModule,
-        TuiComboBoxModule,
-        TuiInputDateRangeModule,
-    ],
-    providers: [
-        provideHttpClient(
-            withInterceptors([httpInterceptor]),
-        ),
-        {provide: ENVIRONMENT, useValue: environment},
-        Apollo,
-        {provide: TUI_SANITIZER, useClass: NgDompurifySanitizer},
-    ],
-    bootstrap: [AppComponent],
+	imports: [
+		BrowserModule,
+		BrowserAnimationsModule,
+		AppRoutingModule,
+		NgxEchartsModule.forRoot({
+			echarts: () => import("echarts"),
+		}),
+		TuiRoot,
+		TuiDialog,
+		TuiAlert,
+		TuiLet,
+		TuiInputNumberModule,
+		ReactiveFormsModule,
+		TuiTextfieldControllerModule,
+		TuiButton,
+		TuiGroup,
+		TuiBlock, ...TuiRadio,
+		NgxJsonViewerModule,
+		...TuiHint,
+		...TuiAccordion,
+		...TuiDropdown,
+		...TuiDataList,
+		TuiIcon,
+		TuiSelectModule,
+		...TuiDataListWrapper,
+		TuiComboBoxModule,
+		TuiInputDateRangeModule, TuiButtonLoading, TuiUnfinishedValidator,
+		TuiCardLarge, TuiSurface, TuiTitle,
+	],
+	providers: [
+		provideHttpClient(
+			withInterceptors([httpInterceptor]),
+		),
+		{provide: ENVIRONMENT, useValue: environment},
+		Apollo,
+		NG_EVENT_PLUGINS
+	],
+	bootstrap: [AppComponent],
 })
 export class AppModule {
 }

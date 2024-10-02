@@ -1,19 +1,19 @@
 <div class="root w-full h-full flex flex-column align-items-center justify-content-center">
-    <tui-island size="l" textAlign="center" class="flex flex-column align-items-center gap-2 quote_loader">
+    <div tuiCardLarge size="l" textAlign="center" class="flex flex-column align-items-center gap-2 quote_loader">
         <h3 class="title"> Pleas enter your username and password </h3>
         <form class="w-full flex flex-column gap-2" [formGroup]="form">
             <tui-input formControlName="username">
                 Username
-                <input name="username" tuiTextfield/>
+                <input name="username" tuiTextfieldLegacy/>
             </tui-input>
             <tui-input formControlName="password">
                 Password
-                <input name="password" tuiTextfield type="password"/>
+                <input name="password" tuiTextfieldLegacy type="password"/>
             </tui-input>
         </form>
         <button tuiButton type="button" class="quote_loader_action_button" (click)="onLogin()" [disabled]="!form.valid"
-                [showLoader]="loadingService.loading()">
+                [loading]="loadingService.loading()">
             Login
         </button>
-    </tui-island>
+    </div>
 </div>

@@ -1,15 +1,15 @@
 <div class="flex flex-column align-content-center justify-content-center w-full h-full">
-    <tui-island size="l" textAlign="center" class="flex flex-column align-items-center gap-2 quote_loader">
+    <div tuiCardLarge size="l" textAlign="center" class="flex flex-column align-items-center gap-2 quote_loader">
         <h3 class="title"> Load a quote data </h3>
         <form class="w-full">
             <tui-input-number tuiTextfieldPrefix="Quote " tuiTextfieldSize="m" [formControl]="quoteForm">
                 Quote Id
-                <input name="quoteId" tuiTextfield/>
+                <input name="quoteId" tuiTextfieldLegacy/>
             </tui-input-number>
         </form>
         <button tuiButton type="button" class="quote_loader_action_button" (click)="onLoadQuote()" [disabled]="!quoteForm.valid"
-                [showLoader]="loadingService.loading()">
+                [loading]="loadingService.loading()">
             Load
         </button>
-    </tui-island>
+    </div>
 </div>
