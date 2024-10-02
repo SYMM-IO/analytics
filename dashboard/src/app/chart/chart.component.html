@@ -13,7 +13,7 @@
                 M
             </button>
             <button tuiIconButton type="button" iconStart="@tui.chevron-left" size="s" appearance="outline"
-                    (click)="goBack()" [disabled]="startTime < minTime" tuiHint="Back">
+                    (click)="goBack()" [disabled]="startTime < minTime || intervalForm.value.name == 'Custom'" tuiHint="Back">
             </button>
             <tui-select
                     *ngIf="viewOptions.length > 1"
@@ -56,7 +56,7 @@
                 <input placeholder="From - To" tuiTextfieldLegacy/>
             </tui-input-date-range>
             <button tuiIconButton type="button" iconStart="@tui.chevron-right" size="s" appearance="outline"
-                    (click)="goForward()" [disabled]="endTime > maxTime" tuiHint="Forward">
+                    (click)="goForward()" [disabled]="endTime > maxTime || intervalForm.value.name == 'Custom' " tuiHint="Forward">
             </button>
         </div>
     </div>
