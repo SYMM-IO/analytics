@@ -79,8 +79,10 @@ def gas_used_by_hedger_wallets(snapshot_context: SnapshotContext, hedger_context
         for address in hedger_context.wallets:
             gas_history: GasHistory = snapshot_context.session.scalar(
                 select(GasHistory).where(
-                    and_(GasHistory.address == address, GasHistory.tenant == snapshot_context.context.tenant))
-            )
+                    and_(
+                        GasHistory.address == address,
+                        GasHistory.tenant == snapshot_context.context.tenant,
+                    )))
             gas_history_details = log_object_properties(gas_history)
             log_span.add_data("gas history before", gas_history_details)
             if gas_history:
@@ -97,6 +99,7 @@ def gas_used_by_hedger_wallets(snapshot_context: SnapshotContext, hedger_context
                     tenant=snapshot_context.context.tenant
                 )
                 gas_history.upsert(snapshot_context.session)
+            snapshot_context.session.commit()
             log_span.add_data("gas_amount", f'{gas_history.gas_amount}')
             print(
                 f"Loaded {gas_history.tx_count} transactions for wallet {address} with total gas of",

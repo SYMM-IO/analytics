@@ -1,8 +1,8 @@
+import { TuiLet } from "@taiga-ui/cdk";
+import { TuiAccordion } from "@taiga-ui/kit";
 import {Component, Inject} from '@angular/core'
 import {TuiDialogContext, TuiDialogService} from "@taiga-ui/core"
-import {POLYMORPHEUS_CONTEXT} from "@tinkoff/ng-polymorpheus"
-import {TuiLetModule} from "@taiga-ui/cdk"
-import {TuiAccordionModule} from "@taiga-ui/kit"
+import {POLYMORPHEUS_CONTEXT} from "@taiga-ui/polymorpheus"
 import {EnvironmentInterface} from "../../../../environments/environment-interface"
 import BigNumber from "bignumber.js"
 
@@ -10,8 +10,8 @@ import BigNumber from "bignumber.js"
 	selector: 'quote-viewer',
 	standalone: true,
 	imports: [
-		TuiLetModule,
-		TuiAccordionModule,
+		TuiLet,
+		TuiAccordion,
 	],
 	templateUrl: './quote-viewer.component.html',
 	styleUrl: './quote-viewer.component.scss',

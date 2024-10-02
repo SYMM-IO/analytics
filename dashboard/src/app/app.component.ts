@@ -2,7 +2,6 @@ import {Component, Inject} from "@angular/core"
 import {Router} from "@angular/router"
 import {EnvironmentService} from "./services/enviroment.service"
 import {Observable} from "rxjs"
-import {TuiNightThemeService} from "@taiga-ui/core"
 import {StateService} from "./services/state.service"
 import {FormControl} from "@angular/forms"
 import {EnvironmentInterface} from "../environments/environment-interface"
@@ -24,8 +23,7 @@ export class AppComponent {
 	constructor(
 		private readonly router: Router,
 		readonly environmentService: EnvironmentService,
-		readonly stateService: StateService,
-		@Inject(TuiNightThemeService) readonly night$: Observable<boolean>,
+		readonly stateService: StateService
 	) {
 		this.assetsFolder = environmentService.getValue("assetsFolder")
 		this.mainColor = environmentService.getValue("mainColor")
@@ -33,7 +31,6 @@ export class AppComponent {
 		this.panel = environmentService.getValue("panel")
 		let favIcon: HTMLLinkElement = document.querySelector('#favIcon')!
 		favIcon.href = `assets/${this.assetsFolder}/favicon.png`
-		night$.subscribe(value => stateService.nightMode.next(true))// should be value instead of true later
 		if (this.panel) {
 			this.environmentForm.setValue(this.environmentService.selectedEnvironment.value)
 			this.environmentForm.valueChanges

@@ -101,8 +101,8 @@ export class ChartComponent implements OnInit, OnDestroy {
 	onResize(event: DOMRectReadOnly) {
 		if (this.chart) {
 			this.chart.resize({
-				width: event.width - 15,
-				height: event.height,
+				width: event.width - 35,
+				height: event.height -20,
 			});
 		}
 	}

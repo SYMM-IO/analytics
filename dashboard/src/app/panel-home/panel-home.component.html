@@ -11,7 +11,7 @@
                            [attr.aria-checked]="rla.isActive"
                            [routerLink]="item.routerLink">
                             {{ item.label }}
-                            <tui-svg *ngIf="rla.isActive" src="tuiIconCheck"></tui-svg>
+                            <tui-icon  *ngIf="rla.isActive" icon="@tui.check"></tui-icon>
                         </a>
                     }
                 </tui-opt-group>

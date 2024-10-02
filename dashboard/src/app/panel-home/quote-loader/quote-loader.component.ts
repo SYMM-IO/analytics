@@ -1,6 +1,6 @@
 import {Component, Inject, Injector} from '@angular/core'
 import {switchMap} from "rxjs"
-import {PolymorpheusComponent} from "@tinkoff/ng-polymorpheus"
+import {PolymorpheusComponent} from "@taiga-ui/polymorpheus"
 import {LoadingService} from "../../services/Loading.service"
 import {FormControl, Validators} from "@angular/forms"
 import {EnvironmentService} from "../../services/enviroment.service"

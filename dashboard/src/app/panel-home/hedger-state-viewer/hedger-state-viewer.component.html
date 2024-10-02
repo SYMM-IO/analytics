@@ -1,5 +1,5 @@
 <div class="flex flex-row gap-2 align-items-start">
-    <tui-island *tuiLet="(hedgerSnapshot|async) as hedgerSnap">
+    <div tuiCardLarge *tuiLet="(hedgerSnapshot|async) as hedgerSnap">
         <span class="tui-island__title">State</span>
         @if (hedgerSnap) {
             <div class="flex flex-column gap-1 mt-2">
@@ -26,7 +26,7 @@
         } @else {
             <div>Not Available</div>
         }
-    </tui-island>
+    </div>
     <tui-accordion class="container" [closeOthers]="false" *tuiLet="(hedgerSnapshot|async) as hedgerSnap">
         <tui-accordion-item>
             Contract Balances
