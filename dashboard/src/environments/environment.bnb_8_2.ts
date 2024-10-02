@@ -27,7 +27,7 @@ export const environment: EnvironmentInterface = {
 	name: "BNB_8_2",
 	serverUrl: "https://analytics-api.symm.io",
 	assetsFolder: "thena",
-	subgraphUrl: "https://api.studio.thegraph.com/query/62454/analytics_bnb_8_2/version/latest",
+	subgraphUrl: "https://api.goldsky.com/api/public/project_cm1hfr4527p0f01u85mz499u8/subgraphs/bnb_analytics/latest/gn",
 	collateralDecimal: 18,
 	version: Version.V_0_8_2,
 	startDate: new Date(1702058147000),

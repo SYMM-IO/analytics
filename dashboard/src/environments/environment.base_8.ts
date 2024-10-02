@@ -23,7 +23,7 @@ export const hedger: Hedger = {
 export const environment: EnvironmentInterface = {
     name: "BASE_8",
     serverUrl: "https://analytics-api.symm.io",
-    subgraphUrl: "https://api.studio.thegraph.com/query/62454/symmioanalytics_base_8/version/latest",
+    subgraphUrl: "https://api.goldsky.com/api/public/project_cm1hfr4527p0f01u85mz499u8/subgraphs/base_0_8_0_analytics/latest/gn",
     version: Version.V_0_8_0,
     collateralDecimal: 6,
     affiliates: [
