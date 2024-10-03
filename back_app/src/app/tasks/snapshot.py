@@ -7,7 +7,7 @@ from aioclock import AioClock, OnStartUp, OnShutDown, Every
 from aioclock.group import Group
 
 from src.app import db_session, log_transaction_context, log_span_context
-from src.config import contexts
+from src.config.local_settings import contexts
 from src.config.settings import SNAPSHOT_INTERVAL
 from src.services.snapshot.snapshot_job import fetch_snapshot
 from src.services.telegram_service import send_alert, escape_markdown_v1

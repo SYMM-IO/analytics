@@ -14,6 +14,7 @@ from src.routers.snapshot_router import router as snapshot_router
 from src.routers.user_history_router import router as user_history_router
 from src.routers.daily_history_router import router as daily_history_router
 from src.routers.health_metric_router import router as heath_metric_router
+from src.routers.report_router import router as report_router
 from src.utils.security_utils import get_current_user
 
 
@@ -44,6 +45,7 @@ app.include_router(user_history_router, dependencies=(Depends(get_current_user),
 app.include_router(daily_history_router)
 app.include_router(heath_metric_router)
 app.include_router(auth_router)
+app.include_router(report_router)
 
 
 @app.get("/", response_model=ReadRoot)
