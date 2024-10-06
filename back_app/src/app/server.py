@@ -45,7 +45,7 @@ app.include_router(user_history_router, dependencies=(Depends(get_current_user),
 app.include_router(daily_history_router)
 app.include_router(heath_metric_router)
 app.include_router(auth_router)
-app.include_router(report_router)
+app.include_router(report_router, dependencies=(Depends(get_current_user),))
 
 
 @app.get("/", response_model=ReadRoot)
