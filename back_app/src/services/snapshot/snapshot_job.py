@@ -20,6 +20,7 @@ from src.config.settings import (
     SNAPSHOT_BLOCK_LAG,
     SNAPSHOT_BLOCK_LAG_STEP,
     CHAIN_ONLY,
+    SNAPSHOT_SCHEDULE,
 )
 from src.services.binance_service import fetch_binance_income_histories
 from src.services.config_service import load_config
@@ -32,14 +33,18 @@ from src.utils.block import Block
 from src.utils.model_utils import log_object_properties
 from src.utils.subgraph.subgraph_client import SubgraphClient
 
+SNAPSHOT_COUNT = 0
+
 
 async def fetch_snapshot(context: Context, session: Session, log_tx: LogTransaction):
+    global SNAPSHOT_COUNT
     sync_block = await sync_data(context, session, log_tx.id)
     log_tx.add_data("sync_block", sync_block.number)
     log_tx.add_data("get_snapshot", context.get_snapshot)
     log_tx.add_data("sync_only", not context.get_snapshot)
     if context.get_snapshot:
         do_fetch_snapshot(context, session, snapshot_block=sync_block, transaction_id=log_tx.id)
+        SNAPSHOT_COUNT += 1
 
 
 async def sync_data(context, session, transaction_id):
@@ -100,38 +105,43 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block,
         multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
         snapshot_context = SnapshotContext(context, session, config, multicallable)
 
-        if not historical_mode and Block(context.w3, config.lastSnapshotBlock).timestamp() >= snapshot_block.timestamp():
+        if not historical_mode and Block(context.w3,
+                                         config.lastSnapshotBlock).timestamp() >= snapshot_block.timestamp():
             # TODO: go to next rpc and try again
             return
-
-        with log_span_context(session, "Prepare Affiliates Snapshots", transaction_id):
-            for affiliate_context in context.affiliates:
-                for hedger_context in context.hedgers:
-                    with log_span_context(session, "Prepare Affiliate Snapshot", transaction_id) as span:
-                        span.add_data("affiliate", affiliate_context.name)
-                        span.add_data("hedger", hedger_context.name)
-                        prepare_affiliate_snapshot(snapshot_context, affiliate_context, hedger_context, snapshot_block, transaction_id)
-
-        with log_span_context(session, "Prepare Liquidators Snapshots", transaction_id):
-            for liquidator in context.liquidators:
-                with log_span_context(session, "Prepare Liquidator Snapshot", transaction_id) as span:
-                    span.add_data("liquidator", liquidator)
-                    prepare_liquidator_snapshot(snapshot_context, liquidator, snapshot_block, transaction_id)
+        if SNAPSHOT_COUNT % SNAPSHOT_SCHEDULE.affiliate == 0:
+            with log_span_context(session, "Prepare Affiliates Snapshots", transaction_id):
+                for affiliate_context in context.affiliates:
+                    for hedger_context in context.hedgers:
+                        with log_span_context(session, "Prepare Affiliate Snapshot", transaction_id) as span:
+                            span.add_data("affiliate", affiliate_context.name)
+                            span.add_data("hedger", hedger_context.name)
+                            prepare_affiliate_snapshot(snapshot_context, affiliate_context, hedger_context,
+                                                       snapshot_block, transaction_id)
+        if SNAPSHOT_COUNT % SNAPSHOT_SCHEDULE.liquidator == 0:
+            with log_span_context(session, "Prepare Liquidators Snapshots", transaction_id):
+                for liquidator in context.liquidators:
+                    with log_span_context(session, "Prepare Liquidator Snapshot", transaction_id) as span:
+                        span.add_data("liquidator", liquidator)
+                        prepare_liquidator_snapshot(snapshot_context, liquidator, snapshot_block, transaction_id)
 
         with log_span_context(session, "Prepare Hedgers Snapshots", transaction_id) as span:
             span.add_data("chain_only", CHAIN_ONLY)
             for hedger_context in context.hedgers:
-                with log_span_context(session, "Prepare Hedger Snapshot", transaction_id) as sp:
-                    sp.add_data("hedger", hedger_context.name)
-                    prepare_hedger_snapshot(snapshot_context, hedger_context, snapshot_block, transaction_id)
+                if SNAPSHOT_COUNT % SNAPSHOT_SCHEDULE.hedger == 0:
+                    with log_span_context(session, "Prepare Hedger Snapshot", transaction_id) as sp:
+                        sp.add_data("hedger", hedger_context.name)
+                        prepare_hedger_snapshot(snapshot_context, hedger_context, snapshot_block, transaction_id)
 
                 if not CHAIN_ONLY and hedger_context.has_binance_keys():
                     with log_span_context(session, "Fetch Income Histories", transaction_id) as sp:
                         sp.add_data("hedger", hedger_context.name)
                         fetch_binance_income_histories(snapshot_context, hedger_context, transaction_id)
-                    with log_span_context(session, "Prepare Hedger Binance Snapshot", transaction_id) as sp:
-                        sp.add_data("hedger", hedger_context.name)
-                        prepare_hedger_binance_snapshot(snapshot_context, hedger_context, snapshot_block, transaction_id)
+                    if SNAPSHOT_COUNT % SNAPSHOT_SCHEDULE.hedger_binance == 0:
+                        with log_span_context(session, "Prepare Hedger Binance Snapshot", transaction_id) as sp:
+                            sp.add_data("hedger", hedger_context.name)
+                            prepare_hedger_binance_snapshot(snapshot_context, hedger_context, snapshot_block,
+                                                            transaction_id)
         if not historical_mode:
             config.lastSnapshotBlock = snapshot_block.number
             config.upsert(session)

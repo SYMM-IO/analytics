@@ -6,6 +6,7 @@ import web3
 from web3.middleware import geth_poa_middleware
 from web3_collections import MultiEndpointHTTPProvider
 
+from src.utils.attr_dict import AttrDict
 from src.utils.binance_client import BinanceClient
 
 
@@ -102,7 +103,8 @@ SERVER_PORT = 7231
 
 # Intervals
 FETCH_STAT_DATA_INTERVAL = 5 * 5
-SNAPSHOT_INTERVAL = 2 * 2
+SNAPSHOT_INTERVAL = 2  # 120
+SNAPSHOT_SCHEDULE = AttrDict(dict(affiliate=10, liquidator=30, hedger=5, hedger_binance=5))
 SNAPSHOT_BLOCK_LAG = 10
 SNAPSHOT_BLOCK_LAG_STEP = 25
 DEBUG_MODE = False
