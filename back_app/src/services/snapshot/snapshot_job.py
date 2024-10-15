@@ -31,7 +31,7 @@ from src.services.snapshot.liquidator_snapshot import prepare_liquidator_snapsho
 from src.services.snapshot.snapshot_context import SnapshotContext
 from src.utils.block import Block
 from src.utils.model_utils import log_object_properties
-from src.utils.subgraph.subgraph_client import SubgraphClient
+from src.utils.subgraph.subgraph_client import Clients
 
 SNAPSHOT_COUNT = 0
 
@@ -59,13 +59,10 @@ async def sync_data(context, session, transaction_id):
         sync_block.backward(config.snapshotBlockLag)
         log_span.add_data("sync_block", sync_block.number)
         try:
-            SubgraphClient(context, User).sync(session, sync_block, transaction_id)
-            SubgraphClient(context, Symbol).sync(session, sync_block, transaction_id)
-            SubgraphClient(context, Account).sync(session, sync_block, transaction_id)
-            SubgraphClient(context, BalanceChange).sync(session, sync_block, transaction_id)
-            SubgraphClient(context, Quote).sync(session, sync_block, transaction_id)
-            SubgraphClient(context, TradeHistory).sync(session, sync_block, transaction_id)
-            SubgraphClient(context, DailyHistory).sync(session, sync_block, transaction_id)
+            Clients(
+                context,
+                [User, Symbol, Account, BalanceChange, Quote, TradeHistory, DailyHistory]
+            ).sync(session, sync_block, transaction_id)
         except Exception as e:
             log_span.add_data("error", str(e))
             if "only indexed up to block number" in str(e):

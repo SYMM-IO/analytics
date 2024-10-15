@@ -67,17 +67,17 @@ class SubgraphClient:
         return obj
 
     def load(
-        self,
-        method: str,
-        fields: List[str],
-        first: int,
-        create_function,
-        block: Block = None,
-        conditions: List[GraphQlCondition] = None,
-        order_by: str = None,
-        order_direction: OrderDirection = OrderDirection.DESCENDING,
-        change_block_gte: int = None,
-        log_prefix="",
+            self,
+            method: str,
+            fields: List[str],
+            first: int,
+            create_function,
+            block: Block = None,
+            conditions: List[GraphQlCondition] = None,
+            order_by: str = None,
+            order_direction: OrderDirection = OrderDirection.DESCENDING,
+            change_block_gte: int = None,
+            log_prefix="",
     ):
         if conditions is None:
             conditions = []
@@ -127,14 +127,14 @@ class SubgraphClient:
         return items
 
     def load_all(
-        self,
-        fields: List[str],
-        create_function,
-        block: Block = None,
-        conditions: List[GraphQlCondition] = None,
-        page_limit: int = None,
-        change_block_gte: int = None,
-        log_prefix="",
+            self,
+            fields: List[str],
+            create_function,
+            block: Block = None,
+            conditions: List[GraphQlCondition] = None,
+            page_limit: int = None,
+            change_block_gte: int = None,
+            log_prefix="",
     ):
         if not conditions:
             conditions = []
@@ -151,13 +151,15 @@ class SubgraphClient:
                 formatted_pv = str(pagination_value)
             else:
                 formatted_pv = None
-            pagination_field_name = self.config.name_maps.get(self.config.pagination_field) or self.config.pagination_field
+            pagination_field_name = self.config.name_maps.get(
+                self.config.pagination_field) or self.config.pagination_field
             temp = self.load(
                 method=self.config.method_name,
                 fields=fields,
                 create_function=create_function,
                 first=limit,
-                conditions=([GraphQlCondition(pagination_field_name, "gte", formatted_pv)] if formatted_pv else []) + conditions,
+                conditions=([GraphQlCondition(pagination_field_name, "gte",
+                                              formatted_pv)] if formatted_pv else []) + conditions,
                 log_prefix=log_prefix,
                 change_block_gte=change_block_gte,
                 block=block,
@@ -197,3 +199,17 @@ class SubgraphClient:
         )
         for o in out:
             pass
+
+
+class Clients:
+    def __init__(self, context: Context, models: List[Type[BaseModel]] = None, proxies: dict = None):
+        self.context = context
+        self.models: List[Type[BaseModel]] = models
+        self.proxies = proxies
+
+    def add(self, model: Type[BaseModel]):
+        self.models.append(model)
+
+    def sync(self, session, sync_block, transaction_id):
+        for model in self.models:
+            SubgraphClient(self.context, model, self.proxies).sync(session, sync_block, transaction_id)
