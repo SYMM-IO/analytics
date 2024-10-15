@@ -1,11 +1,43 @@
 import BigNumber from "bignumber.js"
 
-export class DailyHistory {
-	[key: string]: string | BigNumber | undefined;
+function assignBigNumberProperties(target: any, source: any, properties: string[]) {
+	for (const prop of properties) {
+		target[prop] = BigNumber(source[prop])
+	}
+}
 
+function assignZeroBigNumberProperties(target: any, properties: string[]) {
+	for (const prop of properties) {
+		target[prop] = BigNumber(0)
+	}
+}
+
+export abstract class BaseHistory {
 	id?: string
+	accountSource?: string
+
+	public static getTime(dh: BaseHistory): number | null {
+		if (dh.id != null) return Number(dh.id.split("_")[0])
+		return null
+	}
+
+	public abstract emptyOne(timestamp: number): BaseHistory
+
+	public abstract applyDecimals(decimals: number, properties: string[]): BaseHistory
+
+	protected doApplyDecimals(decimals: number, properties: string[]): BaseHistory {
+		for (const property of properties) {
+			;(this as any)[property] = BigNumber((this as any)[property]!).times(BigNumber(10).pow(18 - decimals))
+		}
+		return this
+	}
+}
+
+export class DailyHistory extends BaseHistory {
 	quotesCount?: BigNumber
 	tradeVolume?: BigNumber
+	liquidateTradeVolume?: BigNumber
+	averagePositionSize?: BigNumber
 	deposit?: BigNumber
 	withdraw?: BigNumber
 	allocate?: BigNumber
@@ -15,55 +47,82 @@ export class DailyHistory {
 	newAccounts?: BigNumber
 	platformFee?: BigNumber
 	openInterest?: BigNumber
-	accountSource?: string
+
+	static propertyList = [
+		"quotesCount",
+		"tradeVolume",
+		"liquidateTradeVolume",
+		"averagePositionSize",
+		"deposit",
+		"withdraw",
+		"allocate",
+		"deallocate",
+		"newUsers",
+		"activeUsers",
+		"newAccounts",
+		"platformFee",
+		"openInterest",
+	]
+
+	static withDecimalsProperties = ["deposit", "withdraw"]
 
 	static fromRawObject(raw: any): DailyHistory {
 		const dailyHistory = new DailyHistory()
 		dailyHistory.id = raw.id
-		dailyHistory.quotesCount = BigNumber(raw.quotesCount)
-		dailyHistory.tradeVolume = BigNumber(raw.tradeVolume)
-		dailyHistory.deposit = BigNumber(raw.deposit)
-		dailyHistory.withdraw = BigNumber(raw.withdraw)
-		dailyHistory.allocate = BigNumber(raw.allocate)
-		dailyHistory.deallocate = BigNumber(raw.deallocate)
-		dailyHistory.newUsers = BigNumber(raw.newUsers)
-		dailyHistory.activeUsers = BigNumber(raw.activeUsers)
-		dailyHistory.newAccounts = BigNumber(raw.newAccounts)
-		dailyHistory.platformFee = BigNumber(raw.platformFee)
-		dailyHistory.openInterest = BigNumber(raw.openInterest)
 		dailyHistory.accountSource = raw.accountSource
+		assignBigNumberProperties(dailyHistory, raw, DailyHistory.propertyList)
 		return dailyHistory
 	}
 
-	static emptyOne(timestamp: string, accountSource = ""): DailyHistory {
+	public emptyOne(timestamp: number): DailyHistory {
 		const dailyHistory = new DailyHistory()
-		dailyHistory.id = timestamp + "_"
-		dailyHistory.quotesCount = BigNumber(0)
-		dailyHistory.tradeVolume = BigNumber(0)
-		dailyHistory.deposit = BigNumber(0)
-		dailyHistory.withdraw = BigNumber(0)
-		dailyHistory.allocate = BigNumber(0)
-		dailyHistory.deallocate = BigNumber(0)
-		dailyHistory.newUsers = BigNumber(0)
-		dailyHistory.activeUsers = BigNumber(0)
-		dailyHistory.newAccounts = BigNumber(0)
-		dailyHistory.platformFee = BigNumber(0)
-		dailyHistory.openInterest = BigNumber(0)
-		dailyHistory.accountSource = accountSource
+		dailyHistory.id = `${timestamp}_`
+		dailyHistory.accountSource = this.accountSource
+		assignZeroBigNumberProperties(dailyHistory, DailyHistory.propertyList)
 		return dailyHistory
 	}
 
-	public static getTime(dh: DailyHistory): number | null {
-		if (dh.id != null)
-			return Number(dh.id?.split("_")[0])
-		return null
+	public override applyDecimals(decimals: number): DailyHistory {
+		return super.doApplyDecimals(decimals, DailyHistory.withDecimalsProperties) as DailyHistory
 	}
 }
 
-export class TotalHistory {
-	[key: string]: string | BigNumber | undefined;
+export class SolverDailyHistory extends BaseHistory {
+	tradeVolume?: BigNumber
+	averagePositionSize?: BigNumber
+	positionsCount?: BigNumber
+	fundingPaid?: BigNumber
+	fundingReceived?: BigNumber
+	openInterest?: BigNumber
+	solver?: string
 
-	id?: string
+	static propertyList = ["tradeVolume", "averagePositionSize", "positionsCount", "fundingPaid", "fundingReceived", "openInterest"]
+	static withDecimalsProperties = []
+
+	static fromRawObject(raw: any): SolverDailyHistory {
+		const history = new SolverDailyHistory()
+		history.id = raw.id
+		history.accountSource = raw.accountSource
+		history.solver = raw.solver
+		assignBigNumberProperties(history, raw, SolverDailyHistory.propertyList)
+		return history
+	}
+
+	public emptyOne(timestamp: number): SolverDailyHistory {
+		const history = new SolverDailyHistory()
+		history.id = `${timestamp}_`
+		history.accountSource = this.accountSource
+		history.solver = this.solver
+		assignZeroBigNumberProperties(history, SolverDailyHistory.propertyList)
+		return history
+	}
+
+	public override applyDecimals(decimals: number): SolverDailyHistory {
+		return super.doApplyDecimals(decimals, SolverDailyHistory.withDecimalsProperties) as SolverDailyHistory
+	}
+}
+
+export class TotalHistory extends BaseHistory {
 	quotesCount?: BigNumber
 	tradeVolume?: BigNumber
 	deposit?: BigNumber
@@ -75,239 +134,89 @@ export class TotalHistory {
 	accounts?: BigNumber
 	platformFee?: BigNumber
 	openInterest?: BigNumber
-	accountSource?: string
+
+	static propertyList = [
+		"quotesCount",
+		"tradeVolume",
+		"deposit",
+		"withdraw",
+		"allocate",
+		"deallocate",
+		"activeUsers",
+		"users",
+		"accounts",
+		"platformFee",
+		"openInterest",
+	]
+	static withDecimalsProperties = ["deposit", "withdraw"]
 
 	static fromRawObject(raw: any): TotalHistory {
-		const dailyHistory = new TotalHistory()
-		dailyHistory.id = raw.id
-		dailyHistory.quotesCount = BigNumber(raw.quotesCount)
-		dailyHistory.tradeVolume = BigNumber(raw.tradeVolume)
-		dailyHistory.deposit = BigNumber(raw.deposit)
-		dailyHistory.withdraw = BigNumber(raw.withdraw)
-		dailyHistory.allocate = BigNumber(raw.allocate)
-		dailyHistory.deallocate = BigNumber(raw.deallocate)
-		dailyHistory.users = BigNumber(raw.users)
-		dailyHistory.activeUsers = BigNumber(raw.activeUsers)
-		dailyHistory.accounts = BigNumber(raw.accounts)
-		dailyHistory.platformFee = BigNumber(raw.platformFee)
-		dailyHistory.openInterest = BigNumber(raw.openInterest)
-		dailyHistory.accountSource = raw.accountSource
-		return dailyHistory
+		const history = new TotalHistory()
+		history.id = raw.id
+		history.accountSource = raw.accountSource
+		assignBigNumberProperties(history, raw, TotalHistory.propertyList)
+		return history
+	}
+
+	public emptyOne(timestamp: number): TotalHistory {
+		return {} as any
+	}
+
+	public override applyDecimals(decimals: number): TotalHistory {
+		return super.doApplyDecimals(decimals, TotalHistory.withDecimalsProperties) as TotalHistory
 	}
 }
 
-
-export class WeeklyHistory {
-	[key: string]: string | BigNumber | undefined;
-
-	id?: string
+export class WeeklyHistory extends BaseHistory {
 	activeUsers?: BigNumber
-	accountSource?: string
+
+	static propertyList = ["activeUsers"]
+	static withDecimalsProperties = []
 
 	static fromRawObject(raw: any): WeeklyHistory {
-		const h = new WeeklyHistory()
-		h.id = raw.id
-		h.activeUsers = BigNumber(raw.activeUsers)
-		h.accountSource = raw.accountSource
-		return h
+		const history = new WeeklyHistory()
+		history.id = raw.id
+		history.accountSource = raw.accountSource
+		assignBigNumberProperties(history, raw, WeeklyHistory.propertyList)
+		return history
 	}
 
-	static emptyOne(timestamp: string, accountSource = ""): WeeklyHistory {
-		const h = new WeeklyHistory()
-		h.id = timestamp + "_"
-		h.activeUsers = BigNumber(0)
-		h.accountSource = accountSource
-		return h
+	public emptyOne(timestamp: number): WeeklyHistory {
+		const history = new WeeklyHistory()
+		history.id = `${timestamp}_`
+		history.accountSource = this.accountSource
+		assignZeroBigNumberProperties(history, WeeklyHistory.propertyList)
+		return history
 	}
 
-	public static getTime(dh: WeeklyHistory): number | null {
-		if (dh.id != null)
-			return Number(dh.id?.split("_")[0])
-		return null
+	public override applyDecimals(decimals: number): WeeklyHistory {
+		return super.doApplyDecimals(decimals, WeeklyHistory.withDecimalsProperties) as WeeklyHistory
 	}
 }
 
-
-export class MonthlyHistory {
-	[key: string]: string | BigNumber | undefined;
-
-	id?: string
+export class MonthlyHistory extends BaseHistory {
 	activeUsers?: BigNumber
-	accountSource?: string
+
+	static propertyList = ["activeUsers"]
+	static withDecimalsProperties = []
 
 	static fromRawObject(raw: any): MonthlyHistory {
-		const h = new MonthlyHistory()
-		h.id = raw.id
-		h.activeUsers = BigNumber(raw.activeUsers)
-		h.accountSource = raw.accountSource
-		return h
+		const history = new MonthlyHistory()
+		history.id = raw.id
+		history.accountSource = raw.accountSource
+		assignBigNumberProperties(history, raw, MonthlyHistory.propertyList)
+		return history
 	}
 
-	static emptyOne(timestamp: string, accountSource = ""): MonthlyHistory {
-		const h = new MonthlyHistory()
-		h.id = timestamp + "_"
-		h.activeUsers = BigNumber(0)
-		h.accountSource = accountSource
-		return h
+	public emptyOne(timestamp: number): MonthlyHistory {
+		const history = new MonthlyHistory()
+		history.id = `${timestamp}_`
+		history.accountSource = this.accountSource
+		assignZeroBigNumberProperties(history, MonthlyHistory.propertyList)
+		return history
 	}
 
-	public static getTime(dh: MonthlyHistory): number | null {
-		if (dh.id != null)
-			return Number(dh.id?.split("_")[0])
-		return null
+	public override applyDecimals(decimals: number): MonthlyHistory {
+		return super.doApplyDecimals(decimals, MonthlyHistory.withDecimalsProperties) as MonthlyHistory
 	}
-}
-
-export class AffiliateSnapshot {
-	status_quotes?: string
-	pnl_of_closed?: BigNumber
-	pnl_of_liquidated?: BigNumber
-	closed_notional_value?: BigNumber
-	liquidated_notional_value?: BigNumber
-	opened_notional_value?: BigNumber
-	earned_cva?: BigNumber
-	loss_cva?: BigNumber
-	hedger_contract_allocated?: BigNumber
-	hedger_upnl?: BigNumber
-	all_contract_deposit?: BigNumber
-	all_contract_withdraw?: BigNumber
-	platform_fee?: BigNumber
-	accounts_count?: number
-	active_accounts?: number
-	users_count?: number
-	active_users?: number
-	liquidator_states?: any
-	trade_volume?: BigNumber
-	timestamp?: string
-	account_source?: string
-	name?: string
-	hedger_name?: string
-	tenant?: string
-
-	static fromRawObject(raw: any): AffiliateSnapshot {
-		const snapshot = new AffiliateSnapshot()
-		snapshot.status_quotes = raw.status_quotes
-		snapshot.pnl_of_closed = BigNumber(raw.pnl_of_closed)
-		snapshot.pnl_of_liquidated = BigNumber(raw.pnl_of_liquidated)
-		snapshot.closed_notional_value = BigNumber(raw.closed_notional_value)
-		snapshot.liquidated_notional_value = BigNumber(raw.liquidated_notional_value)
-		snapshot.opened_notional_value = BigNumber(raw.opened_notional_value)
-		snapshot.earned_cva = BigNumber(raw.earned_cva)
-		snapshot.loss_cva = BigNumber(raw.loss_cva)
-		snapshot.hedger_contract_allocated = BigNumber(raw.hedger_contract_allocated)
-		snapshot.hedger_upnl = BigNumber(raw.hedger_upnl)
-		snapshot.all_contract_deposit = BigNumber(raw.all_contract_deposit)
-		snapshot.all_contract_withdraw = BigNumber(raw.all_contract_withdraw)
-		snapshot.platform_fee = BigNumber(raw.platform_fee)
-		snapshot.accounts_count = raw.accounts_count
-		snapshot.active_accounts = raw.active_accounts
-		snapshot.users_count = raw.users_count
-		snapshot.active_users = raw.active_users
-		snapshot.liquidator_states = raw.liquidator_states
-		snapshot.trade_volume = BigNumber(raw.trade_volume)
-		snapshot.timestamp = raw.timestamp
-		snapshot.account_source = raw.account_source
-		snapshot.name = raw.name
-		snapshot.hedger_name = raw.hedger_name
-		snapshot.tenant = raw.tenant
-		return snapshot
-	}
-}
-
-
-export class HedgerSnapshot {
-	hedger_contract_balance?: BigNumber
-	hedger_contract_deposit?: BigNumber
-	hedger_contract_withdraw?: BigNumber
-	max_open_interest?: BigNumber
-	binance_maintenance_margin?: BigNumber
-	binance_total_balance?: BigNumber
-	binance_account_health_ratio?: BigNumber
-	binance_cross_upnl?: BigNumber
-	binance_av_balance?: BigNumber
-	binance_total_initial_margin?: BigNumber
-	binance_max_withdraw_amount?: BigNumber
-	binance_deposit?: BigNumber
-	binance_trade_volume?: BigNumber
-	binance_paid_funding_fee?: BigNumber
-	binance_received_funding_fee?: BigNumber
-	users_paid_funding_fee?: BigNumber
-	users_received_funding_fee?: BigNumber
-	binance_next_funding_fee?: BigNumber
-	binance_profit?: BigNumber
-	contract_profit?: BigNumber
-	earned_cva?: BigNumber
-	loss_cva?: BigNumber
-	liquidators_profit?: BigNumber
-	liquidators_balance?: BigNumber
-	liquidators_withdraw?: BigNumber
-	liquidators_allocated?: BigNumber
-	name?: string
-	tenant?: string
-	timestamp?: string
-
-	totalState(): BigNumber {
-		return (this?.binance_profit || BigNumber(0)).plus(this!.contract_profit!)
-	}
-
-	totalStateWithLiquidator(): BigNumber {
-		return this.totalState().plus(this.liquidators_profit!)
-	}
-
-	fundingFeeProfit(): BigNumber {
-		return (this.binance_received_funding_fee || BigNumber(0))
-			.plus(this.binance_paid_funding_fee || BigNumber(0))
-			.plus((this.users_received_funding_fee || BigNumber(0)).dividedBy(new BigNumber(10).pow(18)))
-			.plus((this.users_paid_funding_fee || BigNumber(0)).dividedBy(new BigNumber(10).pow(18)))
-	}
-
-	returnOnInvestment(): BigNumber {
-		return this.totalState()
-			.div((this.binance_deposit || BigNumber(0)).plus(this.hedger_contract_deposit!))
-			.multipliedBy(100)
-	}
-
-	returnOnInvestmentWithLiquidator(): BigNumber {
-		return this.totalStateWithLiquidator()
-			.div((this.binance_deposit || BigNumber(0)).plus(this.hedger_contract_deposit!))
-			.multipliedBy(100)
-	}
-
-	static fromRawObject(raw: any): HedgerSnapshot {
-		const snapshot = new HedgerSnapshot()
-		snapshot.hedger_contract_balance = BigNumber(raw.hedger_contract_balance)
-		snapshot.hedger_contract_deposit = BigNumber(raw.hedger_contract_deposit)
-		snapshot.hedger_contract_withdraw = BigNumber(raw.hedger_contract_withdraw)
-		snapshot.max_open_interest = BigNumberOf(raw.max_open_interest)
-		snapshot.binance_maintenance_margin = BigNumberOf(raw.binance_maintenance_margin)
-		snapshot.binance_total_balance = BigNumberOf(raw.binance_total_balance)
-		snapshot.binance_account_health_ratio = BigNumberOf(raw.binance_account_health_ratio)
-		snapshot.binance_cross_upnl = BigNumberOf(raw.binance_cross_upnl)
-		snapshot.binance_av_balance = BigNumberOf(raw.binance_av_balance)
-		snapshot.binance_total_initial_margin = BigNumberOf(raw.binance_total_initial_margin)
-		snapshot.binance_max_withdraw_amount = BigNumberOf(raw.binance_max_withdraw_amount)
-		snapshot.binance_deposit = BigNumberOf(raw.binance_deposit)
-		snapshot.binance_trade_volume = BigNumberOf(raw.binance_trade_volume)
-		snapshot.binance_paid_funding_fee = BigNumberOf(raw.binance_paid_funding_fee)
-		snapshot.binance_received_funding_fee = BigNumberOf(raw.binance_received_funding_fee)
-		snapshot.users_paid_funding_fee = BigNumberOf(raw.users_paid_funding_fee)
-		snapshot.users_received_funding_fee = BigNumberOf(raw.users_received_funding_fee)
-		snapshot.binance_next_funding_fee = BigNumberOf(raw.binance_next_funding_fee)
-		snapshot.binance_profit = BigNumberOf(raw.binance_profit)
-		snapshot.contract_profit = BigNumberOf(raw.contract_profit)
-		snapshot.earned_cva = BigNumberOf(raw.earned_cva)
-		snapshot.loss_cva = BigNumberOf(raw.loss_cva)
-		snapshot.liquidators_profit = BigNumberOf(raw.liquidators_profit)
-		snapshot.liquidators_balance = BigNumberOf(raw.liquidators_balance)
-		snapshot.liquidators_withdraw = BigNumberOf(raw.liquidators_withdraw)
-		snapshot.liquidators_allocated = BigNumberOf(raw.liquidators_allocated)
-		snapshot.name = raw.name
-		snapshot.tenant = raw.tenant
-		snapshot.timestamp = raw.timestamp
-		return snapshot
-	}
-}
-
-export function BigNumberOf(value: any): undefined | BigNumber {
-	return value == null ? undefined : BigNumber(value)
 }
