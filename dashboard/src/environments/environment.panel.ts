@@ -1,7 +1,7 @@
 import {EnvironmentInterface} from "./environment-interface"
-import {environment as bnb82Env} from "./environment.bnb_8_2"
-import {environment as base82Env} from "./environment.base_8_2"
-import {environment as blast82Env} from "./environment.blast_8_2"
+import {environment as bnb82Env} from "./environment.bnb"
+import {environment as base82Env} from "./environment.base"
+import {environment as blast82Env} from "./environment.blast"
 
 export const environment: EnvironmentInterface = {
     name: "panel",

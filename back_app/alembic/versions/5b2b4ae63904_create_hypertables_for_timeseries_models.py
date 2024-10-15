@@ -12,7 +12,7 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import text
 
-from app.models import BaseModel
+from src.app.models import BaseModel
 
 # revision identifiers, used by Alembic.
 revision: str = "5b2b4ae63904"

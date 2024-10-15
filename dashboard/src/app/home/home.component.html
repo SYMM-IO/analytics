@@ -1,74 +1,46 @@
 <div class="flex flex-column flex-grow gap-2 pb-2">
-    <div class="infos flex flex-row gap-2 w-full flex-grow-1 flex-wrap">
-        <div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
-            <app-info title="Deposits" [totalValue]="totalHistory?.deposit" [todayValue]="todayHistory?.deposit"
-                      [lastDayValue]="lastDayHistory?.deposit" [formatMoney]="true">
-            </app-info>
-        </div>
-        <div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
-            <app-info title="Traded Volume" [totalValue]="totalHistory?.tradeVolume"
-                      [todayValue]="todayHistory?.tradeVolume"
-                      [lastDayValue]="lastDayHistory?.tradeVolume" [formatMoney]="true">
-            </app-info>
-        </div>
-        <div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
-            <app-info title="Quotes" [totalValue]="totalHistory?.quotesCount" [todayValue]="todayHistory?.quotesCount"
-                      [lastDayValue]="lastDayHistory?.quotesCount">
-            </app-info>
-        </div>
-        <div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
-            <app-info title="Users" [totalValue]="totalHistory?.users" [todayValue]="todayHistory?.newUsers"
-                      [lastDayValue]="lastDayHistory?.newUsers">
-            </app-info>
-        </div>
-        <div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
-            <app-info title="Accounts" [totalValue]="totalHistory?.accounts" [todayValue]="todayHistory?.newAccounts"
-                      [lastDayValue]="lastDayHistory?.newAccounts">
-            </app-info>
-        </div>
-    </div>
-    @if (dailyAffiliateHistories) {
-        <div class="top-charts flex flex-row gap-2 w-full flex-wrap flex-grow-1">
-            <div tuiCardLarge tuiSurface="elevated" class="chart-card">
-                <app-chart
-                        [dailyAffiliateHistories]="dailyAffiliateHistories" [fieldName]="'quotesCount'"
-                        [chartTitle]="'Quotes'">
-                </app-chart>
-            </div>
-            <div tuiCardLarge tuiSurface="elevated" class="chart-card">
-                <app-chart
-                        [dailyAffiliateHistories]="dailyAffiliateHistories" [fieldName]="'tradeVolume'"
-                        [chartTitle]="'Trade Volume'"
-                        [yAxisFormatter]="moneyValueFormatter" [decimals]="18">
-                </app-chart>
-            </div>
-            <div tuiCardLarge tuiSurface="elevated" class="chart-card">
-                <app-chart
-                        [dailyAffiliateHistories]="dailyAffiliateHistories" [fieldName]="'platformFee'"
-                        [chartTitle]="'Platform Revenue'"
-                        [yAxisFormatter]="moneyValueFormatter" [decimals]="18">
-                </app-chart>
-            </div>
-            <div tuiCardLarge tuiSurface="elevated" class="chart-card">
-                <app-chart
-                        [dailyAffiliateHistories]="dailyAffiliateHistories" [fieldName]="'openInterest'"
-                        [chartTitle]="'Open Interest'"
-                        [yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasCumulative]="false">
-                </app-chart>
-            </div>
-            <div tuiCardLarge tuiSurface="elevated" class="chart-card">
-                <app-chart
-                        [dailyAffiliateHistories]="dailyAffiliateHistories" [fieldName]="'activeUsers'"
-                        [chartTitle]="'Active Users'"
-                        [hasCumulative]="false" [hasGroupByMonthAction]="false">
-                </app-chart>
-            </div>
-            <div tuiCardLarge tuiSurface="elevated" class="chart-card">
-                <app-chart
-                        [dailyAffiliateHistories]="dailyAffiliateHistories" [fieldName]="'newUsers'"
-                        [chartTitle]="'New Users'">
-                </app-chart>
-            </div>
-        </div>
-    }
+	<div class="infos flex flex-row gap-2 w-full flex-grow-1 flex-wrap">
+		<div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
+			<app-info title="Deposits" [totalValue]="totalHistory?.deposit" [todayValue]="todayHistory?.deposit"
+					  [lastDayValue]="lastDayHistory?.deposit" [formatMoney]="true">
+			</app-info>
+		</div>
+		<div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
+			<app-info title="Traded Volume" [totalValue]="totalHistory?.tradeVolume"
+					  [todayValue]="todayHistory?.tradeVolume"
+					  [lastDayValue]="lastDayHistory?.tradeVolume" [formatMoney]="true">
+			</app-info>
+		</div>
+		<div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
+			<app-info title="Quotes" [totalValue]="totalHistory?.quotesCount" [todayValue]="todayHistory?.quotesCount"
+					  [lastDayValue]="lastDayHistory?.quotesCount">
+			</app-info>
+		</div>
+		<div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
+			<app-info title="Users" [totalValue]="totalHistory?.users" [todayValue]="todayHistory?.newUsers"
+					  [lastDayValue]="lastDayHistory?.newUsers">
+			</app-info>
+		</div>
+		<div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
+			<app-info title="Accounts" [totalValue]="totalHistory?.accounts" [todayValue]="todayHistory?.newAccounts"
+					  [lastDayValue]="lastDayHistory?.newAccounts">
+			</app-info>
+		</div>
+	</div>
+	<tui-segmented size="l">
+		<button type="button" class="w-full text-xl" (click)="viewMode = ViewMode.FRONTENDS">Frontends</button>
+		<button type="button" class="w-full text-xl" (click)="viewMode = ViewMode.SOLVERS">Solvers</button>
+	</tui-segmented>
+
+	@switch (viewMode) {
+		@case (ViewMode.FRONTENDS) {
+			<app-affiliates-charts *ngIf="groupedHistories != null"
+								   [groupedHistories]="groupedHistories"
+								   [decimalsMap]="decimalsMap">
+			</app-affiliates-charts>
+		}
+		@case (ViewMode.SOLVERS) {
+			<app-solvers-charts></app-solvers-charts>
+		}
+	}
 </div>

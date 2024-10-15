@@ -28,7 +28,7 @@
 
         </div>
     } @else if (loadingService.loading()) {
-        <div [class.tui-skeleton]="true" style="width: 12em; height: 1.5em"></div>
-        <div [class.tui-skeleton]="true" style="width: 16em; height: 1.5em"></div>
+        <section [class.tui-skeleton]="true" style="width: 12em; height: 1.5em" [tuiSkeleton]="true" ></section>
+        <section [class.tui-skeleton]="true" style="width: 16em; height: 1.5em" [tuiSkeleton]="true"></section>
     }
 </div>
