@@ -6,7 +6,7 @@ from sqlalchemy import select, and_
 from src.app import db_session
 from src.app.models import RuntimeConfiguration
 from src.app.response_models import HealthMetric
-from src.config import contexts
+from src.config.local_settings import contexts
 
 router = APIRouter(prefix="/health-metric", tags=["Health Metric"])
 

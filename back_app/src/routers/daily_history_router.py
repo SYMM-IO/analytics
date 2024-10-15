@@ -7,7 +7,7 @@ from sqlalchemy import select, and_
 from src.app import db_session
 from src.app.models import DailyHistory, RuntimeConfiguration
 from src.app.response_models import DailyHistoryAffiliate
-from src.config import contexts
+from src.config.local_settings import contexts
 
 router = APIRouter(prefix="/history", tags=["Daily History"])
 

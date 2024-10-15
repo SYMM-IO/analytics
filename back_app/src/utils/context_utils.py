@@ -1,4 +1,4 @@
-from src.config import contexts
+from src.config.local_settings import contexts
 from src.config.settings import Context
 
 
