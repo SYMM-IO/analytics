@@ -65,6 +65,7 @@ class Context:
     native_coin: str
     symmio_address: str
     symmio_collateral_address: str
+    symmio_collateral_decimal: int
     deploy_timestamp: int
 
     hedgers: List[HedgerContext]
