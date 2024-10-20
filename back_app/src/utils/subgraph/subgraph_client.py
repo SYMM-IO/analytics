@@ -56,9 +56,8 @@ class LoadParams:
 
 
 class SubgraphClient:
-    def __init__(self, context: Context, models: List[Type[BaseModel]], proxies: dict = None):
+    def __init__(self, context: Context, proxies: dict = None):
         self.context = context
-        self.models: List[Type[BaseModel]] = models
         self.proxies = proxies
 
     def create_function(self, session: Session, model: Type[BaseModel], data):
@@ -76,7 +75,7 @@ class SubgraphClient:
 
     def load(
             self,
-            load_params: Dict[Type[BaseModel], LoadParams],
+            load_params_map: Dict[Type[BaseModel], LoadParams],
             first: int,
             create_function,
             block: Block = None,
@@ -85,7 +84,7 @@ class SubgraphClient:
             log_prefix="",
     ):
         query = "query q {"
-        for model, params in load_params.items():
+        for model, params in load_params_map.items():
             method = model.__subgraph_client_config__.method_name
             condition = aggregate_conditions([w for w in params.conditions if not w.is_empty()])
             where_str = ""
@@ -122,7 +121,7 @@ class SubgraphClient:
         items = dict()
         if response:
             if "data" in response.json():
-                for model in load_params:
+                for model in load_params_map:
                     method = model.__subgraph_client_config__.method_name
                     items[model] = []
                     print(f"-------> Loaded {len(response.json()['data'][method])} items ---------")
@@ -138,7 +137,7 @@ class SubgraphClient:
 
     def load_all(
             self,
-            load_params: Dict[Type[BaseModel], LoadParams],
+            load_params_map: Dict[Type[BaseModel], LoadParams],
             create_function,
             block: Block = None,
             page_limit: int = None,
@@ -146,25 +145,25 @@ class SubgraphClient:
             log_prefix="",
     ):
         limit = 1000
-        pagination_values = {model: None for model in load_params}
+        pagination_values = {model: None for model in load_params_map}
         result = set()
         while page_limit is None or page_limit > 0:
             if page_limit is not None:
                 page_limit -= 1
-            for model, params in load_params.items():
+            for model, params in load_params_map.items():
                 if isinstance(pagination_values[model], datetime):
                     params.formatted_pv = str(int(pagination_values[model].timestamp()))
                 elif pagination_values[model]:
                     params.formatted_pv = str(pagination_values[model])
                 else:
                     params.formatted_pv = None
-            for model, params in load_params.items():
+            for model, params in load_params_map.items():
                 config = model.__subgraph_client_config__
                 params.order_by = config.name_maps.get(config.pagination_field) or config.pagination_field
                 params.conditions = ([GraphQlCondition(params.order_by, "gte", params.formatted_pv)]
                                      if params.formatted_pv else []) + params.conditions
             items = self.load(
-                load_params=load_params,
+                load_params_map=load_params_map,
                 create_function=create_function,
                 first=limit,
                 log_prefix=log_prefix,
@@ -189,8 +188,7 @@ class SubgraphClient:
 
     def sync(self, session, block: Block, transaction_id, models: List[Type[BaseModel]] = None):
         runtime_config: RuntimeConfiguration = load_config(session, self.context, transaction_id)
-        load_params = dict()
-        models = models or self.models
+        load_params_map = dict()
         for model in models:
             config = model.__subgraph_client_config__
             fields = []
@@ -201,9 +199,9 @@ class SubgraphClient:
                     fields.append(config.name_maps[f])
                 else:
                     fields.append(f)
-            load_params[model] = LoadParams(fields=fields, conditions=[])
+            load_params_map[model] = LoadParams(fields=fields, conditions=[])
 
-        out = self.load_all(load_params=load_params,
+        out = self.load_all(load_params_map=load_params_map,
                             create_function=lambda model, data: self.create_function(session, model, data),
                             block=block, change_block_gte=runtime_config.lastSyncBlock, log_prefix=self.context.tenant)
         for o in out:

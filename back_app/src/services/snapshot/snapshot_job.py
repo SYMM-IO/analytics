@@ -59,10 +59,7 @@ async def sync_data(context, session, transaction_id):
         sync_block.backward(config.snapshotBlockLag)
         log_span.add_data("sync_block", sync_block.number)
         try:
-            subgraph_client = SubgraphClient(
-                context,
-                [User, Symbol, Account, BalanceChange, Quote, TradeHistory, DailyHistory]
-            )
+            subgraph_client = SubgraphClient(context)
             subgraph_client.sync(session, sync_block, transaction_id, [User, Symbol, Account])
             subgraph_client.sync(session, sync_block, transaction_id, [BalanceChange, Quote])
             subgraph_client.sync(session, sync_block, transaction_id, [TradeHistory, DailyHistory])
