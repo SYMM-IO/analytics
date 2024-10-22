@@ -2,15 +2,16 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import List, Dict
 
-import requests
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, and_
 
 from src.app import db_session
-from src.app.models import DailyHistory, RuntimeConfiguration
+from src.app.models import DailyHistory, RuntimeConfiguration, TotalHistory
 from src.app.response_models import DailyHistoryAffiliate
 from src.config.local_settings import contexts, unsync_contexts
 from src.utils.attr_dict import AttrDict
+from src.utils.model_utils import get_model_fields
+from src.utils.subgraph.subgraph_client import SubgraphClient, GraphQlCondition, LoadParams
 
 router = APIRouter(prefix="/history", tags=["Daily History"])
 
@@ -137,40 +138,33 @@ async def get_total_history():
     total_history = AttrDict(
         dict(deposits=Decimal(0), trade_volume=Decimal(0), quotes=Decimal(0), users=Decimal(0), accounts=Decimal(0))
     )
+    model = TotalHistory
+    config = model.__subgraph_client_config__
+    model_fields = get_model_fields(model)
+    load_params_map = dict()
+    fields = []
+    for f in model_fields:
+        if f in config.ignore_columns:
+            continue
+        if f in config.name_maps:
+            fields.append(config.name_maps[f])
+        else:
+            fields.append(f)
     for context in contexts + unsync_contexts:
-        timestamp = 0
-        while True:
-            subgraph_response = requests.post(
-                url=context.subgraph_endpoint,
-                json={'query': '''query q {
-                    totalHistories(orderBy: timestamp, first: 1000, where: { '''
-                               f'timestamp_gt: "{timestamp}"'
-                               f'collateral: "{context.symmio_collateral_address}"'
-                               '''}) {
-                               accounts
-                               deposit
-                               quotesCount
-                               users
-                               tradeVolume
-                               accountSource
-                               timestamp
-                             }
-                           }
-                               '''}
-            ).json()
-            if 'data' not in subgraph_response:
-                print(subgraph_response)
-                break
-            for i in subgraph_response['data']['totalHistories']:
-                if not i['accountSource']:
+        subgraph_client = SubgraphClient(context)
+        condition = [
+            GraphQlCondition(field='collateral', operator=None, value=f'"{context.symmio_collateral_address}"')]
+        load_params_map[model] = LoadParams(fields=fields, conditions=condition)
+        out = subgraph_client.load_all(load_params_map=load_params_map,
+                                       create_function=lambda model, data: subgraph_client.create_function(model, data))
+        for res in out:
+            for i in res:
+                if not i.accountSource:
                     continue
-                total_history.accounts += int(i['accounts'])
-                total_history.deposits += int(i['deposit']) // 10 ** context.symmio_collateral_decimal
-                total_history.quotes += int(i['quotesCount'])
-                total_history.users += int(i['users'])
-                total_history.trade_volume += int(i['tradeVolume'])
-            timestamp = int(subgraph_response['data']['totalHistories'][-1]['timestamp'])
-            if len(subgraph_response['data']['totalHistories']) < 1000:
-                break
+                total_history.accounts += int(i.accounts)
+                total_history.deposits += int(i.deposit) // 10 ** context.symmio_collateral_decimal
+                total_history.quotes += int(i.quotesCount)
+                total_history.users += int(i.users)
+                total_history.trade_volume += int(i.tradeVolume)
     total_history.trade_volume //= 10 ** 18
     return total_history

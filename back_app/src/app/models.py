@@ -435,6 +435,24 @@ class GasHistory(BaseModel):
     tenant = Column(String, primary_key=True)
 
 
+class TotalHistory(BaseModel):
+    __tablename__ = "total_history"
+    __is_timeseries__ = False
+    __pk_names__ = ["accountSource", "collateral"]
+    __subgraph_client_config__ = SubgraphClientConfig(
+        method_name="totalHistories",
+        pagination_field="timestamp",
+    )
+    accountSource = Column(String, primary_key=True)
+    collateral = Column(String, primary_key=True)
+    deposit = Column(Numeric(40, 0))
+    tradeVolume = Column(Numeric(40, 0))
+    accounts = Column(Integer)
+    users = Column(Integer)
+    quotesCount = Column(Integer)
+    timestamp = Column(DateTime)
+
+
 class LogTransaction(BaseModel):
     __tablename__ = "log_transaction"
     __is_timeseries__ = False

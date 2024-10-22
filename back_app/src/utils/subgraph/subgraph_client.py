@@ -60,17 +60,19 @@ class SubgraphClient:
         self.context = context
         self.proxies = proxies
 
-    def create_function(self, session: Session, model: Type[BaseModel], data):
+    def create_function(self, model: Type[BaseModel], data, session: Session = None):
         config = model.__subgraph_client_config__
         for f in config.tenant_needed_fields:
             tag_tenant_to_field(data, self.context.tenant, f)
         for key, value in config.name_maps.items():
             data[key] = data[value]
             del data[value]
-        data["tenant"] = self.context.tenant
+        if session:
+            data["tenant"] = self.context.tenant
         data = config.converter(data)
         obj = model(**data)
-        obj.upsert(session)
+        if session:
+            obj.upsert(session)
         return obj
 
     def load(
@@ -202,7 +204,7 @@ class SubgraphClient:
             load_params_map[model] = LoadParams(fields=fields, conditions=[])
 
         out = self.load_all(load_params_map=load_params_map,
-                            create_function=lambda model, data: self.create_function(session, model, data),
+                            create_function=lambda model, data: self.create_function(model, data, session=session),
                             block=block, change_block_gte=runtime_config.lastSyncBlock, log_prefix=self.context.tenant)
         for o in out:
             pass
