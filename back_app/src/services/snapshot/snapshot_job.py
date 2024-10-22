@@ -60,9 +60,10 @@ async def sync_data(context, session, transaction_id):
         log_span.add_data("sync_block", sync_block.number)
         try:
             subgraph_client = SubgraphClient(context)
-            subgraph_client.sync(session, sync_block, transaction_id, [User, Symbol, Account])
+            subgraph_client.sync(session, sync_block, transaction_id, [User, Symbol, DailyHistory])
+            subgraph_client.sync(session, sync_block, transaction_id, [Account])
             subgraph_client.sync(session, sync_block, transaction_id, [BalanceChange, Quote])
-            subgraph_client.sync(session, sync_block, transaction_id, [TradeHistory, DailyHistory])
+            subgraph_client.sync(session, sync_block, transaction_id, [TradeHistory])
         except Exception as e:
             log_span.add_data("error", str(e))
             if "only indexed up to block number" in str(e):
