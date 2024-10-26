@@ -1,13 +1,17 @@
 from datetime import datetime, timedelta
+from decimal import Decimal
 from typing import List, Dict
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import select, and_
 
 from src.app import db_session
-from src.app.models import DailyHistory, RuntimeConfiguration
+from src.app.models import DailyHistory, RuntimeConfiguration, TotalHistory
 from src.app.response_models import DailyHistoryAffiliate
-from src.config import contexts
+from src.config.local_settings import contexts, unsync_contexts
+from src.utils.attr_dict import AttrDict
+from src.utils.model_utils import get_model_fields
+from src.utils.subgraph.subgraph_client import SubgraphClient, GraphQlCondition, LoadParams
 
 router = APIRouter(prefix="/history", tags=["Daily History"])
 
@@ -56,16 +60,17 @@ async def get_affiliate_history(group_by="day"):
                 ]
                 for rec in daily_history[affiliate][1:]:
                     if (
-                        rec.timestamp.date() == daily_history_affiliate[affiliate][-1].start_date
-                        or (group_by == "week" and rec.timestamp.weekday())
-                        or (group_by == "month" and rec.timestamp.day != 1)
+                            rec.timestamp.date() == daily_history_affiliate[affiliate][-1].start_date
+                            or (group_by == "week" and rec.timestamp.weekday())
+                            or (group_by == "month" and rec.timestamp.day != 1)
                     ):
                         daily_history_affiliate[affiliate][-1].quotesCount += rec.quotesCount
                         daily_history_affiliate[affiliate][-1].newUsers += rec.newUsers
                         daily_history_affiliate[affiliate][-1].newAccounts += rec.newAccounts
                         daily_history_affiliate[affiliate][-1].activeUsers += rec.activeUsers
                         daily_history_affiliate[affiliate][-1].tradeVolume += rec.tradeVolume
-                        daily_history_affiliate[affiliate][-1].deposit += rec.deposit * 10 ** (18 - decimals[rec.tenant])
+                        daily_history_affiliate[affiliate][-1].deposit += rec.deposit * 10 ** (
+                                18 - decimals[rec.tenant])
                         daily_history_affiliate[affiliate][-1].withdraw += rec.withdraw
                         daily_history_affiliate[affiliate][-1].allocate += rec.allocate
                         daily_history_affiliate[affiliate][-1].deallocate += rec.deallocate
@@ -104,7 +109,8 @@ async def _get_affiliate_full_history(until="today"):
         raise HTTPException(status_code=404, detail="Not found")
     daily_history_affiliate = await get_affiliate_history()
     affiliate_full_history = {
-        affiliate: DailyHistoryAffiliate(start_date=daily_history_affiliate[affiliate][0].start_date) for affiliate in daily_history_affiliate
+        affiliate: DailyHistoryAffiliate(start_date=daily_history_affiliate[affiliate][0].start_date) for affiliate in
+        daily_history_affiliate
     }
     for affiliate in daily_history_affiliate:
         if until == "yesterday" and daily_history_affiliate[affiliate][-1].start_date == datetime.today().date():
@@ -125,3 +131,40 @@ async def _get_affiliate_full_history(until="today"):
 @router.get("/full", response_model=Dict[str, DailyHistoryAffiliate])
 async def get_affiliate_full_history():
     return await _get_affiliate_full_history()
+
+
+@router.get("/total_history")
+async def get_total_history():
+    total_history = AttrDict(
+        dict(deposits=Decimal(0), trade_volume=Decimal(0), quotes=Decimal(0), users=Decimal(0), accounts=Decimal(0))
+    )
+    model = TotalHistory
+    config = model.__subgraph_client_config__
+    model_fields = get_model_fields(model)
+    load_params_map = dict()
+    fields = []
+    for f in model_fields:
+        if f in config.ignore_columns:
+            continue
+        if f in config.name_maps:
+            fields.append(config.name_maps[f])
+        else:
+            fields.append(f)
+    for context in contexts + unsync_contexts:
+        subgraph_client = SubgraphClient(context)
+        condition = [
+            GraphQlCondition(field='collateral', operator=None, value=f'"{context.symmio_collateral_address}"')]
+        load_params_map[model] = LoadParams(fields=fields, conditions=condition)
+        out = subgraph_client.load_all(load_params_map=load_params_map,
+                                       create_function=lambda model, data: subgraph_client.create_function(model, data))
+        for res in out:
+            for i in res:
+                if not i.accountSource:
+                    continue
+                total_history.accounts += int(i.accounts)
+                total_history.deposits += int(i.deposit) // 10 ** context.symmio_collateral_decimal
+                total_history.quotes += int(i.quotesCount)
+                total_history.users += int(i.users)
+                total_history.trade_volume += int(i.tradeVolume)
+    total_history.trade_volume //= 10 ** 18
+    return total_history
