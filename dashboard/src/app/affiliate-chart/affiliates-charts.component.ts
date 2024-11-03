@@ -12,6 +12,7 @@ import { MonthlyHistory, WeeklyHistory } from "../models"
 import { aggregateMonthlyHistories, aggregateWeeklyHistories } from "../utils/aggregate-utils"
 import BigNumber from "bignumber.js"
 import { aggregateHistories, collectAllDates, justifyHistoriesToDates } from "../utils/common-utils"
+
 function deepCopy<T>(obj: T): T {
 	if (obj === null || typeof obj !== "object") return obj
 
@@ -27,6 +28,7 @@ function deepCopy<T>(obj: T): T {
 	}
 	return copy
 }
+
 @Component({
 	selector: "app-affiliates-charts",
 	templateUrl: "./affiliates-charts.component.html",
@@ -100,7 +102,7 @@ export class AffiliatesChartsComponent implements OnInit {
 								weeklyHistories: "0",
 							}
 
-							return context.graphQlClient.loadAllWithInterval(configs, 30000, 1000, startPaginationFields).pipe(
+							return context.graphQlClient.loadAll(configs, 1000, startPaginationFields).pipe(
 								map(result => {
 									return [result["monthlyHistories"] || [], result["weeklyHistories"] || []]
 								}),

@@ -72,7 +72,7 @@ export class SolversChartsComponent implements OnInit {
 							createFunction: (obj: any) => SolverDailyHistory.fromRawObject(obj).applyDecimals(context.env.collateralDecimal!),
 						},
 					]
-					return context.graphQlClient.loadAllWithInterval(configs, 30000, 1000).pipe(map(result => result["solverDailyHistories"] || []))
+					return context.graphQlClient.loadAll(configs, 1000).pipe(map(result => result["solverDailyHistories"] || []))
 				}),
 		).pipe(
 			catchError(err => {

@@ -114,7 +114,7 @@ export class HomeComponent implements OnInit {
 						dailyHistories: context.affiliate.fromTimestamp || null,
 						totalHistories: "0",
 					}
-					return context.graphQlClient.loadAllWithInterval(configs, 30000, 1000, startPaginationFields).pipe(
+					return context.graphQlClient.loadAll(configs, 1000, startPaginationFields).pipe(
 						map(result => {
 							return [result["dailyHistories"] || [], result["totalHistories"] || []]
 						}),
