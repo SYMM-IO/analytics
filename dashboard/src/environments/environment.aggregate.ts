@@ -8,10 +8,11 @@ import { environment as ftm8Env } from "./environment.ftm_8"
 import { environment as blastEnv } from "./environment.blast"
 import { environment as mantleEnv } from "./environment.mantle"
 import { environment as arbitrumEnv } from "./environment.arbitrum"
+import { environment as modeEnv } from "./environment.mode"
 
 export const environment: EnvironmentInterface = {
 	name: "aggregate",
 	assetsFolder: "aggregate",
 	serverUrl: "https://analytics-api.symm.io",
-	environments: [ftm8Env, bnb8Env, bnbEnv, base8Env, baseEnv, blastEnv, mantleEnv, arbitrumEnv],
+	environments: [ftm8Env, bnb8Env, bnbEnv, base8Env, baseEnv, blastEnv, mantleEnv, arbitrumEnv, modeEnv],
 }
