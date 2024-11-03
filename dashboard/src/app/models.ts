@@ -94,9 +94,10 @@ export class SolverDailyHistory extends BaseHistory {
 	fundingPaid?: BigNumber
 	fundingReceived?: BigNumber
 	openInterest?: BigNumber
+	timestamp?: BigNumber
 	solver?: string
 
-	static propertyList = ["tradeVolume", "averagePositionSize", "positionsCount", "fundingPaid", "fundingReceived", "openInterest"]
+	static propertyList = ["tradeVolume", "averagePositionSize", "positionsCount", "fundingPaid", "fundingReceived", "openInterest", "timestamp"]
 	static withDecimalsProperties = []
 
 	static fromRawObject(raw: any): SolverDailyHistory {

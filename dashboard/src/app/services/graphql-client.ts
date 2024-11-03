@@ -1,5 +1,5 @@
 import { Apollo, gql } from "apollo-angular"
-import { defer, interval, Observable } from "rxjs"
+import { defer, EMPTY, interval, Observable } from "rxjs"
 import { expand, map, startWith, switchMap } from "rxjs/operators"
 import { LoadingService } from "./Loading.service"
 
@@ -101,7 +101,7 @@ export class GraphQlClient {
 				const start = startFields[config.method]
 				if (start) {
 					const paginationCondition: Condition = {
-						field: config.orderBy || "id",
+						field: config.orderBy || "timestamp",
 						operator: "gte",
 						value: start,
 					}
@@ -125,17 +125,16 @@ export class GraphQlClient {
 							const items = result[config.method]
 							if (items.length > 0) {
 								const lastItem = items[items.length - 1]
-								nextStartFields[config.method] = (lastItem as any)[config.orderBy || "id"]
+								nextStartFields[config.method] = (lastItem as any)[config.orderBy || "timestamp"]
 							} else {
 								nextStartFields[config.method] = null
 							}
 						})
 						return loadPage(nextStartFields)
 					} else {
-						return new Observable()
+						return EMPTY
 					}
 				}),
-				map(result => result),
 			) as any
 		}
 
