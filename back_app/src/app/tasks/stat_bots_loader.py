@@ -4,7 +4,7 @@ import os
 from aioclock import AioClock, OnStartUp, OnShutDown, Every
 from aioclock.group import Group
 
-from src.config import contexts
+from src.config.local_settings import contexts
 from src.config.settings import SNAPSHOT_INTERVAL
 from src.services import load_all_messages, start_telegram_client, stop_telegram_client
 from src.services.telegram_service import escape_markdown_v1, send_alert

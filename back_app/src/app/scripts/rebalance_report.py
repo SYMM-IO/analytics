@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from src.app import db_session
 from src.app.models import BalanceChange, BinanceIncome
-from src.config import contexts
+from src.config.local_settings import contexts
 from src.config.settings import Context
 from src.services.config_service import load_config
 
