@@ -4,7 +4,7 @@
 		<div class="flex flex-row justify-content-end align-items-center gap-2 pr-4">
 			<button tuiButton type="button" size="s" appearance="outline" (click)="onShowPartyBVolumeChanged()"
 					[ngClass]="{'selected-button': showPartyBVolume}" tuiHint="Show PartyB Volume"
-					*ngIf=" fieldName == 'tradeVolume' ">
+					*ngIf="hasPartyBVolume">
 				PartyB
 			</button>
 			<button tuiButton type="button" size="s" appearance="outline" (click)="onGroupByMonthChanged()"

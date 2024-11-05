@@ -1,7 +1,8 @@
 import { Apollo, gql } from "apollo-angular"
-import { defer, EMPTY, interval, Observable } from "rxjs"
-import { expand, map, startWith, switchMap } from "rxjs/operators"
+import { from, interval, lastValueFrom, Observable, take } from "rxjs"
+import { map, startWith, switchMap } from "rxjs/operators"
 import { LoadingService } from "./Loading.service"
+import { Logger } from "@angular-devkit/core/src/logger"
 
 export interface Condition {
 	field: string
@@ -90,60 +91,69 @@ export class GraphQlClient {
 		startPaginationFields?: { [method: string]: string | null },
 		pageLimits?: { [method: string]: number },
 	): Observable<{ [method: string]: T[] }> {
-		const loadedPages: { [method: string]: number } = {}
-		configs.forEach(config => (loadedPages[config.method] = 0))
+		const self = this
 
-		const loadPage = (startFields: { [method: string]: string | null }): Observable<{ [method: string]: T[] }> => {
-			configs.forEach(config => (loadedPages[config.method] += 1))
+		async function loadAllData(): Promise<{ [method: string]: T[] }> {
+			const results: { [method: string]: T[] } = {}
+			const loadedPages: { [method: string]: number } = {}
+			const startFields: { [method: string]: string | null } = {}
 
-			const updatedConfigs = configs.map(config => {
-				const newConfig = { ...config }
-				const start = startFields[config.method]
-				if (start) {
-					const paginationCondition: Condition = {
-						field: config.orderBy || "timestamp",
-						operator: "gte",
-						value: start,
-					}
-					newConfig.conditions = [...(newConfig.conditions || []), paginationCondition]
-				}
-				return newConfig
+			configs.forEach(config => {
+				results[config.method] = []
+				loadedPages[config.method] = 0
+				startFields[config.method] = startPaginationFields ? startPaginationFields[config.method] : null
 			})
 
-			return this.load<T>(updatedConfigs).pipe(
-				expand(result => {
-					const shouldLoadMore = configs.some(config => {
-						const items = result[config.method]
-						const hasMoreItems = items.length === limit
-						const withinPageLimit = pageLimits == null || pageLimits[config.method] == null || loadedPages[config.method] < pageLimits[config.method]
-						return hasMoreItems && withinPageLimit
-					})
+			let continueLoading = true
+			while (continueLoading) {
+				configs.forEach(config => {
+					loadedPages[config.method] += 1
+				})
 
-					if (shouldLoadMore) {
-						const nextStartFields: { [method: string]: string | null } = {}
-						configs.forEach(config => {
-							const items = result[config.method]
-							if (items.length > 0) {
-								const lastItem = items[items.length - 1]
-								nextStartFields[config.method] = (lastItem as any)[config.orderBy || "timestamp"]
-							} else {
-								nextStartFields[config.method] = null
-							}
-						})
-						return loadPage(nextStartFields)
-					} else {
-						return EMPTY
+				const updatedConfigs = configs.map(config => {
+					const newConfig = { ...config }
+					const start = startFields[config.method]
+					if (start) {
+						const paginationCondition: Condition = {
+							field: config.orderBy || "timestamp",
+							operator: "gte",
+							value: start,
+						}
+						newConfig.conditions = [...(newConfig.conditions || []), paginationCondition]
 					}
-				}),
-			) as any
+					return newConfig
+				})
+
+				const result = await lastValueFrom(self.load<T>(updatedConfigs).pipe(take(1)))
+				configs.forEach(config => {
+					const items = result[config.method]
+					results[config.method] = results[config.method].concat(items)
+				})
+
+				continueLoading = configs.some(config => {
+					const items = result[config.method]
+					const hasMoreItems = items.length === limit
+					const withinPageLimit = !pageLimits || !pageLimits[config.method] || loadedPages[config.method] < pageLimits[config.method]
+					return hasMoreItems && withinPageLimit
+				})
+
+				if (continueLoading) {
+					configs.forEach(config => {
+						const items = result[config.method]
+						if (items.length > 0) {
+							const lastItem = items[items.length - 1]
+							startFields[config.method] = (lastItem as any)[config.orderBy || "timestamp"]
+						} else {
+							startFields[config.method] = null
+						}
+					})
+				}
+			}
+
+			return results
 		}
 
-		const initialStartFields: { [method: string]: string | null } = {}
-		configs.forEach(config => {
-			initialStartFields[config.method] = startPaginationFields ? startPaginationFields[config.method] : null
-		})
-
-		return defer(() => loadPage(initialStartFields))
+		return from(loadAllData())
 	}
 
 	loadAllWithInterval<T>(

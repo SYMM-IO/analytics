@@ -28,6 +28,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 	@Input() tooltipFormatter?: any
 	@Input() hasGroupByMonthAction = true
 	@Input() hasCumulative = true
+	@Input() hasPartyBVolume = false
 	@Input() groupedHistories!: Observable<GroupedHistory[]>
 
 	chartOption?: EChartsOption

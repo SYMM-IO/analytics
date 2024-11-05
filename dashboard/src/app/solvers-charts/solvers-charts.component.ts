@@ -5,7 +5,7 @@ import { GraphQlClient, QueryConfig } from "../services/graphql-client"
 import { EnvironmentInterface } from "../../environments/environment-interface"
 import { LoadingService } from "../services/Loading.service"
 import { TuiAlertService } from "@taiga-ui/core"
-import { SolverDailyHistory } from "../models"
+import { BaseHistory, SolverDailyHistory } from "../models"
 import { catchError, map, Observable, shareReplay, zip } from "rxjs"
 import { GroupedHistory } from "../groupedHistory"
 import BigNumber from "bignumber.js"
@@ -95,7 +95,24 @@ export class SolversChartsComponent implements OnInit {
 				}
 				const all_dates = collectAllDates(out, "dailyHistories")
 				out.forEach(groupedHistory => {
-					groupedHistory.dailyHistories = justifyHistoriesToDates(groupedHistory.dailyHistories, all_dates)
+					let mapped_data = new Map<number, SolverDailyHistory>()
+					for (const history of groupedHistory.dailyHistories) {
+						const time = BaseHistory.getTime(history)!
+						if (mapped_data.has(time)) {
+							let lastHistory = mapped_data.get(time)!
+							if (lastHistory.timestamp! >= history.timestamp!) {
+								history.openInterest = BigNumber(0)
+							} else {
+								lastHistory.openInterest = BigNumber(0)
+							}
+							let aggregatedHistory = aggregateSolverDailyHistories([lastHistory, history])
+							aggregatedHistory.timestamp = lastHistory.timestamp! >= history.timestamp! ? lastHistory.timestamp : history.timestamp
+							mapped_data.set(time, aggregatedHistory)
+						} else {
+							mapped_data.set(time, history)
+						}
+					}
+					groupedHistory.dailyHistories = justifyHistoriesToDates([...mapped_data.values()], all_dates)
 				})
 
 				const map = new Map<string, GroupedHistory>()

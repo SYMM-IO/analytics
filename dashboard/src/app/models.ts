@@ -47,6 +47,7 @@ export class DailyHistory extends BaseHistory {
 	newAccounts?: BigNumber
 	platformFee?: BigNumber
 	openInterest?: BigNumber
+	timestamp?: BigNumber
 
 	static propertyList = [
 		"quotesCount",
