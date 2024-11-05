@@ -1,0 +1,56 @@
+<div class="top-charts flex flex-row gap-2 w-full flex-wrap flex-grow-1">
+	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
+		<app-chart
+			[groupedHistories]="groupedHistories" [fieldName]="'quotesCount'"
+			[chartTitle]="'Quotes'">
+		</app-chart>
+	</div>
+	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
+		<app-chart
+			[groupedHistories]="groupedHistories" [fieldName]="'tradeVolume'"
+			[chartTitle]="'Trade Volume'"
+			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasPartyBVolume]="true">
+		</app-chart>
+	</div>
+	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
+		<app-chart
+			[groupedHistories]="groupedHistories" [fieldName]="'platformFee'"
+			[chartTitle]="'Platform Revenue'"
+			[yAxisFormatter]="moneyValueFormatter" [decimals]="18">
+		</app-chart>
+	</div>
+	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
+		<app-chart
+			[groupedHistories]="groupedHistories" [fieldName]="'openInterest'"
+			[chartTitle]="'Open Interest'"
+			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasCumulative]="false">
+		</app-chart>
+	</div>
+	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
+		<app-chart
+			[groupedHistories]="groupedHistories" [fieldName]="'activeUsers'"
+			[chartTitle]="'Active Users'"
+			[hasCumulative]="false" [hasGroupByMonthAction]="false">
+		</app-chart>
+	</div>
+	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
+		<app-chart
+			[groupedHistories]="groupedHistories" [fieldName]="'newUsers'"
+			[chartTitle]="'New Users'">
+		</app-chart>
+	</div>
+	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
+		<app-chart
+			[groupedHistories]="groupedHistories" [fieldName]="'liquidateTradeVolume'"
+			[chartTitle]="'Liquidation volume'"
+			[yAxisFormatter]="moneyValueFormatter" [decimals]="18">
+		</app-chart>
+	</div>
+	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
+		<app-chart
+			[groupedHistories]="groupedHistories" [fieldName]="'averagePositionSize'"
+			[chartTitle]="'Average Position Size'"
+			[yAxisFormatter]="moneyValueFormatter" [decimals]="18">
+		</app-chart>
+	</div>
+</div>

@@ -1,9 +1,0 @@
-config/local_settings.py
-config/local_settings.old.py
-poetry.lock
-app/user_client.session
-app/user_client.session-journal
-cache
-config/contexts
-*venv
-log_file*.log

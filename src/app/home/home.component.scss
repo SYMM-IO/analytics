@@ -1,0 +1,17 @@
+.chart-card {
+  min-width: 40em;
+  width: calc(50% - 2.3rem);
+  flex-grow: 1;
+}
+
+@media (max-width: 75em) {
+  .chart-card {
+    width: 100%;
+  }
+}
+
+.info-card {
+}
+
+.infos {
+}

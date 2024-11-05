@@ -1,0 +1,36 @@
+<tui-root tuiTheme="dark" class="h-full">
+    <div class="root flex flex-column h-full flex-grow p-2">
+        <div tuiCardLarge class="flex flex-row align-content-center justify-content-between toolbar p-2">
+            <div class="align-items-end flex flex-row gap-2">
+                <img [src]="'../assets/'+assetsFolder+'/logo.svg'" class="clover-logo">
+                @if (aggregated || panel) {
+                    <div class="flex flex-column  justify-content-center h-full">
+                        <span class="text-xs powered-by font-semibold">Analytics</span>
+                    </div>
+                } @else {
+                    <div class="flex flex-row align-items-center justify-content-center gap-1 h-full">
+                        <span class="text-xs powered-by">Powered by SYMMIO</span>
+                        <img src="../assets/poweredByLogo.svg" class="symmio-logo">
+                    </div>
+                }
+            </div>
+            @if (panel) {
+                <div class="flex flex-row gap-2 align-items-center mx-2">
+                    <form tuiGroup class="group" [collapsed]="true">
+                        @for (env of environmentService.environments; track env.name) {
+                            <label tuiBlock="s"> <input tuiRadio type="radio" [formControl]="environmentForm"
+                                                        [value]="env" style="min-width: 120px">
+                                <span>
+                                    {{ env.name }}
+                                </span>
+                            </label>
+                        }
+                    </form>
+                </div>
+            }
+        </div>
+        <div class="body flex-grow-1 w-full h-full pt-2">
+            <router-outlet></router-outlet>
+        </div>
+    </div>
+</tui-root>

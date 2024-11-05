@@ -1,0 +1,30 @@
+.chart-container {
+  min-height: 25em;
+}
+
+.chart {
+}
+
+.selected-button {
+  background-color: var(--tui-background-neutral-1-hover);
+}
+
+.intervalSelector {
+  width: 6.5em;
+}
+
+.viewSelector {
+  width: 6.5em;
+}
+
+.intervalRangePicker {
+  min-width: 13em;
+}
+
+.loader {
+  position: absolute;
+  left: 4.1em;
+  right: 1.9em;
+  top: 5em;
+  bottom: 6em;
+}
