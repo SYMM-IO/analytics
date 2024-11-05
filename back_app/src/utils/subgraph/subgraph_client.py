@@ -76,14 +76,14 @@ class SubgraphClient:
         return obj
 
     def load(
-            self,
-            load_params_map: Dict[Type[BaseModel], LoadParams],
-            first: int,
-            create_function,
-            block: Block = None,
-            order_direction: OrderDirection = OrderDirection.DESCENDING,
-            change_block_gte: int = None,
-            log_prefix="",
+        self,
+        load_params_map: Dict[Type[BaseModel], LoadParams],
+        first: int,
+        create_function,
+        block: Block = None,
+        order_direction: OrderDirection = OrderDirection.DESCENDING,
+        change_block_gte: int = None,
+        log_prefix="",
     ):
         query = "query q {"
         for model, params in load_params_map.items():
@@ -138,13 +138,13 @@ class SubgraphClient:
         return items
 
     def load_all(
-            self,
-            load_params_map: Dict[Type[BaseModel], LoadParams],
-            create_function,
-            block: Block = None,
-            page_limit: int = None,
-            change_block_gte: int = None,
-            log_prefix="",
+        self,
+        load_params_map: Dict[Type[BaseModel], LoadParams],
+        create_function,
+        block: Block = None,
+        page_limit: int = None,
+        change_block_gte: int = None,
+        log_prefix="",
     ):
         limit = 1000
         pagination_values = {model: None for model in load_params_map}
@@ -162,8 +162,9 @@ class SubgraphClient:
             for model, params in load_params_map.items():
                 config = model.__subgraph_client_config__
                 params.order_by = config.name_maps.get(config.pagination_field) or config.pagination_field
-                params.conditions = ([GraphQlCondition(params.order_by, "gte", params.formatted_pv)]
-                                     if params.formatted_pv else []) + params.conditions
+                params.conditions = (
+                    [GraphQlCondition(params.order_by, "gte", params.formatted_pv)] if params.formatted_pv else []
+                ) + params.conditions
             items = self.load(
                 load_params_map=load_params_map,
                 create_function=create_function,
@@ -203,8 +204,12 @@ class SubgraphClient:
                     fields.append(f)
             load_params_map[model] = LoadParams(fields=fields, conditions=[])
 
-        out = self.load_all(load_params_map=load_params_map,
-                            create_function=lambda model, data: self.create_function(model, data, session=session),
-                            block=block, change_block_gte=runtime_config.lastSyncBlock, log_prefix=self.context.tenant)
+        out = self.load_all(
+            load_params_map=load_params_map,
+            create_function=lambda model, data: self.create_function(model, data, session=session),
+            block=block,
+            change_block_gte=runtime_config.lastSyncBlock,
+            log_prefix=self.context.tenant,
+        )
         for o in out:
             pass

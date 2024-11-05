@@ -2,7 +2,8 @@ from decimal import Decimal
 
 from sqlalchemy import select, func, and_
 
-from src.app.models import BalanceChange, BalanceChangeType, LiquidatorSnapshot
+from src.app.models import BalanceChangeType, LiquidatorSnapshot
+from src.app.subgraph_models import BalanceChange
 from src.services.snapshot.snapshot_context import SnapshotContext
 from src.utils.block import Block
 

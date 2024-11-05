@@ -7,13 +7,8 @@ from src.app import log_span_context, LogTransaction
 from src.app.models import (
     RuntimeConfiguration,
     User,
-    Symbol,
-    Account,
-    BalanceChange,
-    Quote,
-    TradeHistory,
-    DailyHistory,
 )
+from src.app.subgraph_models import Account, BalanceChange, Symbol, Quote, TradeHistory, DailyHistory
 from src.config.settings import (
     Context,
     SYMMIO_ABI,
@@ -103,8 +98,7 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block,
         multicallable = Multicallable(context.w3.to_checksum_address(context.symmio_address), SYMMIO_ABI, context.w3)
         snapshot_context = SnapshotContext(context, session, config, multicallable)
 
-        if not historical_mode and Block(context.w3,
-                                         config.lastSnapshotBlock).timestamp() >= snapshot_block.timestamp():
+        if not historical_mode and Block(context.w3, config.lastSnapshotBlock).timestamp() >= snapshot_block.timestamp():
             # TODO: go to next rpc and try again
             return
         if SNAPSHOT_COUNT % SNAPSHOT_SCHEDULE.affiliate == 0:
@@ -114,8 +108,7 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block,
                         with log_span_context(session, "Prepare Affiliate Snapshot", transaction_id) as span:
                             span.add_data("affiliate", affiliate_context.name)
                             span.add_data("hedger", hedger_context.name)
-                            prepare_affiliate_snapshot(snapshot_context, affiliate_context, hedger_context,
-                                                       snapshot_block, transaction_id)
+                            prepare_affiliate_snapshot(snapshot_context, affiliate_context, hedger_context, snapshot_block, transaction_id)
         if SNAPSHOT_COUNT % SNAPSHOT_SCHEDULE.liquidator == 0:
             with log_span_context(session, "Prepare Liquidators Snapshots", transaction_id):
                 for liquidator in context.liquidators:
@@ -138,8 +131,7 @@ def do_fetch_snapshot(context: Context, session: Session, snapshot_block: Block,
                     if SNAPSHOT_COUNT % SNAPSHOT_SCHEDULE.hedger_binance == 0:
                         with log_span_context(session, "Prepare Hedger Binance Snapshot", transaction_id) as sp:
                             sp.add_data("hedger", hedger_context.name)
-                            prepare_hedger_binance_snapshot(snapshot_context, hedger_context, snapshot_block,
-                                                            transaction_id)
+                            prepare_hedger_binance_snapshot(snapshot_context, hedger_context, snapshot_block, transaction_id)
         if not historical_mode:
             config.lastSnapshotBlock = snapshot_block.number
             config.upsert(session)

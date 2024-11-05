@@ -6,12 +6,11 @@ from sqlalchemy.orm import Session
 
 from src.app import log_span_context
 from src.app.models import (
-    BalanceChange,
     BalanceChangeType,
     HedgerSnapshot,
     RuntimeConfiguration,
-    Quote,
 )
+from src.app.subgraph_models import BalanceChange, Quote
 from src.config.settings import (
     Context,
     SYMMIO_ABI,

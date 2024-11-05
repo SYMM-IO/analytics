@@ -8,16 +8,11 @@ from sqlalchemy.orm import Session, load_only, joinedload
 
 from src.app import log_span_context
 from src.app.models import (
-    Account,
     AffiliateSnapshot,
-    DailyHistory,
-    Quote,
-    Symbol,
-    TradeHistory,
-    BalanceChange,
     BalanceChangeType,
     RuntimeConfiguration,
 )
+from src.app.subgraph_models import Account, BalanceChange, Symbol, Quote, TradeHistory, DailyHistory
 from src.config.settings import (
     AffiliateContext,
     HedgerContext,

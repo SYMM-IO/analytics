@@ -3,7 +3,8 @@ from sqlalchemy import select, func, and_
 from sqlalchemy.orm import Session, aliased
 
 from src.app import get_db_session
-from src.app.models import User, Account, TradeHistory
+from src.app.models import User
+from src.app.subgraph_models import Account, TradeHistory
 from src.app.response_models import UserTradingVolume
 
 router = APIRouter(prefix="/user-history", tags=["User History"])

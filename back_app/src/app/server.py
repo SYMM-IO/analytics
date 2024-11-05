@@ -10,11 +10,11 @@ from src.config.settings import (
     SERVER_PORT,
 )
 from src.routers.auth_router import router as auth_router
-from src.routers.snapshot_router import router as snapshot_router
-from src.routers.user_history_router import router as user_history_router
 from src.routers.daily_history_router import router as daily_history_router
 from src.routers.health_metric_router import router as heath_metric_router
 from src.routers.report_router import router as report_router
+from src.routers.snapshot_router import router as snapshot_router
+from src.routers.user_history_router import router as user_history_router
 from src.utils.security_utils import get_current_user
 
 
@@ -50,7 +50,7 @@ app.include_router(report_router, dependencies=(Depends(get_current_user),))
 
 @app.get("/", response_model=ReadRoot)
 def read_root():
-    return {"root_test": "Hello World"}
+    return {"message": "Hello World"}
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ from web3.middleware import geth_poa_middleware
 from web3_collections import MultiEndpointHTTPProvider
 
 from src.app import db_session
-from src.app.models import BalanceChange
+from src.app.subgraph_models import BalanceChange
 from src.config import blast_8_2_contexts
 
 DEC18 = 10**18

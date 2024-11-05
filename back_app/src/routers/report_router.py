@@ -28,10 +28,10 @@ async def quotes_report_route(report_data: ReportData):
     try:
         get_quotes_report(start, end, affiliate)
     except:
-        raise HTTPException(status_code=400, detail='Bad request')
-    if os.path.exists(file := f'{REPORTS_PATH}/{affiliate}_quotes.csv'):
-        return FileResponse(file, media_type='application/octet-stream', filename=f'{affiliate}_quotes.csv')
-    raise HTTPException(status_code=400, detail='Bad request')
+        raise HTTPException(status_code=400, detail="Bad request")
+    if os.path.exists(file := f"{REPORTS_PATH}/{affiliate}_quotes.csv"):
+        return FileResponse(file, media_type="application/octet-stream", filename=f"{affiliate}_quotes.csv")
+    raise HTTPException(status_code=400, detail="Bad request")
 
 
 @router.post("/aggregate")
@@ -42,7 +42,7 @@ async def aggregate_report_route(report_data: ReportData):
     try:
         get_aggregate_report(start, end, affiliate)
     except:
-        raise HTTPException(status_code=400, detail='Bad request')
-    if os.path.exists(file := f'{REPORTS_PATH}/{affiliate}_aggregate.csv'):
-        return FileResponse(file, media_type='application/octet-stream', filename=f'{affiliate}_aggregate.csv')
-    raise HTTPException(status_code=400, detail='Bad request')
+        raise HTTPException(status_code=400, detail="Bad request")
+    if os.path.exists(file := f"{REPORTS_PATH}/{affiliate}_aggregate.csv"):
+        return FileResponse(file, media_type="application/octet-stream", filename=f"{affiliate}_aggregate.csv")
+    raise HTTPException(status_code=400, detail="Bad request")

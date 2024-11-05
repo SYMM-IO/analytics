@@ -129,3 +129,5 @@ CHAIN_ONLY = True
 # FORMATTER = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 # logger = logging.getLogger(LOGGER)
 # logger.setLevel(logging.DEBUG)
+
+UPDATE_HISTORIES_INTERVAL = 60

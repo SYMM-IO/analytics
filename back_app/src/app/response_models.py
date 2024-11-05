@@ -64,7 +64,7 @@ class HealthMetric(BaseModel):
 
 
 class ReadRoot(BaseModel):
-    root_test: str
+    message: str
 
 
 class Login(BaseModel):
