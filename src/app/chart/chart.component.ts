@@ -116,7 +116,16 @@ export class ChartComponent implements OnInit, OnDestroy {
 			grid: { left: "60", right: "20", top: "15" },
 			autoResize: true,
 			darkMode: true,
-			xAxis: { type: "time" },
+			xAxis: {
+				type: "time",
+				axisPointer: {
+					snap: true,
+					lineStyle: {
+						color: '#ffffff',
+						width: 1
+					},
+				},
+			},
 			yAxis: {
 				type: "value",
 				splitNumber: 4,
@@ -131,7 +140,9 @@ export class ChartComponent implements OnInit, OnDestroy {
 			},
 			tooltip: {
 				trigger: "axis",
-				appendTo: "html",
+				appendTo: undefined,
+				confine:true,
+				renderMode: "html",
 				axisPointer: {
 					type: "line",
 				},

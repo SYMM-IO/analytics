@@ -100,11 +100,6 @@ export class SolversChartsComponent implements OnInit {
 						const time = BaseHistory.getTime(history)!
 						if (mapped_data.has(time)) {
 							let lastHistory = mapped_data.get(time)!
-							if (lastHistory.timestamp! >= history.timestamp!) {
-								history.openInterest = BigNumber(0)
-							} else {
-								lastHistory.openInterest = BigNumber(0)
-							}
 							let aggregatedHistory = aggregateSolverDailyHistories([lastHistory, history])
 							aggregatedHistory.timestamp = lastHistory.timestamp! >= history.timestamp! ? lastHistory.timestamp : history.timestamp
 							mapped_data.set(time, aggregatedHistory)
