@@ -43,7 +43,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 		{ days: 90, name: "3M" },
 		{ days: 180, name: "6M" },
 		{ days: 365, name: "1Y" },
-		{ days: 730, name: "2Y" },
+		{ days: 730, name: "All" },
 		{ days: 0, name: "Custom" },
 	]
 	intervalOptionsStringify = stringifier
