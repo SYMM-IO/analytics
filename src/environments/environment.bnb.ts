@@ -1,9 +1,89 @@
-import { Affiliate, affiliateColors, AffiliateName, EnvironmentInterface, Solver, solverColors, SolverName, Version } from "./environment-interface"
+import {
+	Affiliate,
+	affiliateColors,
+	AffiliateName,
+	EnvironmentInterface,
+	NULL_AFFILIATE,
+	Solver,
+	solverColors,
+	SolverName,
+	Version,
+} from "./environment-interface"
 
-export const alpha_v3: Affiliate = {
+export const alpha_v3_1: Affiliate = {
 	name: AffiliateName.THENA,
 	mainColor: affiliateColors.get(AffiliateName.THENA),
 	address: "0x650a2D6C263A93cFF5EdD41f836ce832F05A1cF3",
+	fromTimestamp: null,
+}
+
+export const alpha_v3_2: Affiliate = {
+	name: AffiliateName.THENA,
+	mainColor: affiliateColors.get(AffiliateName.THENA),
+	address: "0xdAA571297038eeCB31dCafc3d1ff2C1A138E41C9",
+	fromTimestamp: null,
+}
+
+export const alpha_v3_3: Affiliate = {
+	name: AffiliateName.THENA,
+	mainColor: affiliateColors.get(AffiliateName.THENA),
+	address: "0xf3d56c3c1E610581181f4dE9242DbDa92D583dD6",
+	fromTimestamp: null,
+}
+
+export const alpha_v3_4: Affiliate = {
+	name: AffiliateName.THENA,
+	mainColor: affiliateColors.get(AffiliateName.THENA),
+	address: "0x49f49005e8e4D333459a05CCD34D00EB30D67446",
+	fromTimestamp: null,
+}
+
+export const alpha_v3_5: Affiliate = {
+	name: AffiliateName.THENA,
+	mainColor: affiliateColors.get(AffiliateName.THENA),
+	address: "0x2035CAC2C606c66e0B650f6E102bfAF931218432",
+	fromTimestamp: null,
+}
+
+export const alpha_v3_6: Affiliate = {
+	name: AffiliateName.THENA,
+	mainColor: affiliateColors.get(AffiliateName.THENA),
+	address: "0xBCc250B8D7e7e378c85fe9bc83fF0Eff5d5b0f20",
+	fromTimestamp: null,
+}
+
+export const alpha_v3_7: Affiliate = {
+	name: AffiliateName.THENA,
+	mainColor: affiliateColors.get(AffiliateName.THENA),
+	address: "0x7634Fd3084286e15DE973eca9a56dD353dAB3eE3",
+	fromTimestamp: null,
+}
+
+export const alpha_v3_8: Affiliate = {
+	name: AffiliateName.THENA,
+	mainColor: affiliateColors.get(AffiliateName.THENA),
+	address: "0xeFD638A013bF62638EfB4a405aca804F5f7d6cb8",
+	fromTimestamp: null,
+}
+
+export const alpha_v3_9: Affiliate = {
+	name: AffiliateName.THENA,
+	mainColor: affiliateColors.get(AffiliateName.THENA),
+	address: "0x041e372ed328a6088e470476e6df92617a86e2b2",
+	fromTimestamp: null,
+}
+
+export const alpha_v3_10: Affiliate = {
+	name: AffiliateName.THENA,
+	mainColor: affiliateColors.get(AffiliateName.THENA),
+	address: "0x4986415e243b9db258124909facb0a6aa87f6ccd",
+	fromTimestamp: null,
+}
+
+export const alpha_v3_11: Affiliate = {
+	name: AffiliateName.THENA,
+	mainColor: affiliateColors.get(AffiliateName.THENA),
+	address: "0x723abb2ef943d816a010f6f2ed510e513cc0d7f3",
 	fromTimestamp: null,
 }
 
@@ -59,6 +139,6 @@ export const environment: EnvironmentInterface = {
 	collaterals: ["0x55d398326f99059ff775485246999027b3197955"],
 	version: Version.LATEST,
 	startDate: new Date(1702058147000),
-	affiliates: [alpha_v3, cloverfield],
+	affiliates: [alpha_v3_1, alpha_v3_2, alpha_v3_3, alpha_v3_4, alpha_v3_5, alpha_v3_6, alpha_v3_7, alpha_v3_8, cloverfield, NULL_AFFILIATE],
 	solvers: [rasa_solver, perps1_solver, perps2_solver, perps3_solver, zenith1_solver, zenith2_solver],
 }

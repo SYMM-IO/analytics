@@ -9,7 +9,7 @@
 		<app-chart
 			[groupedHistories]="groupedHistories" [fieldName]="'tradeVolume'"
 			[chartTitle]="'Trade Volume'"
-			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasPartyBVolume]="true">
+			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [partyBVolumeIncluded]="true">
 		</app-chart>
 	</div>
 	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
@@ -23,7 +23,7 @@
 		<app-chart
 			[groupedHistories]="groupedHistories" [fieldName]="'openInterest'"
 			[chartTitle]="'Open Interest'"
-			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasCumulative]="false">
+			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasCumulative]="false" [partyBVolumeIncluded]="false">
 		</app-chart>
 	</div>
 	<div tuiCardLarge tuiSurface="elevated" class="chart-card">

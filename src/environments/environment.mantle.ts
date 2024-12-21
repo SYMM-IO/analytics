@@ -1,4 +1,14 @@
-import { Affiliate, affiliateColors, AffiliateName, EnvironmentInterface, Solver, solverColors, SolverName, Version } from "./environment-interface"
+import {
+	Affiliate,
+	affiliateColors,
+	AffiliateName,
+	EnvironmentInterface,
+	NULL_AFFILIATE,
+	Solver,
+	solverColors,
+	SolverName,
+	Version,
+} from "./environment-interface"
 
 export const intentX: Affiliate = {
 	name: AffiliateName.INTENTX,
@@ -46,6 +56,6 @@ export const environment: EnvironmentInterface = {
 	collaterals: ["0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34"],
 	version: Version.LATEST,
 	startDate: new Date(1712075812000),
-	affiliates: [intentX, cloverfield],
+	affiliates: [intentX, cloverfield, NULL_AFFILIATE],
 	solvers: [rasa_solver, perps1_solver, perps2_solver, perps3_solver],
 }

@@ -1,4 +1,14 @@
-import { Affiliate, affiliateColors, AffiliateName, EnvironmentInterface, Solver, solverColors, SolverName, Version } from "./environment-interface"
+import {
+	Affiliate,
+	affiliateColors,
+	AffiliateName,
+	EnvironmentInterface,
+	NULL_AFFILIATE,
+	Solver,
+	solverColors,
+	SolverName,
+	Version,
+} from "./environment-interface"
 import BigNumber from "bignumber.js"
 
 export const based: Affiliate = {
@@ -29,6 +39,6 @@ export const environment: EnvironmentInterface = {
 	version: Version.V_0_8_0,
 	collateralDecimal: 6,
 	collaterals: ["0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA"],
-	affiliates: [based, intentx],
+	affiliates: [based, intentx, NULL_AFFILIATE],
 	solvers: [solver],
 }

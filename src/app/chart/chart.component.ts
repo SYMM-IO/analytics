@@ -28,7 +28,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 	@Input() tooltipFormatter?: any
 	@Input() hasGroupByMonthAction = true
 	@Input() hasCumulative = true
-	@Input() hasPartyBVolume = false
+	@Input() partyBVolumeIncluded: boolean | undefined = undefined
 	@Input() groupedHistories!: Observable<GroupedHistory[]>
 
 	chartOption?: EChartsOption
@@ -43,6 +43,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 		{ days: 90, name: "3M" },
 		{ days: 180, name: "6M" },
 		{ days: 365, name: "1Y" },
+		{ days: 730, name: "2Y" },
 		{ days: 0, name: "Custom" },
 	]
 	intervalOptionsStringify = stringifier
@@ -121,8 +122,8 @@ export class ChartComponent implements OnInit, OnDestroy {
 				axisPointer: {
 					snap: true,
 					lineStyle: {
-						color: '#ffffff',
-						width: 1
+						color: "#ffffff",
+						width: 1,
 					},
 				},
 			},
@@ -141,7 +142,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 			tooltip: {
 				trigger: "axis",
 				appendTo: undefined,
-				confine:true,
+				confine: true,
 				renderMode: "html",
 				axisPointer: {
 					type: "line",
@@ -276,7 +277,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 	private createSeriesItem(groupedHistory: GroupedHistory, preparedResults: any, fieldName: string, view: string) {
 		return {
 			type: "bar",
-			stack: "total",
+			stack: fieldName.match("average") == null ? "total" : undefined,
 			color: groupedHistory.index.mainColor,
 			name: this.fixedValueName || groupedHistory.index.name,
 			data: preparedResults.data.map((history: any) => {
@@ -347,7 +348,15 @@ export class ChartComponent implements OnInit, OnDestroy {
 			})
 			.map(history => ({ ...history }))
 
-		if (!this.showPartyBVolume) {
+		if (this.showPartyBVolume == true && this.partyBVolumeIncluded == false) {
+			data = data.map(h => {
+				const time = this.getTimeByView(h, this.selectedView.value!)
+				if (time > 1723852800000) {
+					h[fieldName] = h[fieldName].times(BigNumber(2))
+				}
+				return h
+			})
+		} else if (this.showPartyBVolume == false && this.partyBVolumeIncluded == true) {
 			data = data.map(h => {
 				const time = this.getTimeByView(h, this.selectedView.value!)
 				if (time > 1723852800000) {
@@ -477,7 +486,8 @@ export class ChartComponent implements OnInit, OnDestroy {
 		}
 
 		// Add Aggregated row
-		content += `
+		if (this.fieldName.match("average") == null)
+			content += `
         <tr style="border-top: 1px solid rgba(255, 255, 255, 0.2);">
           <td style="padding: 5px; color: #cccccc;">
             <strong>Aggregated</strong>

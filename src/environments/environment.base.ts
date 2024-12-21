@@ -1,4 +1,14 @@
-import { Affiliate, affiliateColors, AffiliateName, EnvironmentInterface, Solver, solverColors, SolverName, Version } from "./environment-interface"
+import {
+	Affiliate,
+	affiliateColors,
+	AffiliateName,
+	EnvironmentInterface,
+	NULL_AFFILIATE,
+	Solver,
+	solverColors,
+	SolverName,
+	Version,
+} from "./environment-interface"
 
 export const based: Affiliate = {
 	name: AffiliateName.BASED,
@@ -74,6 +84,6 @@ export const environment: EnvironmentInterface = {
 	collaterals: ["0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"],
 	version: Version.LATEST,
 	startDate: new Date(1702466963000),
-	affiliates: [based, intentx, bmx, beFi, privex, cloverfield],
+	affiliates: [based, intentx, bmx, beFi, privex, cloverfield, NULL_AFFILIATE],
 	solvers: [rasa_solver, perps_solver, zenith_solver, zenith2_solver],
 }
