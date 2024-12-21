@@ -1,4 +1,14 @@
-import { Affiliate, affiliateColors, AffiliateName, EnvironmentInterface, Solver, solverColors, SolverName, Version } from "./environment-interface"
+import {
+	Affiliate,
+	affiliateColors,
+	AffiliateName,
+	EnvironmentInterface,
+	NULL_AFFILIATE,
+	Solver,
+	solverColors,
+	SolverName,
+	Version,
+} from "./environment-interface"
 
 export const pear: Affiliate = {
 	name: AffiliateName.PEAR,
@@ -47,6 +57,6 @@ export const environment: EnvironmentInterface = {
 	collaterals: ["0xaf88d065e77c8cC2239327C5EDb3A432268e5831"],
 	version: Version.LATEST,
 	startDate: new Date(1715990400000),
-	affiliates: [pear, intentx, cloverfield],
+	affiliates: [pear, intentx, cloverfield, NULL_AFFILIATE],
 	solvers: [perps1, perps2, perps3],
 }

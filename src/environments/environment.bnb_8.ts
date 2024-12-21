@@ -1,4 +1,14 @@
-import { Affiliate, affiliateColors, AffiliateName, EnvironmentInterface, Solver, solverColors, SolverName, Version } from "./environment-interface"
+import {
+	Affiliate,
+	affiliateColors,
+	AffiliateName,
+	EnvironmentInterface,
+	NULL_AFFILIATE,
+	Solver,
+	solverColors,
+	SolverName,
+	Version,
+} from "./environment-interface"
 
 export const alpha_v1: Affiliate = {
 	name: AffiliateName.THENA,
@@ -34,6 +44,6 @@ export const environment: EnvironmentInterface = {
 	collateralDecimal: 18,
 	collaterals: ["0x55d398326f99059ff775485246999027b3197955"],
 	version: Version.V_0_8_0,
-	affiliates: [cloverfield, alpha_v1, alpha_v2],
+	affiliates: [cloverfield, alpha_v1, alpha_v2, NULL_AFFILIATE],
 	solvers: [rasa_solver],
 }

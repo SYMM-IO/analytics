@@ -23,8 +23,8 @@ export interface EnvironmentInterface {
 export interface GroupIndex {
 	id?: number
 	name?: string
-	address?: string
 	mainColor?: string
+	address?: string
 }
 
 export enum AffiliateName {
@@ -37,6 +37,7 @@ export enum AffiliateName {
 	PRIVEX = "Privex",
 	PEAR = "Pear",
 	BASED = "Based",
+	UNKNOWN = "Unknown",
 }
 
 export let affiliateColors = new Map<AffiliateName, string>()
@@ -73,4 +74,11 @@ export interface Solver extends GroupIndex {
 	name?: string
 	address?: string
 	mainColor?: string
+}
+
+export const NULL_AFFILIATE: Affiliate = {
+	name: AffiliateName.UNKNOWN,
+	mainColor: "#e6e6e6",
+	address: "0x0000000000000000000000000000000000000000",
+	fromTimestamp: null,
 }
