@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from "@angular/core"
+import { Component, EventEmitter, Input, OnInit, Output } from "@angular/core"
 import { GroupedHistory } from "../groupedHistory"
 import { EnvironmentService } from "../services/enviroment.service"
 import { ApolloManagerService } from "../services/apollo-manager-service"
@@ -6,7 +6,7 @@ import { GraphQlClient, QueryConfig } from "../services/graphql-client"
 import { EnvironmentInterface } from "../../environments/environment-interface"
 import { LoadingService } from "../services/Loading.service"
 import { catchError, Observable, shareReplay, switchMap, zip } from "rxjs"
-import { map } from "rxjs/operators"
+import { map, tap } from "rxjs/operators"
 import { TuiAlertService } from "@taiga-ui/core"
 import { MonthlyHistory, WeeklyHistory } from "../models"
 import { aggregateMonthlyHistories, aggregateWeeklyHistories } from "../utils/aggregate-utils"
@@ -37,6 +37,8 @@ function deepCopy<T>(obj: T): T {
 export class AffiliatesChartsComponent implements OnInit {
 	@Input() groupedHistories!: Observable<GroupedHistory[]>
 	@Input() decimalsMap!: Map<string, number>
+	@Output() totalMonthlyHistory = new EventEmitter<MonthlyHistory>()
+
 	environments: EnvironmentInterface[]
 
 	constructor(
@@ -176,6 +178,22 @@ export class AffiliatesChartsComponent implements OnInit {
 						return [...map.values()]
 					}),
 				)
+			}),
+			tap((affiliateHistories: GroupedHistory[]) => {
+				// Collect each affiliate's second-last monthly history
+				const lastMonthEntries = affiliateHistories
+					.map(ah => {
+						const m = ah.monthlyHistories
+						// only grab it if there's at least 2 months
+						return m.length >= 2 ? m[m.length - 2] : null
+					})
+					.filter(Boolean) as MonthlyHistory[]
+
+				// Aggregate them
+				const aggregatedLastMonth = aggregateMonthlyHistories(lastMonthEntries)
+
+				// Emit the result
+				this.totalMonthlyHistory.emit(aggregatedLastMonth)
 			}),
 			shareReplay(1),
 		)

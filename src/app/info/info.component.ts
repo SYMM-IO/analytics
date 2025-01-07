@@ -10,8 +10,7 @@ import BigNumber from "bignumber.js"
 export class InfoComponent {
     @Input() title?: string
     @Input() totalValue?: BigNumber
-    @Input() todayValue?: BigNumber
-    @Input() lastDayValue?: BigNumber
+    @Input() lastMonthValue?: BigNumber | null
     @Input() formatMoney: boolean = false
     @Input() decimals: number = 18
 

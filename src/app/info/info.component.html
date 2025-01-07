@@ -1,34 +1,19 @@
 <div class="flex flex-column p-2 gap-1">
     <span tuiTitle class="text-xl pb-2">{{ title }}</span>
-    @if (totalValue != null && todayValue != null) {
-        <span class="text-xl font-semibold">
+    @if (totalValue != null) {
+    <span class="text-xl font-semibold">
         {{ formatValue(totalValue) }}
-        </span>
-        <div class="flex flex-row gap-1">
+    </span>
+    <div class="flex-row gap-1">
         <span class="text-sm">
-            Added Today:
+            Monthly:
         </span>
-            <span class="text-sm">
-            {{ formatValue(todayValue) }}
+        <span class="text-sm">
+            {{ lastMonthValue != null ? formatValue(lastMonthValue): '' }}
         </span>
-            @if (lastDayValue != null && lastDayValue.gt(0) && todayValue.gt(0)) {
-                <!--                    <div class="flex flex-row gap-1 red-text" *ngIf="todayValue.lt(lastDayValue)">-->
-                        <!--                        <span class="text-sm">-->
-                        <!--                            {{todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1)}}%-->
-                        <!--                        </span>-->
-                        <!--                        <span class="pi pi-arrow-down"></span>-->
-                        <!--                    </div>-->
-                <div class="flex flex-row gap-1 green-text" *ngIf="todayValue.gt(lastDayValue)">
-            <span class="text-sm">
-                {{ todayValue.minus(lastDayValue).abs().div(lastDayValue).multipliedBy(100).toFormat(1) }}%
-            </span>
-                    <span class="pi pi-arrow-up"></span>
-                </div>
-            }
-
-        </div>
+    </div>
     } @else if (loadingService.loading()) {
-        <section [class.tui-skeleton]="true" style="width: 12em; height: 1.5em" [tuiSkeleton]="true" ></section>
-        <section [class.tui-skeleton]="true" style="width: 16em; height: 1.5em" [tuiSkeleton]="true"></section>
+    <section [class.tui-skeleton]="true" style="width: 12em; height: 1.5em" [tuiSkeleton]="true"></section>
+    <section [class.tui-skeleton]="true" style="width: 16em; height: 1.5em" [tuiSkeleton]="true"></section>
     }
 </div>

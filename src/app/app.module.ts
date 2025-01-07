@@ -26,12 +26,10 @@ import { ChartComponent } from "./chart/chart.component"
 import { HomeComponent } from "./home/home.component"
 import { ResizeObserverDirective } from "./resize-observer.directive"
 import { TuiAccordion, TuiBlock, TuiButtonLoading, TuiDataListWrapper, TuiRadio, TuiSegmented, TuiSkeleton } from "@taiga-ui/kit"
-import { PanelHomeComponent } from "./panel-home/panel-home.component"
 import { ReactiveFormsModule } from "@angular/forms"
 import { NgxJsonViewerModule } from "ngx-json-viewer"
 import { httpInterceptor } from "./http.Interceptor"
 import { BigNumberFormatPipe } from "./big-number-format.pipe"
-import { QuoteLoaderComponent } from "./panel-home/quote-loader/quote-loader.component"
 import { AffiliatesChartsComponent } from "./affiliate-chart/affiliates-charts.component"
 import { SolversChartsComponent } from "./solvers-charts/solvers-charts.component"
 
@@ -42,9 +40,7 @@ import { SolversChartsComponent } from "./solvers-charts/solvers-charts.componen
 		ChartComponent,
 		HomeComponent,
 		ResizeObserverDirective,
-		PanelHomeComponent,
 		BigNumberFormatPipe,
-		QuoteLoaderComponent,
 		ChartComponent,
 		AffiliatesChartsComponent,
 		SolversChartsComponent,
