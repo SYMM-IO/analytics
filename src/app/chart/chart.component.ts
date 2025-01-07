@@ -446,18 +446,19 @@ export class ChartComponent implements OnInit, OnDestroy {
 					value = item.value
 				}
 				sum += value
-
-				content += `
-                <tr>
-                  <td style="padding: 3px 5px;">
-                    <span style="display: inline-block; width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-right: 5px;"></span>
-                    <span style="color: #cccccc;">${item.seriesName || "Unknown"}</span>
-                  </td>
-                  <td style="padding: 3px 5px; text-align: right; color: #ffffff; font-weight: bold;">
-                    ${this.yAxisFormatter(value)}
-                  </td>
-                </tr>
-            `
+				if (value > 0) {
+					content += `
+					<tr>
+					  <td style="padding: 3px 5px;">
+						<span style="display: inline-block; width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-right: 5px;"></span>
+						<span style="color: #cccccc;">${item.seriesName || "Cloverfield"}</span>
+					  </td>
+					  <td style="padding: 3px 5px; text-align: right; color: #ffffff; font-weight: bold;">
+						${this.yAxisFormatter(value)}
+					  </td>
+					</tr>
+				`
+				}
 			}
 		})
 
