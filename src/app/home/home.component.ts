@@ -11,6 +11,7 @@ import { DailyHistory, TotalHistory } from "../models"
 import { aggregateDailyHistories, aggregateTotalHistories } from "../utils/aggregate-utils"
 import { GroupedHistory } from "../groupedHistory"
 import { aggregateHistories, collectAllDates, justifyHistoriesToDates } from "../utils/common-utils"
+import BigNumber from "bignumber.js"
 
 export enum ViewMode {
 	SOLVERS = "SOLVERS",
@@ -26,12 +27,13 @@ export class HomeComponent implements OnInit {
 	groupedHistories?: Observable<GroupedHistory[]>
 	totalHistory?: TotalHistory
 	todayHistory?: DailyHistory
-	lastDayHistory?: DailyHistory
+	lastMonthHistory?: DailyHistory
 	environments: EnvironmentInterface[]
 	decimalsMap = new Map<string, number>()
 	ViewMode = ViewMode
 	viewMode: ViewMode = ViewMode.FRONTENDS
-
+	monthlyActiveUsers: any
+	zero  = BigNumber(0)
 	constructor(
 		private loadingService: LoadingService,
 		readonly environmentService: EnvironmentService,
@@ -173,9 +175,29 @@ export class HomeComponent implements OnInit {
 			}),
 			tap((affiliateHistories: GroupedHistory[]) => {
 				this.todayHistory = aggregateDailyHistories(affiliateHistories.map(a => a.dailyHistories[a.dailyHistories.length - 1]))
-				this.lastDayHistory = aggregateDailyHistories(affiliateHistories.map(a => a.dailyHistories[a.dailyHistories.length - 2]))
+
+				const lastMonthHistoriesPerAffiliate = affiliateHistories.map(a => this.getLastCalendarMonthHistories(a.dailyHistories))
+
+				const allLastMonthHistories = lastMonthHistoriesPerAffiliate.flat()
+				this.lastMonthHistory = aggregateDailyHistories(allLastMonthHistories)
 			}),
 			shareReplay(1),
 		)
+	}
+	private getLastCalendarMonthHistories(histories: DailyHistory[]): DailyHistory[] {
+		const now = new Date()
+		const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1
+		const yearOfLastMonth = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear()
+
+		const startOfLastMonth = new Date(yearOfLastMonth, lastMonth, 1)
+		const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+		const startOfLastMonthTimestamp = Math.floor(startOfLastMonth.getTime() / 1000)
+		const startOfThisMonthTimestamp = Math.floor(startOfThisMonth.getTime() / 1000)
+
+		return histories.filter(daily => {
+			const ts = DailyHistory.getTime(daily)! / 1000
+			return ts >= startOfLastMonthTimestamp && ts < startOfThisMonthTimestamp
+		})
 	}
 }
