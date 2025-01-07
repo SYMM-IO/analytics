@@ -37,7 +37,7 @@ export enum AffiliateName {
 	PRIVEX = "Privex",
 	PEAR = "Pear",
 	BASED = "Based",
-	UNKNOWN = "Unknown",
+	UNKNOWN = "Symmio",
 }
 
 export let affiliateColors = new Map<AffiliateName, string>()
@@ -77,7 +77,7 @@ export interface Solver extends GroupIndex {
 }
 
 export const NULL_AFFILIATE: Affiliate = {
-	name: AffiliateName.UNKNOWN,
+	name: AffiliateName.CLOVERFIELD,
 	mainColor: "#e6e6e6",
 	address: "0x0000000000000000000000000000000000000000",
 	fromTimestamp: null,
