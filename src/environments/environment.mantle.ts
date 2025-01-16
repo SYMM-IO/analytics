@@ -48,6 +48,12 @@ export const perps3_solver: Solver = {
 	mainColor: solverColors.get(SolverName.PERPS_HUB),
 }
 
+export const zenith_solver: Solver = {
+	name: SolverName.ZENITH,
+	address: "0x8c6641e23143718419829e709f093ee6ec922537",
+	mainColor: solverColors.get(SolverName.ZENITH),
+}
+
 export const environment: EnvironmentInterface = {
 	name: "MANTLE",
 	serverUrl: "https://analytics-api.symm.io",
@@ -57,5 +63,5 @@ export const environment: EnvironmentInterface = {
 	version: Version.LATEST,
 	startDate: new Date(1712075812000),
 	affiliates: [intentX, cloverfield, NULL_AFFILIATE],
-	solvers: [rasa_solver, perps1_solver, perps2_solver, perps3_solver],
+	solvers: [rasa_solver, perps1_solver, perps2_solver, perps3_solver, zenith_solver],
 }
