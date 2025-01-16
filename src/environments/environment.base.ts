@@ -64,6 +64,23 @@ export const perps_solver: Solver = {
 	mainColor: solverColors.get(SolverName.PERPS_HUB),
 }
 
+export const perps2_solver: Solver = {
+	name: SolverName.PERPS_HUB,
+	address: "0x1ecabf0eba136920677c9575faccee36f30592cf",
+	mainColor: solverColors.get(SolverName.PERPS_HUB),
+}
+
+export const perps3_solver: Solver = {
+	name: SolverName.PERPS_HUB,
+	address: "0xfc4ac3af357ebe6d556dcd72453e9b30f6dc6873",
+	mainColor: solverColors.get(SolverName.PERPS_HUB),
+}
+export const perps4_solver: Solver = {
+	name: SolverName.PERPS_HUB,
+	address: "0xB6e3b44975f2966707a91747F89D2002ff8d62Db",
+	mainColor: solverColors.get(SolverName.PERPS_HUB),
+}
+
 export const zenith_solver: Solver = {
 	name: SolverName.ZENITH,
 	address: "0x5f3525db7589640dae87d6040a85c49fa43feb2f",
@@ -85,5 +102,5 @@ export const environment: EnvironmentInterface = {
 	version: Version.LATEST,
 	startDate: new Date(1702466963000),
 	affiliates: [based, intentx, bmx, beFi, privex, cloverfield, NULL_AFFILIATE],
-	solvers: [rasa_solver, perps_solver, zenith_solver, zenith2_solver],
+	solvers: [rasa_solver, perps_solver, perps2_solver, perps3_solver, perps4_solver, zenith_solver, zenith2_solver],
 }
