@@ -52,6 +52,13 @@ export const privex: Affiliate = {
 	fromTimestamp: "0",
 }
 
+export const xpanse: Affiliate = {
+	name: AffiliateName.XPANSE,
+	mainColor: affiliateColors.get(AffiliateName.XPANSE),
+	address: "0xDE6446197Cd1AE02E1C5B7191a626Fb0c1757377",
+	fromTimestamp: "0",
+}
+
 export const rasa_solver: Solver = {
 	name: SolverName.RASA,
 	address: "0x9206d9d8f7f1b212a4183827d20de32af3a23c59",
@@ -101,6 +108,6 @@ export const environment: EnvironmentInterface = {
 	collaterals: ["0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"],
 	version: Version.LATEST,
 	startDate: new Date(1702466963000),
-	affiliates: [based, intentx, bmx, beFi, privex, cloverfield, NULL_AFFILIATE],
+	affiliates: [based, intentx, bmx, beFi, privex, cloverfield, xpanse, NULL_AFFILIATE],
 	solvers: [rasa_solver, perps_solver, perps2_solver, perps3_solver, perps4_solver, zenith_solver, zenith2_solver],
 }

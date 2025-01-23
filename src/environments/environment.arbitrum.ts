@@ -31,6 +31,13 @@ export const cloverfield: Affiliate = {
 	fromTimestamp: "0",
 }
 
+export const xpanse: Affiliate = {
+	name: AffiliateName.XPANSE,
+	mainColor: affiliateColors.get(AffiliateName.XPANSE),
+	address: "0x263A8220e9351c5d0cC13567Db4d7BF58e7470c6",
+	fromTimestamp: "0",
+}
+
 export const perps1: Solver = {
 	name: SolverName.PERPS_HUB,
 	address: "0x00c069d68bc7420740460dbc3cc3fff9b3742421",
@@ -57,6 +64,6 @@ export const environment: EnvironmentInterface = {
 	collaterals: ["0xaf88d065e77c8cC2239327C5EDb3A432268e5831"],
 	version: Version.LATEST,
 	startDate: new Date(1715990400000),
-	affiliates: [pear, intentx, cloverfield, NULL_AFFILIATE],
+	affiliates: [pear, intentx, cloverfield, xpanse, NULL_AFFILIATE],
 	solvers: [perps1, perps2, perps3],
 }
