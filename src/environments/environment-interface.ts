@@ -38,6 +38,8 @@ export enum AffiliateName {
 	PEAR = "Pear",
 	BASED = "Based",
 	XPANSE = "Xpanse",
+	IVX = "Ivx",
+	LODE = "Lode",
 	UNKNOWN = "Symmio",
 }
 
@@ -52,6 +54,8 @@ affiliateColors.set(AffiliateName.PEAR, "#ace075")
 affiliateColors.set(AffiliateName.BASED, "#F5B3F7")
 affiliateColors.set(AffiliateName.THENA, "#ED00C9")
 affiliateColors.set(AffiliateName.XPANSE, "#90efff")
+affiliateColors.set(AffiliateName.IVX, "#5a3da0")
+affiliateColors.set(AffiliateName.LODE, "#21206b") //FIXME: Color should be fixed
 
 export interface Affiliate extends GroupIndex {
 	name?: AffiliateName
