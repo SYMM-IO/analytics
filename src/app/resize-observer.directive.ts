@@ -1,7 +1,8 @@
 import { Directive, ElementRef, EventEmitter, OnDestroy, Output } from "@angular/core"
 
 @Directive({
-	selector: "[appResizeObserver]",
+    selector: "[appResizeObserver]",
+    standalone: false
 })
 export class ResizeObserverDirective implements OnDestroy {
 	@Output() resize = new EventEmitter<DOMRectReadOnly>()

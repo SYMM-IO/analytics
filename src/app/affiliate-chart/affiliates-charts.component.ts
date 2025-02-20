@@ -30,9 +30,10 @@ function deepCopy<T>(obj: T): T {
 }
 
 @Component({
-	selector: "app-affiliates-charts",
-	templateUrl: "./affiliates-charts.component.html",
-	styleUrls: ["./affiliates-charts.component.scss"],
+    selector: "app-affiliates-charts",
+    templateUrl: "./affiliates-charts.component.html",
+    styleUrls: ["./affiliates-charts.component.scss"],
+    standalone: false
 })
 export class AffiliatesChartsComponent implements OnInit {
 	@Input() groupedHistories!: Observable<GroupedHistory[]>
