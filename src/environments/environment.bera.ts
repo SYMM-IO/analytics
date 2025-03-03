@@ -50,6 +50,6 @@ export const environment: EnvironmentInterface = {
 	collaterals: ["0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce"],
 	version: Version.LATEST,
 	startDate: new Date(1738658091000),
-	affiliates: [ivx, NULL_AFFILIATE],
+	affiliates: [ivx, lode, NULL_AFFILIATE],
 	solvers: [perps1_solver, perps2_solver, perps3_solver],
 }
