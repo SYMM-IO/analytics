@@ -55,7 +55,7 @@ affiliateColors.set(AffiliateName.BASED, "#F5B3F7")
 affiliateColors.set(AffiliateName.THENA, "#ED00C9")
 affiliateColors.set(AffiliateName.XPANSE, "#90efff")
 affiliateColors.set(AffiliateName.IVX, "#5a3da0")
-affiliateColors.set(AffiliateName.LODE, "#21206b") //FIXME: Color should be fixed
+affiliateColors.set(AffiliateName.LODE, "#f9661b")
 
 export interface Affiliate extends GroupIndex {
 	name?: AffiliateName

@@ -13,10 +13,11 @@ import { CallbackDataParams } from "echarts/types/dist/shared"
 const stringifier = (item: any): string => item.name || item
 
 @Component({
-	selector: "app-chart",
-	templateUrl: "./chart.component.html",
-	styleUrls: ["./chart.component.scss"],
-	providers: [tuiItemsHandlersProvider({ stringify: stringifier })],
+    selector: "app-chart",
+    templateUrl: "./chart.component.html",
+    styleUrls: ["./chart.component.scss"],
+    providers: [tuiItemsHandlersProvider({ stringify: stringifier })],
+    standalone: false
 })
 export class ChartComponent implements OnInit, OnDestroy {
 	@ViewChild("chart") chartElement!: ElementRef

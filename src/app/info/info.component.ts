@@ -6,6 +6,7 @@ import BigNumber from "bignumber.js"
     selector: "app-info",
     templateUrl: "./info.component.html",
     styleUrls: ["./info.component.scss"],
+    standalone: false
 })
 export class InfoComponent {
     @Input() title?: string

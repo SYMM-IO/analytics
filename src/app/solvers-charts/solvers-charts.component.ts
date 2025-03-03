@@ -13,9 +13,10 @@ import { aggregateSolverDailyHistories } from "../utils/aggregate-utils"
 import { aggregateHistories, collectAllDates, justifyHistoriesToDates } from "../utils/common-utils"
 
 @Component({
-	selector: "app-solvers-charts",
-	templateUrl: "./solvers-charts.component.html",
-	styleUrls: ["./solvers-charts.component.scss"],
+    selector: "app-solvers-charts",
+    templateUrl: "./solvers-charts.component.html",
+    styleUrls: ["./solvers-charts.component.scss"],
+    standalone: false
 })
 export class SolversChartsComponent implements OnInit {
 	groupedHistories?: Observable<GroupedHistory[]>
