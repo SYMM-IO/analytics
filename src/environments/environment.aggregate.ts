@@ -10,10 +10,11 @@ import { environment as mantleEnv } from "./environment.mantle"
 import { environment as arbitrumEnv } from "./environment.arbitrum"
 import { environment as modeEnv } from "./environment.mode"
 import { environment as beraEnv } from "./environment.bera"
+import { environment as sonicEnv } from "./environment.sonic"
 
 export const environment: EnvironmentInterface = {
 	name: "aggregate",
 	assetsFolder: "aggregate",
 	serverUrl: "https://analytics-api.symm.io",
-	environments: [ftm8Env, bnb8Env, bnbEnv, base8Env, baseEnv, blastEnv, mantleEnv, arbitrumEnv, modeEnv, beraEnv],
+	environments: [ftm8Env, bnb8Env, bnbEnv, base8Env, baseEnv, blastEnv, mantleEnv, arbitrumEnv, modeEnv, beraEnv, sonicEnv],
 }
