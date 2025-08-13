@@ -48,7 +48,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 		{ days: 0, name: "Custom" },
 	]
 	intervalOptionsStringify = stringifier
-	intervalForm = new FormControl(this.intervalOptions[2])
+	intervalForm = new FormControl(this.intervalOptions[1])
 	intervalRangeForm = new FormControl()
 	readonly intervalRangeMin = new TuiDay(2000, 2, 20)
 	readonly intervalRangeMax = new TuiDay(2040, 2, 20)
