@@ -42,6 +42,10 @@ export enum AffiliateName {
 	LODE = "Lode",
 	SPOOKY = "Spooky",
 	UNKNOWN = "Symmio",
+	VIBE = "Vibe",
+	CARBON = "Carbon",
+	QUICKSWAP = "QuickSwap",
+	TREBLE = "Treble",
 }
 
 export let affiliateColors = new Map<AffiliateName, string>()
@@ -58,6 +62,10 @@ affiliateColors.set(AffiliateName.XPANSE, "#90efff")
 affiliateColors.set(AffiliateName.IVX, "#5a3da0")
 affiliateColors.set(AffiliateName.LODE, "#f9661b")
 affiliateColors.set(AffiliateName.SPOOKY, "#8C8CE3")
+affiliateColors.set(AffiliateName.VIBE, "#dc4fe1")
+affiliateColors.set(AffiliateName.CARBON, "#e7e7e7")
+affiliateColors.set(AffiliateName.QUICKSWAP, "#448aff")
+affiliateColors.set(AffiliateName.TREBLE, "#08efff")
 
 export interface Affiliate extends GroupIndex {
 	name?: AffiliateName
