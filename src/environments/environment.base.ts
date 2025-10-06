@@ -59,6 +59,41 @@ export const xpanse: Affiliate = {
 	fromTimestamp: "0",
 }
 
+export const vibe: Affiliate = {
+	name: AffiliateName.VIBE,
+	mainColor: affiliateColors.get(AffiliateName.VIBE),
+	address: "0x95605c64356572eb5C076Cb9c027c88b527A2059".toLowerCase(),
+	fromTimestamp: "0",
+}
+
+export const carbon: Affiliate = {
+	name: AffiliateName.CARBON,
+	mainColor: affiliateColors.get(AffiliateName.CARBON),
+	address: "0x39EcC772f6073242d6FD1646d81FA2D87fe95314".toLowerCase(),
+	fromTimestamp: "0",
+}
+
+export const pear: Affiliate = {
+	name: AffiliateName.PEAR,
+	mainColor: affiliateColors.get(AffiliateName.PEAR),
+	address: "0xE43166cE17d3511B09438a359dAa53513225101D".toLowerCase(),
+	fromTimestamp: "0",
+}
+
+export const quickswap: Affiliate = {
+	name: AffiliateName.QUICKSWAP,
+	mainColor: affiliateColors.get(AffiliateName.QUICKSWAP),
+	address: "0x0B4779a37C5E6cD7060cc265105Ff44a03b47b26".toLowerCase(),
+	fromTimestamp: "0",
+}
+
+export const treble: Affiliate = {
+	name: AffiliateName.TREBLE,
+	mainColor: affiliateColors.get(AffiliateName.TREBLE),
+	address: "0x72b03E85B40A745B07f3a15e7A02E66F7f8352F3".toLowerCase(),
+	fromTimestamp: "0",
+}
+
 export const rasa_solver: Solver = {
 	name: SolverName.RASA,
 	address: "0x9206d9d8f7f1b212a4183827d20de32af3a23c59",
@@ -108,6 +143,6 @@ export const environment: EnvironmentInterface = {
 	collaterals: ["0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"],
 	version: Version.LATEST,
 	startDate: new Date(1702466963000),
-	affiliates: [based, intentx, bmx, beFi, privex, cloverfield, xpanse, NULL_AFFILIATE],
+	affiliates: [based, intentx, bmx, beFi, privex, cloverfield, xpanse, vibe, carbon, pear, quickswap, treble, NULL_AFFILIATE],
 	solvers: [rasa_solver, perps_solver, perps2_solver, perps3_solver, perps4_solver, zenith_solver, zenith2_solver],
 }
