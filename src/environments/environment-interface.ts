@@ -65,7 +65,7 @@ affiliateColors.set(AffiliateName.SPOOKY, "#8C8CE3")
 affiliateColors.set(AffiliateName.VIBE, "#1ccff3")
 affiliateColors.set(AffiliateName.CARBON, "#e7e7e7")
 affiliateColors.set(AffiliateName.QUICKSWAP, "#448aff")
-affiliateColors.set(AffiliateName.TREBLE, "#08efff")
+affiliateColors.set(AffiliateName.TREBLE, "#2797ff")
 
 export interface Affiliate extends GroupIndex {
 	name?: AffiliateName
