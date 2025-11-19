@@ -135,14 +135,26 @@ export const zenith2_solver: Solver = {
 	mainColor: solverColors.get(SolverName.ZENITH),
 }
 
+export const carbon_solver: Solver = {
+	name: SolverName.CARBON,
+	address: "0x9F20BaD77CCa97f2F96De88b146603Ca3F65baD5",
+	mainColor: solverColors.get(SolverName.CARBON),
+}
+
+export const carbon2_solver: Solver = {
+	name: SolverName.CARBON,
+	address: "0xB49Cae38c96f6425Ce4A46e8220549C6a13362bE",
+	mainColor: solverColors.get(SolverName.CARBON),
+}
+
 export const environment: EnvironmentInterface = {
 	name: "BASE",
 	serverUrl: "https://analytics-api.symm.io",
-	subgraphUrl: "https://api.goldsky.com/api/public/project_cm1hfr4527p0f01u85mz499u8/subgraphs/base_analytics/latest/gn",
+	subgraphUrl: "https://api.studio.thegraph.com/query/85206/base-analytics/version/latest",
 	collateralDecimal: 6,
 	collaterals: ["0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"],
 	version: Version.LATEST,
 	startDate: new Date(1702466963000),
 	affiliates: [based, intentx, bmx, beFi, privex, cloverfield, xpanse, vibe, carbon, pear, quickswap, treble, NULL_AFFILIATE],
-	solvers: [rasa_solver, perps_solver, perps2_solver, perps3_solver, perps4_solver, zenith_solver, zenith2_solver],
+	solvers: [rasa_solver, perps_solver, perps2_solver, perps3_solver, perps4_solver, zenith_solver, zenith2_solver, carbon_solver, carbon2_solver],
 }

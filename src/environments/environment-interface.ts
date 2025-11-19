@@ -77,6 +77,8 @@ export interface Affiliate extends GroupIndex {
 
 export enum SolverName {
 	PERPS_HUB = "PerpsHub",
+	PRIVEX = "Privex Solver",
+	CARBON = "Carbon Solver",
 	RASA = "Rasa",
 	ZENITH = "Zenith",
 }
@@ -85,6 +87,8 @@ export let solverColors = new Map<SolverName, string>()
 solverColors.set(SolverName.PERPS_HUB, "#ff6e7f")
 solverColors.set(SolverName.RASA, "#A2D4EA")
 solverColors.set(SolverName.ZENITH, "#e9de7d")
+solverColors.set(SolverName.PRIVEX, "#0000ff")
+solverColors.set(SolverName.CARBON, "#e7e7e7")
 
 export interface Solver extends GroupIndex {
 	name?: string
