@@ -4,7 +4,6 @@ import { map } from "rxjs/operators"
 import { GraphQlClient, QueryConfig } from "../services/graphql-client"
 import { LoadingService } from "../services/Loading.service"
 import { EnvironmentService } from "../services/enviroment.service"
-import { ApolloManagerService } from "../services/apollo-manager-service"
 import { EnvironmentInterface } from "../../environments/environment-interface"
 import { TuiAlertService } from "@taiga-ui/core"
 import { DailyHistory, TotalHistory } from "../models"
@@ -38,7 +37,6 @@ export class HomeComponent implements OnInit {
 	constructor(
 		private loadingService: LoadingService,
 		readonly environmentService: EnvironmentService,
-		readonly apolloService: ApolloManagerService,
 		@Inject(TuiAlertService) protected readonly alert: TuiAlertService,
 	) {
 		this.environments = environmentService.getValue("environments")
@@ -56,7 +54,7 @@ export class HomeComponent implements OnInit {
 						return {
 							affiliate: aff,
 							env: env,
-							graphQlClient: new GraphQlClient(this.apolloService.getClient(env.subgraphUrl!)!, this.loadingService),
+							graphQlClient: new GraphQlClient(env.subgraphUrl!, this.loadingService),
 						}
 					})
 				})

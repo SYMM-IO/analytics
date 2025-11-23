@@ -15,7 +15,6 @@ import { BrowserModule } from "@angular/platform-browser"
 
 import { provideHttpClient, withInterceptors } from "@angular/common/http"
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations"
-import { Apollo } from "apollo-angular"
 import { NgxEchartsModule } from "ngx-echarts"
 import { AppRoutingModule } from "./app-routing.module"
 import { AppComponent } from "./app.component"
@@ -81,7 +80,7 @@ import { SolversChartsComponent } from "./solvers-charts/solvers-charts.componen
 		TuiSegmented,
 		TuiSkeleton,
 	],
-	providers: [provideHttpClient(withInterceptors([httpInterceptor])), { provide: ENVIRONMENT, useValue: environment }, Apollo, NG_EVENT_PLUGINS],
+	providers: [provideHttpClient(withInterceptors([httpInterceptor])), { provide: ENVIRONMENT, useValue: environment }, NG_EVENT_PLUGINS],
 	bootstrap: [AppComponent],
 })
 export class AppModule {}
