@@ -16,6 +16,13 @@
           M
         </button>
       }
+      @if (hasCumulative) {
+        <button tuiButton type="button" size="s" appearance="outline" (click)="toggleCumulative()"
+          [ngClass]="{'selected-button': isCumulativeSelected()}" tuiHint="Toggle Cumulative"
+          >
+          Cumulative
+        </button>
+      }
       <button tuiIconButton type="button" iconStart="@tui.chevron-left" size="s" appearance="outline"
         (click)="goBack()" [disabled]="startTime < minTime || intervalForm.value.name == 'Custom'"
         tuiHint="Back">
@@ -72,6 +79,96 @@
     <div echarts [options]="chartOption" theme="dark"
       [autoResize]="true" #chart (chartInit)="onChartInit($event)"
       class="chart">
+    </div>
+  }
+  
+  <!-- Custom Legend -->
+  @if (allSeries.length > 0) {
+    <div class="custom-legend">
+      <!-- Dropdown Button -->
+      <div class="legend-dropdown-container">
+        <button 
+          tuiButton 
+          type="button" 
+          size="l" 
+          appearance="outline"
+          (click)="toggleLegendDropdown()"
+          class="legend-dropdown-button">
+          <tui-icon icon="@tui.filter" class="mr-1"></tui-icon>
+          <span class="mx-0.5">Filter</span>
+          <tui-icon icon="@tui.chevron-down" [class.rotated]="legendDropdownOpen" class="ml-1"></tui-icon>
+        </button>
+        
+        <!-- Dropdown Content -->
+        @if (legendDropdownOpen) {
+          <div class="legend-dropdown-content">
+            <div class="legend-dropdown-header">
+              <button 
+                tuiButton 
+                type="button" 
+                size="s" 
+                appearance="outline"
+                (click)="deselectAll()"
+                class="legend-action-button">
+                Deselect All
+              </button>
+              <button 
+                tuiButton 
+                type="button" 
+                size="s" 
+                appearance="outline"
+                (click)="selectAll()"
+                class="legend-action-button">
+                Select All
+              </button>
+            </div>
+            <div class="legend-chips-container">
+              @for (series of allSeries; track series.name) {
+                @if (series.name !== 'Cumulative') {
+                  <div 
+                    class="legend-chip"
+                    [class.selected]="isSeriesSelected(series.name)"
+                    (click)="toggleSeries(series.name)">
+                    <span 
+                      class="legend-chip-indicator" 
+                      [style.background-color]="series.color">
+                    </span>
+                    <span class="legend-chip-label">{{ series.name }}</span>
+                    @if (isSeriesSelected(series.name)) {
+                      <tui-icon icon="@tui.check" class="legend-chip-check"></tui-icon>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+      
+      <!-- Main Legend Items (Chips) -->
+      <div class="legend-items">
+        @for (series of allSeries; track series.name) {
+          @if (isSeriesSelected(series.name)) {
+            <tui-chip
+              class="legend-chip-item"
+              size="s">
+              <span 
+                class="legend-chip-indicator" 
+                [style.background-color]="series.color">
+              </span>
+              <span class="legend-chip-label">{{ series.name }}</span>
+              <button
+                iconStart="@tui.x"
+                tuiIconButton
+                type="button"
+                (click.stop)="removeSeries(series.name)"
+                class="legend-chip-remove">
+                Remove
+              </button>
+            </tui-chip>
+          }
+        }
+      </div>
     </div>
   }
 </section>

@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from "@angular/core"
+import { Component, ElementRef, HostListener, Input, OnDestroy, OnInit, ViewChild } from "@angular/core"
 import { EChartsOption } from "echarts"
 import { Observable, Subscription } from "rxjs"
 import { DailyHistory, MonthlyHistory, WeeklyHistory } from "../models"
@@ -58,6 +58,11 @@ export class ChartComponent implements OnInit, OnDestroy {
 	minTime = Number.MAX_SAFE_INTEGER
 	maxTime = 0
 	visibleSeries: string[] = []
+	
+	// Custom legend properties
+	allSeries: Array<{ name: string; color: string }> = []
+	selectedSeries: Set<string> = new Set()
+	legendDropdownOpen = false
 
 	private subscriptions: Subscription[] = []
 
@@ -88,6 +93,20 @@ export class ChartComponent implements OnInit, OnDestroy {
 		this.updateChartIfDataAvailable()
 	}
 
+	toggleCumulative() {
+		const cumulativeName = "Cumulative"
+		if (this.selectedSeries.has(cumulativeName)) {
+			this.selectedSeries.delete(cumulativeName)
+		} else {
+			this.selectedSeries.add(cumulativeName)
+		}
+		this.updateChartVisibility()
+	}
+
+	isCumulativeSelected(): boolean {
+		return this.selectedSeries.has("Cumulative")
+	}
+
 	goBack() {
 		this.endTime = this.startTime
 		this.startTime = this.startTime - this.interval
@@ -115,7 +134,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 			progressiveThreshold: 500,
 			backgroundColor: "transparent",
 			color: ["#3398DB", "#7CFC00", "#FF7F50", "#8B0000", "#D2691E"],
-			grid: { left: "60", right: "20", top: "15" },
+			grid: { left: "60", right: "20", top: "15", bottom: "0" },
 			autoResize: true,
 			darkMode: true,
 			xAxis: {
@@ -161,9 +180,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 				triggerOn: "mousemove|click",
 			},
 			legend: {
-				show: true,
-				bottom: 0,
-				selected: { Cumulative: false },
+				show: false, // Hide default legend, we'll use custom one
 			},
 			toolbox: { show: false },
 			dataZoom: [{ type: "inside", throttle: 50 }],
@@ -198,10 +215,15 @@ export class ChartComponent implements OnInit, OnDestroy {
 
 	private setupChartEventListeners() {
 		this.chart.on("legendselectchanged", (params: any) => {
-			this.visibleSeries = this.chart
-				.getOption()
-				.series.filter((series: any) => params.selected[series.name])
-				.map((item: any) => item.name)
+			// Update selectedSeries based on ECharts legend changes
+			Object.keys(params.selected).forEach(seriesName => {
+				if (params.selected[seriesName]) {
+					this.selectedSeries.add(seriesName)
+				} else {
+					this.selectedSeries.delete(seriesName)
+				}
+			})
+			this.visibleSeries = Array.from(this.selectedSeries)
 			this.updateChartIfDataAvailable()
 		})
 	}
@@ -231,9 +253,41 @@ export class ChartComponent implements OnInit, OnDestroy {
 
 	private updateChart(groupedHistories: GroupedHistory[], fieldName: string) {
 		const series = this.prepareSeries(groupedHistories, fieldName)
+		
+		// Get colors from chart option
+		const colors = this.chartOption?.color as string[] || ["#3398DB", "#7CFC00", "#FF7F50", "#8B0000", "#D2691E"]
+		
+		// Update allSeries with current series data
+		this.allSeries = series.map((s: any, index: number) => ({
+			name: s.name,
+			color: s.color || colors[index % colors.length] || colors[0],
+		}))
+		
+		// Initialize selectedSeries if empty (first load)
+		if (this.selectedSeries.size === 0) {
+			this.allSeries.forEach(s => {
+				// Exclude Cumulative from default selection
+				if (s.name !== "Cumulative") {
+					this.selectedSeries.add(s.name)
+				}
+			})
+		}
+		
+		// Update visibleSeries based on selectedSeries
+		this.visibleSeries = Array.from(this.selectedSeries)
+		
+		// Build selected object for ECharts
+		const selected: Record<string, boolean> = {}
+		this.allSeries.forEach(s => {
+			selected[s.name] = this.selectedSeries.has(s.name)
+		})
+		
 		this.chart.setOption(
 			{
 				series: series,
+				legend: {
+					selected: selected,
+				},
 				xAxis: {
 					type: "time",
 					axisLabel: {
@@ -249,10 +303,8 @@ export class ChartComponent implements OnInit, OnDestroy {
 	private prepareSeries(groupedHistories: GroupedHistory[], fieldName: string) {
 		const series = []
 		const view = this.selectedView.value
+		// Always include all series - visibility is controlled by ECharts legend selection
 		for (const groupHistory of groupedHistories) {
-			if (this.visibleSeries.length !== 0 && !this.visibleSeries.includes(groupHistory.index.name!)) {
-				continue
-			}
 			const preparedResults = this.prepareResults(this.getHistoryByView(groupHistory, view!), fieldName)
 			series.push(this.createSeriesItem(groupHistory, preparedResults, fieldName, view!))
 		}
@@ -552,5 +604,73 @@ export class ChartComponent implements OnInit, OnDestroy {
 		const offset = dayOfWeek === 0 ? 6 : dayOfWeek - 1 // Adjust for Monday as first day of week
 
 		return Math.ceil((date.getDate() + offset) / 7)
+	}
+	
+	// Custom legend methods
+	toggleSeries(seriesName: string) {
+		if (this.selectedSeries.has(seriesName)) {
+			this.selectedSeries.delete(seriesName)
+		} else {
+			this.selectedSeries.add(seriesName)
+		}
+		this.updateChartVisibility()
+	}
+	
+	deselectAll() {
+		this.selectedSeries.clear()
+		this.updateChartVisibility()
+	}
+	
+	selectAll() {
+		this.allSeries.forEach(s => {
+			// Exclude Cumulative from select all
+			if (s.name !== "Cumulative") {
+				this.selectedSeries.add(s.name)
+			}
+		})
+		this.updateChartVisibility()
+	}
+	
+	isSeriesSelected(seriesName: string): boolean {
+		return this.selectedSeries.has(seriesName)
+	}
+	
+	removeSeries(seriesName: string) {
+		this.selectedSeries.delete(seriesName)
+		this.updateChartVisibility()
+	}
+	
+	private updateChartVisibility() {
+		if (!this.chart) return
+		
+		const selected: Record<string, boolean> = {}
+		this.allSeries.forEach(s => {
+			selected[s.name] = this.selectedSeries.has(s.name)
+		})
+		
+		this.chart.setOption({
+			legend: {
+				selected: selected,
+			},
+		}, false, false)
+		
+		this.visibleSeries = Array.from(this.selectedSeries)
+	}
+	
+	toggleLegendDropdown() {
+		this.legendDropdownOpen = !this.legendDropdownOpen
+	}
+	
+	closeLegendDropdown() {
+		this.legendDropdownOpen = false
+	}
+	
+	@HostListener('document:click', ['$event'])
+	onDocumentClick(event: MouseEvent) {
+		const target = event.target as HTMLElement
+		const dropdownContainer = target.closest('.legend-dropdown-container')
+		if (!dropdownContainer && this.legendDropdownOpen) {
+			this.closeLegendDropdown()
+		}
 	}
 }

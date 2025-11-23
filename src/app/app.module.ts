@@ -24,7 +24,7 @@ import { environment } from "../environments/environment"
 import { ChartComponent } from "./chart/chart.component"
 import { HomeComponent } from "./home/home.component"
 import { ResizeObserverDirective } from "./resize-observer.directive"
-import { TuiAccordion, TuiBlock, TuiButtonLoading, TuiDataListWrapper, TuiRadio, TuiSegmented, TuiSkeleton } from "@taiga-ui/kit"
+import { TuiAccordion, TuiBlock, TuiButtonLoading, TuiChip, TuiDataListWrapper, TuiRadio, TuiSegmented, TuiSkeleton } from "@taiga-ui/kit"
 import { ReactiveFormsModule } from "@angular/forms"
 import { NgxJsonViewerModule } from "ngx-json-viewer"
 import { httpInterceptor } from "./http.Interceptor"
@@ -79,6 +79,7 @@ import { SolversChartsComponent } from "./solvers-charts/solvers-charts.componen
 		TuiTitle,
 		TuiSegmented,
 		TuiSkeleton,
+		TuiChip,
 	],
 	providers: [provideHttpClient(withInterceptors([httpInterceptor])), { provide: ENVIRONMENT, useValue: environment }, NG_EVENT_PLUGINS],
 	bootstrap: [AppComponent],
