@@ -1,69 +1,77 @@
 <section class="chart-container w-full h-full" style="position: relative" [tuiSkeleton]="loadedResults == null">
-	<div class="flex flex-row align-items-center gap-2">
-		<span tuiTitle class="w-full text-xl pb-2">{{ chartTitle }}</span>
-		<div class="flex flex-row justify-content-end align-items-center gap-2 pr-4">
-			<button tuiButton type="button" size="s" appearance="outline" (click)="onShowPartyBVolumeChanged()"
-					[ngClass]="{'selected-button': showPartyBVolume}" tuiHint="Show PartyB Volume"
-					*ngIf="partyBVolumeIncluded != undefined">
-				PartyB
-			</button>
-			<button tuiButton type="button" size="s" appearance="outline" (click)="onGroupByMonthChanged()"
-					[ngClass]="{'selected-button': groupedByMonth}" tuiHint="Group By Month"
-					*ngIf="hasGroupByMonthAction">
-				M
-			</button>
-			<button tuiIconButton type="button" iconStart="@tui.chevron-left" size="s" appearance="outline"
-					(click)="goBack()" [disabled]="startTime < minTime || intervalForm.value.name == 'Custom'"
-					tuiHint="Back">
-			</button>
-			<tui-select
-				*ngIf="viewOptions.length > 1"
-				class="viewSelector"
-				tuiTextfieldSize="s"
-				[formControl]="selectedView"
-			>
-				<tui-data-list-wrapper
-					*tuiDataList
-					[items]="viewOptions"
-				></tui-data-list-wrapper>
-			</tui-select>
-			<tui-select
-				class="intervalSelector"
-				tuiTextfieldSize="s"
-				[formControl]="intervalForm"
-				[stringify]="intervalOptionsStringify"
-			>
-				<tui-data-list-wrapper
-					*tuiDataList
-					[items]="intervalOptions"
-					[itemContent]="intervalItemView"
-				></tui-data-list-wrapper>
+  <div class="flex flex-row align-items-center gap-2">
+    <span tuiTitle class="w-full text-xl pb-2">{{ chartTitle }}</span>
+    <div class="flex flex-row justify-content-end align-items-center gap-2 pr-4">
+      @if (partyBVolumeIncluded != undefined) {
+        <button tuiButton type="button" size="s" appearance="outline" (click)="onShowPartyBVolumeChanged()"
+          [ngClass]="{'selected-button': showPartyBVolume}" tuiHint="Show PartyB Volume"
+          >
+          PartyB
+        </button>
+      }
+      @if (hasGroupByMonthAction) {
+        <button tuiButton type="button" size="s" appearance="outline" (click)="onGroupByMonthChanged()"
+          [ngClass]="{'selected-button': groupedByMonth}" tuiHint="Group By Month"
+          >
+          M
+        </button>
+      }
+      <button tuiIconButton type="button" iconStart="@tui.chevron-left" size="s" appearance="outline"
+        (click)="goBack()" [disabled]="startTime < minTime || intervalForm.value.name == 'Custom'"
+        tuiHint="Back">
+      </button>
+      @if (viewOptions.length > 1) {
+        <tui-select
+          class="viewSelector"
+          tuiTextfieldSize="s"
+          [formControl]="selectedView"
+          >
+          <tui-data-list-wrapper
+            *tuiDataList
+            [items]="viewOptions"
+          ></tui-data-list-wrapper>
+        </tui-select>
+      }
+      <tui-select
+        class="intervalSelector"
+        tuiTextfieldSize="s"
+        [formControl]="intervalForm"
+        [stringify]="intervalOptionsStringify"
+        >
+        <tui-data-list-wrapper
+          *tuiDataList
+          [items]="intervalOptions"
+          [itemContent]="intervalItemView"
+        ></tui-data-list-wrapper>
 
-				<ng-template #intervalItemView let-item>
-					{{ item.name }}
-				</ng-template>
-			</tui-select>
+        <ng-template #intervalItemView let-item>
+          {{ item.name }}
+        </ng-template>
+      </tui-select>
 
-			<tui-input-date-range
-				*ngIf="intervalForm.value.days == 0"
-				class="intervalRangePicker"
-				tuiTextfieldSize="s"
-				[formControl]="intervalRangeForm"
-				tuiUnfinishedValidator="Finish filling the field"
-				[max]="intervalRangeMax"
-				[min]="intervalRangeMin"
-			>
-				Choose dates
-				<input placeholder="From - To" tuiTextfieldLegacy />
-			</tui-input-date-range>
-			<button tuiIconButton type="button" iconStart="@tui.chevron-right" size="s" appearance="outline"
-					(click)="goForward()" [disabled]="endTime > maxTime || intervalForm.value.name == 'Custom' "
-					tuiHint="Forward">
-			</button>
-		</div>
-	</div>
-	<div echarts *ngIf="chartOption" [options]="chartOption" theme="dark"
-		 [autoResize]="true" #chart (chartInit)="onChartInit($event)"
-		 class="chart">
-	</div>
+      @if (intervalForm.value.days == 0) {
+        <tui-input-date-range
+          class="intervalRangePicker"
+          tuiTextfieldSize="s"
+          [formControl]="intervalRangeForm"
+          tuiUnfinishedValidator="Finish filling the field"
+          [max]="intervalRangeMax"
+          [min]="intervalRangeMin"
+          >
+          Choose dates
+          <input placeholder="From - To" tuiTextfieldLegacy />
+        </tui-input-date-range>
+      }
+      <button tuiIconButton type="button" iconStart="@tui.chevron-right" size="s" appearance="outline"
+        (click)="goForward()" [disabled]="endTime > maxTime || intervalForm.value.name == 'Custom' "
+        tuiHint="Forward">
+      </button>
+    </div>
+  </div>
+  @if (chartOption) {
+    <div echarts [options]="chartOption" theme="dark"
+      [autoResize]="true" #chart (chartInit)="onChartInit($event)"
+      class="chart">
+    </div>
+  }
 </section>

@@ -1,4 +1,6 @@
 <div class="top-charts flex flex-row gap-2 w-full flex-wrap flex-grow-1">
+	<div class="grouped-histories w-full mb-4" *ngIf="groupedHistories | async as histories">
+	</div>
 	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
 		<app-chart
 			[groupedHistories]="groupedHistories!" [fieldName]="'positionsCount'"
