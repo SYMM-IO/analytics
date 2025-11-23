@@ -37,6 +37,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 	loadedResults?: GroupedHistory[]
 	groupedByMonth = false
 	showPartyBVolume = true
+	cumulativeMode = false
 	viewOptions: string[] = ["Daily"]
 	selectedView = new FormControl("Daily")
 	intervalOptions: readonly any[] = [
@@ -94,17 +95,12 @@ export class ChartComponent implements OnInit, OnDestroy {
 	}
 
 	toggleCumulative() {
-		const cumulativeName = "Cumulative"
-		if (this.selectedSeries.has(cumulativeName)) {
-			this.selectedSeries.delete(cumulativeName)
-		} else {
-			this.selectedSeries.add(cumulativeName)
-		}
-		this.updateChartVisibility()
+		this.cumulativeMode = !this.cumulativeMode
+		this.updateChartIfDataAvailable()
 	}
 
 	isCumulativeSelected(): boolean {
-		return this.selectedSeries.has("Cumulative")
+		return this.cumulativeMode
 	}
 
 	goBack() {
@@ -266,10 +262,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 		// Initialize selectedSeries if empty (first load)
 		if (this.selectedSeries.size === 0) {
 			this.allSeries.forEach(s => {
-				// Exclude Cumulative from default selection
-				if (s.name !== "Cumulative") {
-					this.selectedSeries.add(s.name)
-				}
+				this.selectedSeries.add(s.name)
 			})
 		}
 		
@@ -308,9 +301,6 @@ export class ChartComponent implements OnInit, OnDestroy {
 			const preparedResults = this.prepareResults(this.getHistoryByView(groupHistory, view!), fieldName)
 			series.push(this.createSeriesItem(groupHistory, preparedResults, fieldName, view!))
 		}
-		if (this.hasCumulative) {
-			series.push(this.createCumulativeSeries(series, fieldName))
-		}
 		return series
 	}
 
@@ -328,53 +318,26 @@ export class ChartComponent implements OnInit, OnDestroy {
 	}
 
 	private createSeriesItem(groupedHistory: GroupedHistory, preparedResults: any, fieldName: string, view: string) {
+		let data = preparedResults.data.map((history: any) => {
+			return [new Date(this.getTimeByView(history, view)), (history[fieldName] as BigNumber).div(BigNumber(10).pow(this.decimals)).toNumber()]
+		})
+		
+		// If cumulative mode is enabled, make the values cumulative
+		if (this.cumulativeMode) {
+			let runningTotal = 0
+			data = data.map(([date, value]: [Date, number]) => {
+				runningTotal += value
+				return [date, runningTotal]
+			})
+		}
+		
 		return {
 			type: "bar",
 			stack: fieldName.match("average") == null ? "total" : undefined,
 			color: groupedHistory.index.mainColor,
 			name: this.fixedValueName || groupedHistory.index.name,
-			data: preparedResults.data.map((history: any) => {
-				return [new Date(this.getTimeByView(history, view)), (history[fieldName] as BigNumber).div(BigNumber(10).pow(this.decimals)).toNumber()]
-			}),
+			data: data,
 			animation: true,
-		}
-	}
-
-	private createCumulativeSeries(series: any[], fieldName: string) {
-		// Start with the first series' data structure
-		const baseData = series[0].data.map((item: any) => [item[0], 0])
-
-		// Accumulate values across all series
-		const cumulativeData = baseData.map((baseItem: [Date, number], index: number) => {
-			const date = baseItem[0]
-			let cumulativeValue = 0
-
-			for (const serie of series) {
-				if (serie.data[index]) {
-					cumulativeValue += serie.data[index][1]
-				}
-			}
-
-			return [date, cumulativeValue]
-		})
-
-		// Create a running total
-		let runningTotal = 0
-		const finalCumulativeData = cumulativeData.map(([date, value]: [Date, number]) => {
-			runningTotal += value
-			return [date, runningTotal]
-		})
-
-		return {
-			type: "line",
-			name: "Cumulative",
-			color: "#00ffa2",
-			data: finalCumulativeData,
-			animation: true,
-			smooth: true, // Optional: makes the line smoother
-			lineStyle: {
-				width: 2, // Optional: adjust line width as needed
-			},
 		}
 	}
 
@@ -489,18 +452,16 @@ export class ChartComponent implements OnInit, OnDestroy {
 		let sum = 0
 
 		params.forEach(item => {
-			if (item.seriesName !== "Cumulative") {
-				// Exclude Cumulative series from sum
-				const color = item.color as string
-				let value: number = 0
-				if (Array.isArray(item.value) && item.value[1] != null) {
-					value = Number(item.value[1])
-				} else if (typeof item.value === "number") {
-					value = item.value
-				}
-				sum += value
-				if (value > 0) {
-					content += `
+			const color = item.color as string
+			let value: number = 0
+			if (Array.isArray(item.value) && item.value[1] != null) {
+				value = Number(item.value[1])
+			} else if (typeof item.value === "number") {
+				value = item.value
+			}
+			sum += value
+			if (value > 0) {
+				content += `
 					<tr>
 					  <td style="padding: 3px 5px;">
 						<span style="display: inline-block; width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-right: 5px;"></span>
@@ -511,33 +472,8 @@ export class ChartComponent implements OnInit, OnDestroy {
 					  </td>
 					</tr>
 				`
-				}
 			}
 		})
-
-		// Add Cumulative series if it exists
-		const cumulativeItem = params.find(item => item.seriesName === "Cumulative")
-		if (cumulativeItem) {
-			const color = cumulativeItem.color as string
-			let value: number = 0
-			if (Array.isArray(cumulativeItem.value) && cumulativeItem.value[1] != null) {
-				value = Number(cumulativeItem.value[1])
-			} else if (typeof cumulativeItem.value === "number") {
-				value = cumulativeItem.value
-			}
-
-			content += `
-            <tr>
-              <td style="padding: 3px 5px;">
-                <span style="display: inline-block; width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-right: 5px;"></span>
-                <span style="color: #cccccc;">Cumulative</span>
-              </td>
-              <td style="padding: 3px 5px; text-align: right; color: #ffffff; font-weight: bold;">
-                ${this.yAxisFormatter(value)}
-              </td>
-            </tr>
-        `
-		}
 
 		// Add Aggregated row
 		if (this.fieldName.match("average") == null)
@@ -623,10 +559,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 	
 	selectAll() {
 		this.allSeries.forEach(s => {
-			// Exclude Cumulative from select all
-			if (s.name !== "Cumulative") {
-				this.selectedSeries.add(s.name)
-			}
+			this.selectedSeries.add(s.name)
 		})
 		this.updateChartVisibility()
 	}

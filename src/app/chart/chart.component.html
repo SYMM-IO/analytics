@@ -124,21 +124,19 @@
             </div>
             <div class="legend-chips-container">
               @for (series of allSeries; track series.name) {
-                @if (series.name !== 'Cumulative') {
-                  <div 
-                    class="legend-chip"
-                    [class.selected]="isSeriesSelected(series.name)"
-                    (click)="toggleSeries(series.name)">
-                    <span 
-                      class="legend-chip-indicator" 
-                      [style.background-color]="series.color">
-                    </span>
-                    <span class="legend-chip-label">{{ series.name }}</span>
-                    @if (isSeriesSelected(series.name)) {
-                      <tui-icon icon="@tui.check" class="legend-chip-check"></tui-icon>
-                    }
-                  </div>
-                }
+                <div 
+                  class="legend-chip"
+                  [class.selected]="isSeriesSelected(series.name)"
+                  (click)="toggleSeries(series.name)">
+                  <span 
+                    class="legend-chip-indicator" 
+                    [style.background-color]="series.color">
+                  </span>
+                  <span class="legend-chip-label">{{ series.name }}</span>
+                  @if (isSeriesSelected(series.name)) {
+                    <tui-icon icon="@tui.check" class="legend-chip-check"></tui-icon>
+                  }
+                </div>
               }
             </div>
           </div>
