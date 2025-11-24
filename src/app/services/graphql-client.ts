@@ -1,8 +1,6 @@
-import { Apollo, gql } from "apollo-angular"
-import { from, interval, lastValueFrom, Observable, take } from "rxjs"
-import { map, startWith, switchMap } from "rxjs/operators"
+import { from, interval, lastValueFrom, Observable, take, throwError } from "rxjs"
+import { catchError, map, startWith, switchMap } from "rxjs/operators"
 import { LoadingService } from "./Loading.service"
-import { Logger } from "@angular-devkit/core/src/logger"
 
 export interface Condition {
 	field: string
@@ -21,7 +19,7 @@ export interface QueryConfig<T> {
 
 export class GraphQlClient {
 	constructor(
-		private apollo: Apollo,
+		private graphqlUrl: string,
 		private loadingService: LoadingService,
 	) {}
 
@@ -58,31 +56,53 @@ export class GraphQlClient {
     `
 	}
 
-	private load<T>(configs: QueryConfig<T>[]): Observable<{ [method: string]: T[] }> {
+	private async fetchGraphQL<T>(configs: QueryConfig<T>[]): Promise<{ [method: string]: T[] }> {
 		const queryString = this.createGraphQlQuery(configs)
-		const graphQLQuery = gql`
-			${queryString}
-		`
+
+		const response = await fetch(this.graphqlUrl, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				query: queryString,
+			}),
+		})
+
+		if (!response.ok) {
+			throw new Error(`GraphQL request failed: ${response.status} ${response.statusText}`)
+		}
+
+		const result = await response.json()
+
+		if (result.errors) {
+			throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`)
+		}
+
+		const processedData: { [method: string]: T[] } = {}
+
+		for (const config of configs) {
+			let res = (result.data as any)[config.method]
+			if (!Array.isArray(res)) res = [res]
+			processedData[config.method] = res.map((obj: any) => config.createFunction(obj))
+		}
+
+		return processedData
+	}
+
+	private load<T>(configs: QueryConfig<T>[]): Observable<{ [method: string]: T[] }> {
 		this.loadingService.setLoading(true)
 
-		return this.apollo
-			.watchQuery({
-				query: graphQLQuery,
-				fetchPolicy: "network-only",
-			})
-			.valueChanges.pipe(
-				map(({ data }) => {
-					this.loadingService.setLoading(false)
-					const processedData: { [method: string]: T[] } = {}
-
-					for (const config of configs) {
-						let res = (data as any)[config.method]
-						if (!Array.isArray(res)) res = [res]
-						processedData[config.method] = res.map((obj: any) => config.createFunction(obj))
-					}
-					return processedData
-				}),
-			)
+		return from(this.fetchGraphQL<T>(configs)).pipe(
+			map(data => {
+				this.loadingService.setLoading(false)
+				return data
+			}),
+			catchError(error => {
+				this.loadingService.setLoading(false)
+				return throwError(() => error)
+			}),
+		)
 	}
 
 	loadAll<T>(

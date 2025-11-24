@@ -1,6 +1,5 @@
 import { Component, OnInit } from "@angular/core"
 import { EnvironmentService } from "../services/enviroment.service"
-import { ApolloManagerService } from "../services/apollo-manager-service"
 import { GraphQlClient, QueryConfig } from "../services/graphql-client"
 import { EnvironmentInterface } from "../../environments/environment-interface"
 import { LoadingService } from "../services/Loading.service"
@@ -25,7 +24,6 @@ export class SolversChartsComponent implements OnInit {
 	constructor(
 		private loadingService: LoadingService,
 		readonly environmentService: EnvironmentService,
-		readonly apolloService: ApolloManagerService,
 		protected readonly alert: TuiAlertService,
 	) {
 		this.environments = environmentService.getValue("environments")
@@ -40,7 +38,7 @@ export class SolversChartsComponent implements OnInit {
 						return {
 							solver: solver,
 							env: env,
-							graphQlClient: new GraphQlClient(this.apolloService.getClient(env.subgraphUrl!)!, this.loadingService),
+							graphQlClient: new GraphQlClient(env.subgraphUrl!, this.loadingService),
 						}
 					})
 				})

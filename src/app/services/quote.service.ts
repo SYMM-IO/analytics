@@ -1,6 +1,5 @@
 import { Inject, Injectable } from "@angular/core";
 import { Observable } from "rxjs";
-import { ApolloManagerService } from "./apollo-manager-service";
 import { LoadingService } from "./Loading.service";
 import { TuiAlertService } from "@taiga-ui/core";
 
@@ -10,7 +9,6 @@ import { TuiAlertService } from "@taiga-ui/core";
 export class QuoteService {
 
 	constructor(
-		readonly apolloService: ApolloManagerService,
 		private loadingService: LoadingService,
 		@Inject(TuiAlertService) protected readonly alert: TuiAlertService,
 	) {

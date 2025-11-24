@@ -1,10 +1,9 @@
-import { Component, Inject, OnInit } from "@angular/core"
+import { ChangeDetectorRef, Component, Inject, OnInit } from "@angular/core"
 import { catchError, Observable, shareReplay, tap, zip } from "rxjs"
 import { map } from "rxjs/operators"
 import { GraphQlClient, QueryConfig } from "../services/graphql-client"
 import { LoadingService } from "../services/Loading.service"
 import { EnvironmentService } from "../services/enviroment.service"
-import { ApolloManagerService } from "../services/apollo-manager-service"
 import { EnvironmentInterface } from "../../environments/environment-interface"
 import { TuiAlertService } from "@taiga-ui/core"
 import { DailyHistory, TotalHistory } from "../models"
@@ -38,8 +37,8 @@ export class HomeComponent implements OnInit {
 	constructor(
 		private loadingService: LoadingService,
 		readonly environmentService: EnvironmentService,
-		readonly apolloService: ApolloManagerService,
 		@Inject(TuiAlertService) protected readonly alert: TuiAlertService,
+		private cdr: ChangeDetectorRef,
 	) {
 		this.environments = environmentService.getValue("environments")
 		for (const env of this.environments)
@@ -56,7 +55,7 @@ export class HomeComponent implements OnInit {
 						return {
 							affiliate: aff,
 							env: env,
-							graphQlClient: new GraphQlClient(this.apolloService.getClient(env.subgraphUrl!)!, this.loadingService),
+							graphQlClient: new GraphQlClient(env.subgraphUrl!, this.loadingService),
 						}
 					})
 				})
@@ -132,6 +131,7 @@ export class HomeComponent implements OnInit {
 			tap(value => {
 				const totalHistories: TotalHistory[] = value.map(v => v[1][0]).filter(th => th != null)
 				this.totalHistory = aggregateTotalHistories(totalHistories)
+				this.cdr.markForCheck()
 			}),
 			map(value => {
 				const dailyHistories: DailyHistory[][] = value.map(v => v[0])
@@ -181,6 +181,7 @@ export class HomeComponent implements OnInit {
 
 				const allLastMonthHistories = lastMonthHistoriesPerAffiliate.flat()
 				this.lastMonthHistory = aggregateDailyHistories(allLastMonthHistories)
+				this.cdr.markForCheck()
 			}),
 			shareReplay(1),
 		)
