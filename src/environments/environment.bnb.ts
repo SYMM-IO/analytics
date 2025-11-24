@@ -134,7 +134,7 @@ export const environment: EnvironmentInterface = {
 	name: "BNB",
 	serverUrl: "https://analytics-api.symm.io",
 	assetsFolder: "thena",
-	subgraphUrl: "https://api.goldsky.com/api/public/project_cm1hfr4527p0f01u85mz499u8/subgraphs/bnb_analytics/latest/gn",
+	subgraphUrl: "https://api.goldsky.com/api/public/project_cmi1t9ac85xtt01zf0gpn0sw1/subgraphs/bnb_analytics/latest/gn",
 	collateralDecimal: 18,
 	collaterals: ["0x55d398326f99059ff775485246999027b3197955"],
 	version: Version.LATEST,
