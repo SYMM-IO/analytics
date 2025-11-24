@@ -150,7 +150,7 @@ export const carbon2_solver: Solver = {
 export const environment: EnvironmentInterface = {
 	name: "BASE",
 	serverUrl: "https://analytics-api.symm.io",
-	subgraphUrl: "https://gateway.thegraph.com/api/5fbbf1e6788d7828837a7802ed3830c0/subgraphs/id/8NioXC1VKiRG67PW9AQBHreiWS3WkCAWJEDb9ghi63Te",
+	subgraphUrl: "https://api.goldsky.com/api/public/project_cmi1t9ac85xtt01zf0gpn0sw1/subgraphs/base_analytics/latest/gn",
 	collateralDecimal: 6,
 	collaterals: ["0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"],
 	version: Version.LATEST,

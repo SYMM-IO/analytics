@@ -57,7 +57,7 @@ export const zenith_solver: Solver = {
 export const environment: EnvironmentInterface = {
 	name: "MANTLE",
 	serverUrl: "https://analytics-api.symm.io",
-	subgraphUrl: "https://api.goldsky.com/api/public/project_cm1hfr4527p0f01u85mz499u8/subgraphs/mantle_analytics/latest/gn",
+	subgraphUrl: "https://api.goldsky.com/api/public/project_cmi1t9ac85xtt01zf0gpn0sw1/subgraphs/mantle_analytics/latest/gn",
 	collateralDecimal: 18,
 	collaterals: ["0x5d3a1Ff2b6BAb83b63cd9AD0787074081a52ef34"],
 	version: Version.LATEST,
