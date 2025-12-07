@@ -6,7 +6,7 @@ import { LoadingService } from "../services/Loading.service"
 import { EnvironmentService } from "../services/enviroment.service"
 import { EnvironmentInterface } from "../../environments/environment-interface"
 import { TuiAlertService } from "@taiga-ui/core"
-import { DailyHistory, TotalHistory } from "../models"
+import { BaseHistory, DailyHistory, TotalHistory } from "../models"
 import { aggregateDailyHistories, aggregateTotalHistories } from "../utils/aggregate-utils"
 import { GroupedHistory } from "../groupedHistory"
 import { aggregateHistories, collectAllDates, justifyHistoriesToDates } from "../utils/common-utils"
@@ -150,13 +150,27 @@ export class HomeComponent implements OnInit {
 				return out
 			}),
 			map((groupedHistories: GroupedHistory[]) => {
+				const all_dates = collectAllDates(groupedHistories, "dailyHistories")
 				groupedHistories.forEach(groupedHistory => {
-					groupedHistory.dailyHistories = justifyHistoriesToDates(groupedHistory.dailyHistories, collectAllDates(groupedHistories, "dailyHistories"))
+					// Aggregate multiple dailyHistories for the same day and accountSource
+					let mapped_data = new Map<number, DailyHistory>()
+					for (const history of groupedHistory.dailyHistories) {
+						const time = BaseHistory.getTime(history)!
+						if (mapped_data.has(time)) {
+							let lastHistory = mapped_data.get(time)!
+							let aggregatedHistory = aggregateDailyHistories([lastHistory, history])
+							aggregatedHistory.timestamp = lastHistory.timestamp! >= history.timestamp! ? lastHistory.timestamp : history.timestamp
+							mapped_data.set(time, aggregatedHistory)
+						} else {
+							mapped_data.set(time, history)
+						}
+					}
+					groupedHistory.dailyHistories = justifyHistoriesToDates([...mapped_data.values()], all_dates)
 				})
 				return groupedHistories
 			}),
 			map((affiliateHistories: GroupedHistory[]) => {
-				// Aggregate histories for affiliates with the same name
+				// Aggregate histories for affiliates with the same name 
 				const map = new Map<string, GroupedHistory>()
 				for (const affiliateHistory of affiliateHistories) {
 					const affiliate = affiliateHistory.index.name!

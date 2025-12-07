@@ -59,7 +59,7 @@ export const perps3: Solver = {
 export const environment: EnvironmentInterface = {
 	name: "ARBITRUM",
 	serverUrl: "https://analytics-api.symm.io",
-	subgraphUrl: "https://api.goldsky.com/api/public/project_cmi1t9ac85xtt01zf0gpn0sw1/subgraphs/arbitrum_analytics/latest/gn",
+	subgraphUrl: "https://api.goldsky.com/api/public/project_cm1hfr4527p0f01u85mz499u8/subgraphs/arbitrum_analytics/latest/gn",
 	collateralDecimal: 6,
 	collaterals: ["0xaf88d065e77c8cC2239327C5EDb3A432268e5831"],
 	version: Version.LATEST,

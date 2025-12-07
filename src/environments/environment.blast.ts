@@ -40,7 +40,7 @@ export const rasa_solver: Solver = {
 export const environment: EnvironmentInterface = {
 	name: "BLAST",
 	serverUrl: "https://analytics-api.symm.io",
-	subgraphUrl: "https://api.goldsky.com/api/public/project_cmi1t9ac85xtt01zf0gpn0sw1/subgraphs/blast_analytics/latest/gn",
+	subgraphUrl: "https://api.goldsky.com/api/public/project_cm1hfr4527p0f01u85mz499u8/subgraphs/blast_analytics/latest/gn",
 	collateralDecimal: 18,
 	collaterals: ["0x4300000000000000000000000000000000000003"],
 	version: Version.LATEST,

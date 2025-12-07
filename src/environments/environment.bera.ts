@@ -45,7 +45,7 @@ export const perps3_solver: Solver = {
 export const environment: EnvironmentInterface = {
 	name: "Bera",
 	serverUrl: "https://analytics-api.symm.io",
-	subgraphUrl: "https://api.goldsky.com/api/public/project_cmi1t9ac85xtt01zf0gpn0sw1/subgraphs/bera_analytics/latest/gn",
+	subgraphUrl: "https://api.goldsky.com/api/public/project_cm1hfr4527p0f01u85mz499u8/subgraphs/bera_analytics/latest/gn",
 	collateralDecimal: 18,
 	collaterals: ["0xFCBD14DC51f0A4d49d5E53C2E0950e0bC26d0Dce"],
 	version: Version.LATEST,

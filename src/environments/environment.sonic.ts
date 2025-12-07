@@ -26,7 +26,7 @@ export const perps1_solver: Solver = {
 export const environment: EnvironmentInterface = {
 	name: "Sonic",
 	serverUrl: "https://analytics-api.symm.io",
-	subgraphUrl: "https://api.goldsky.com/api/public/project_cmi1t9ac85xtt01zf0gpn0sw1/subgraphs/sonic_analytics/latest/gn",
+	subgraphUrl: "https://api.goldsky.com/api/public/project_cm1hfr4527p0f01u85mz499u8/subgraphs/sonic_analytics/latest/gn",
 	collateralDecimal: 18,
 	collaterals: ["0x29219dd400f2Bf60E5a23d13Be72B486D4038894"],
 	version: Version.LATEST,
