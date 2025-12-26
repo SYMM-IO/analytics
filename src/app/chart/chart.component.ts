@@ -441,15 +441,9 @@ export class ChartComponent implements OnInit, OnDestroy {
 			dateString = new Date(dateValue).toLocaleDateString()
 		}
 
-		let content = `
-      <div style="font-family: Arial, sans-serif; padding: 10px; border-radius: 5px; border: 0">
-        <div style="font-size: 14px; color: #ffffff; margin-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 5px;">
-          <strong>${dateString}</strong>
-        </div>
-        <table style="width: 100%; border-collapse: collapse;">
-    `
-
+		// Filter items with values > 0 and calculate sum
 		let sum = 0
+		const validItems: Array<{ color: string; name: string; value: number }> = []
 
 		params.forEach(item => {
 			const color = item.color as string
@@ -461,35 +455,54 @@ export class ChartComponent implements OnInit, OnDestroy {
 			}
 			sum += value
 			if (value > 0) {
-				content += `
-					<tr>
-					  <td style="padding: 3px 5px;">
-						<span style="display: inline-block; width: 10px; height: 10px; background-color: ${color}; border-radius: 50%; margin-right: 5px;"></span>
-						<span style="color: #cccccc;">${item.seriesName || "Cloverfield"}</span>
-					  </td>
-					  <td style="padding: 3px 5px; text-align: right; color: #ffffff; font-weight: bold;">
-						${this.yAxisFormatter(value)}
-					  </td>
-					</tr>
-				`
+				validItems.push({
+					color,
+					name: item.seriesName || "Cloverfield",
+					value,
+				})
 			}
 		})
+
+		// Determine if we need multi-column layout
+		const useMultiColumn = validItems.length > 8
+		const columnCount = validItems.length > 16 ? 3 : validItems.length > 8 ? 2 : 1
+
+		let content = `
+      <div style="font-family: Arial, sans-serif; padding: 10px; border-radius: 5px; border: 0; max-width: ${useMultiColumn ? "600px" : "300px"};">
+        <div style="font-size: 14px; color: #ffffff; margin-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 5px;">
+          <strong>${dateString}</strong>
+        </div>
+        <div style="max-height: 350px; overflow-y: auto; overflow-x: hidden;">
+          <div style="display: grid; grid-template-columns: repeat(${columnCount}, 1fr); gap: 2px 15px;">
+    `
+
+		validItems.forEach(item => {
+			content += `
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 3px 5px; min-width: 0;">
+              <div style="display: flex; align-items: center; min-width: 0; flex: 1; margin-right: 8px;">
+                <span style="flex-shrink: 0; width: 10px; height: 10px; background-color: ${item.color}; border-radius: 50%; margin-right: 5px;"></span>
+                <span style="color: #cccccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</span>
+              </div>
+              <span style="color: #ffffff; font-weight: bold; white-space: nowrap;">${this.yAxisFormatter(item.value)}</span>
+            </div>
+			`
+		})
+
+		content += `
+          </div>
+        </div>
+    `
 
 		// Add Aggregated row
 		if (this.fieldName.match("average") == null)
 			content += `
-        <tr style="border-top: 1px solid rgba(255, 255, 255, 0.2);">
-          <td style="padding: 5px; color: #cccccc;">
-            <strong>Aggregated</strong>
-          </td>
-          <td style="padding: 5px; text-align: right; color: #ffffff; font-weight: bold;">
-            ${this.yAxisFormatter(sum)}
-          </td>
-        </tr>
+        <div style="border-top: 1px solid rgba(255, 255, 255, 0.2); margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between;">
+          <span style="color: #cccccc;"><strong>Aggregated</strong></span>
+          <span style="color: #ffffff; font-weight: bold;">${this.yAxisFormatter(sum)}</span>
+        </div>
     `
 
 		content += `
-        </table>
       </div>
     `
 
