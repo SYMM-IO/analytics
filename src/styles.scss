@@ -1,8 +1,12 @@
 @import "../node_modules/primeflex/primeflex.scss";
 
 body {
-  font-family: Vazirmatn, sans-serif;
+  font-family: Manrope, sans-serif;
   background-color: var(--tui-background-base);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: Inter, sans-serif;
 }
 
 .surface-card {

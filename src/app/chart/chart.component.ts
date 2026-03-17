@@ -468,7 +468,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 		const columnCount = validItems.length > 16 ? 3 : validItems.length > 8 ? 2 : 1
 
 		let content = `
-      <div style="font-family: Arial, sans-serif; padding: 10px; border-radius: 5px; border: 0; max-width: ${useMultiColumn ? "600px" : "300px"};">
+      <div style="font-family: Manrope, sans-serif; padding: 10px; border-radius: 5px; border: 0; max-width: ${useMultiColumn ? "600px" : "300px"};">
         <div style="font-size: 14px; color: #ffffff; margin-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 5px;">
           <strong>${dateString}</strong>
         </div>
