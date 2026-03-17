@@ -1,20 +1,41 @@
 .chart-container {
 	min-height: 25em;
+	border: 1px solid rgba(132, 125, 125, 0.12);
+	border-radius: 6px;
+	padding: 1rem;
 
-	// Make all Taiga button text white
 	button[tuiButton],
 	button[tuiIconButton] {
-		color: #ffffff !important;
-		
+		color: rgba(245, 240, 240, 0.6) !important;
+		background: transparent !important;
+		box-shadow: inset 0 0 0 1px rgba(132, 125, 125, 0.15) !important;
+		font-weight: 500 !important;
+		font-size: 0.8rem !important;
+		letter-spacing: 0.02em;
+		transition: all 0.15s ease !important;
+
+		&:hover {
+			color: #F5F0F0 !important;
+			background: rgba(255, 255, 255, 0.04) !important;
+			box-shadow: inset 0 0 0 1px rgba(132, 125, 125, 0.3) !important;
+		}
+
 		&:disabled {
-			color: rgba(255, 255, 255, 0.5) !important;
+			color: rgba(245, 240, 240, 0.25) !important;
+			box-shadow: inset 0 0 0 1px rgba(132, 125, 125, 0.08) !important;
 		}
 	}
 }
 
-
 .selected-button {
-	background-color: var(--tui-background-neutral-1-hover);
+	color: #F5F0F0 !important;
+	background: rgba(233, 76, 61, 0.15) !important;
+	box-shadow: inset 0 0 0 1px rgba(233, 76, 61, 0.4) !important;
+
+	&:hover {
+		background: rgba(233, 76, 61, 0.22) !important;
+		box-shadow: inset 0 0 0 1px rgba(233, 76, 61, 0.5) !important;
+	}
 }
 
 .intervalSelector {
@@ -78,23 +99,24 @@
 	bottom: 100%;
 	left: 0;
 	margin-bottom: 0.5rem;
-	background: #150f0f !important;
-	background-color: #150f0f !important;
-	border: 1px solid var(--tui-base-03);
+	background: rgba(21, 15, 15, 0.92) !important;
+	backdrop-filter: blur(16px);
+	-webkit-backdrop-filter: blur(16px);
+	border: 1px solid rgba(132, 125, 125, 0.15);
 	border-radius: var(--tui-radius-m);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 8px 32px rgba(10, 5, 5, 0.5), 0 0 0 1px rgba(132, 125, 125, 0.06);
 	z-index: 1000;
 	min-width: 280px;
 	max-width: 400px;
 	max-height: 400px;
 	overflow-y: auto;
-	animation: slideDown 0.2s ease-out;
+	animation: slideUp 0.2s ease-out;
 }
 
-@keyframes slideDown {
+@keyframes slideUp {
 	from {
 		opacity: 0;
-		transform: translateY(-10px);
+		transform: translateY(8px);
 	}
 	to {
 		opacity: 1;
@@ -274,9 +296,57 @@
 	height: 16px;
 	padding: 0;
 	margin-left: 0.125rem;
-	
+
 	&:hover {
 		background: var(--tui-error-bg);
 		color: var(--tui-error-fill);
+	}
+}
+
+.chart-hidden {
+	position: absolute !important;
+	width: 0;
+	height: 0;
+	overflow: hidden;
+	opacity: 0;
+	pointer-events: none;
+}
+
+// Animated bar chart skeleton
+.chart-skeleton {
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	height: 22em;
+	padding: 2rem 3rem;
+}
+
+.skeleton-bars {
+	display: flex;
+	align-items: flex-end;
+	gap: 6px;
+	width: 100%;
+	height: 100%;
+}
+
+.skeleton-bar {
+	flex: 1;
+	border-radius: 2px 2px 0 0;
+	background: linear-gradient(
+		180deg,
+		rgba(233, 76, 61, 0.15) 0%,
+		rgba(132, 125, 125, 0.06) 100%
+	);
+	animation: barPulse 2s ease-in-out infinite;
+}
+
+@keyframes barPulse {
+	0%, 100% {
+		height: 20%;
+		opacity: 0.3;
+	}
+	50% {
+		height: 80%;
+		opacity: 0.6;
 	}
 }

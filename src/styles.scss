@@ -3,6 +3,8 @@
 body {
   font-family: Manrope, sans-serif;
   background-color: var(--tui-background-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -14,6 +16,13 @@ h1, h2, h3, h4, h5, h6 {
   // Font overrides — Inter for headings, Manrope for body
   --tui-font-heading: 'Inter', -apple-system, 'BlinkMacSystemFont', system-ui, sans-serif;
   --tui-font-text: 'Manrope', -apple-system, 'BlinkMacSystemFont', system-ui, sans-serif;
+
+  // Radii — sharp geometric style
+  --tui-radius-xs: 2px;
+  --tui-radius-s: 4px;
+  --tui-radius-m: 6px;
+  --tui-radius-l: 8px;
+  --tui-radius-xl: 8px;
 
   // Backgrounds — Symmio Void Red base (#0A0505)
   --tui-background-base: #0A0505;
@@ -39,6 +48,10 @@ h1, h2, h3, h4, h5, h6 {
   --tui-text-tertiary: rgba(245, 240, 240, 0.5);
   --tui-text-action: #FF7A6E;
   --tui-text-action-hover: #FFA69D;
+  --tui-text-positive: #4AC99B;
+  --tui-text-positive-hover: #3aa981;
+  --tui-text-negative: #FF7A6E;
+  --tui-text-negative-hover: #E94C3D;
 
   // Accent colors — Symmio Bright Red for buttons, tabs, checked states
   --tui-background-accent-1: #E94C3D;
@@ -50,10 +63,17 @@ h1, h2, h3, h4, h5, h6 {
   --tui-text-primary-on-accent-1: #fff;
   --tui-text-primary-on-accent-2: #fff;
 
-  // Statuses — brand red for negative
+  // Statuses — brand-aligned
   --tui-status-negative: #FF7A6E;
   --tui-status-negative-pale: rgba(233, 76, 61, 0.32);
   --tui-status-negative-pale-hover: rgba(233, 76, 61, 0.4);
+  --tui-status-positive: #4AC99B;
+  --tui-status-positive-pale: rgba(74, 201, 155, 0.24);
+  --tui-status-positive-pale-hover: rgba(74, 201, 155, 0.32);
+  --tui-status-warning: hsl(46, 100%, 50%);
+  --tui-status-warning-pale: hsla(46, 100%, 50%, 0.24);
+  --tui-status-info: hsl(196, 81%, 62%);
+  --tui-status-info-pale: hsla(196, 81%, 62%, 0.24);
 
   // Shadows — warmer tint
   --tui-shadow-small: 0 0.25rem 1.25rem rgba(10, 5, 5, 0.25);
@@ -95,10 +115,132 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb {
   background-color: rgba(132, 125, 125, 0.3);
   border-radius: 4px;
+
+  &:hover {
+    background-color: rgba(132, 125, 125, 0.5);
+  }
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+// Global card polish — sharp corners
+[tuiCardLarge] {
+  border-radius: 6px !important;
+}
+
+[tuiCardLarge][tuiSurface="elevated"] {
+  border: 1px solid rgba(132, 125, 125, 0.08);
+  border-radius: 6px !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+// Segmented control — sharp, matching symmtoken tabs
+tui-segmented {
+  border-radius: 4px !important;
+  border: 1px solid rgba(132, 125, 125, 0.1) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  // Active indicator color — make it visible against void background
+  color: var(--tui-background-elevation-2) !important;
+
+  // The sliding ::before indicator inherits border-radius
+  &::before {
+    border-radius: 3px !important;
+    filter: none !important; // Remove default drop-shadow
+    box-shadow: 0 1px 4px rgba(10, 5, 5, 0.4) !important;
+  }
+
+  > button,
+  > a,
+  > label {
+    font-weight: 600 !important;
+    letter-spacing: 0.02em;
+    border-radius: 3px !important;
+    transition: color 0.15s ease, background 0.15s ease !important;
+    font-size: 0.9375rem !important;
+
+    // Active tab text — brighter
+    &.tui-segmented_active {
+      color: var(--tui-text-primary) !important;
+    }
+  }
+}
+
+// Buttons — sharper
+[tuiButton],
+[tuiIconButton] {
+  border-radius: 4px !important;
+}
+
+// Block radio labels (environment tabs) — sharper, better active state
+[tuiBlock] {
+  border-radius: 4px !important;
+}
+
+// tuiGroup — sharper corners for grouped radio tabs
+[tuiGroup] {
+  border-radius: 4px !important;
+
+  [tuiBlock] {
+    &:first-child {
+      border-radius: 4px 0 0 4px !important;
+    }
+
+    &:last-child {
+      border-radius: 0 4px 4px 0 !important;
+    }
+  }
+}
+
+// Inputs — sharper
+[tuiTextfieldLegacy],
+tui-input {
+  border-radius: 4px !important;
+}
+
+// Dropdowns — sharper
+tui-dropdown,
+[tuiDropdown] {
+  border-radius: 6px !important;
+}
+
+// Selection color
+::selection {
+  background: rgba(233, 76, 61, 0.3);
+  color: #F5F0F0;
+}
+
+// Glowing dots keyframe
+@keyframes glowingDot {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+// Dotted grid background pattern
+.dots-background {
+  position: relative;
+  background-image: radial-gradient(circle, rgba(233, 76, 61, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+// Squared grid background pattern
+.grid-background {
+  position: relative;
+  background-image:
+    linear-gradient(rgba(132, 125, 125, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(132, 125, 125, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 .surface-card {

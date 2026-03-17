@@ -1,8 +1,33 @@
+:host {
+  display: block;
+}
+
+.info-inner {
+  position: relative;
+}
+
+.info-label {
+  color: var(--tui-text-tertiary);
+  font-weight: 500;
+}
+
+.info-value {
+  color: var(--tui-text-primary);
+  line-height: 1.2;
+}
+
+.info-monthly-label {
+  color: var(--tui-text-tertiary);
+}
+
+.info-monthly-value {
+  color: var(--tui-text-secondary);
+}
+
 .red-text {
   color: #FF7A6E;
 }
 
 .green-text {
-  color: rgb(154, 206, 77);
+  color: #4AC99B;
 }
-

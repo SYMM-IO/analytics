@@ -1,4 +1,4 @@
-<section class="chart-container w-full h-full" style="position: relative" [tuiSkeleton]="loadedResults == null">
+<section class="chart-container w-full h-full" style="position: relative">
   <div class="flex flex-row align-items-center gap-2">
     <span tuiTitle class="w-full text-xl pb-2">{{ chartTitle }}</span>
     <div class="flex flex-row justify-content-end align-items-center gap-2 pr-4">
@@ -75,22 +75,33 @@
       </button>
     </div>
   </div>
+
+  <!-- Animated bar chart skeleton (shown while loading) -->
+  @if (loadedResults == null) {
+    <div class="chart-skeleton">
+      <div class="skeleton-bars">
+        @for (bar of [1,2,3,4,5,6,7,8,9,10,11,12]; track bar) {
+          <div class="skeleton-bar" [style.animation-delay]="bar * 0.12 + 's'"></div>
+        }
+      </div>
+    </div>
+  }
   @if (chartOption) {
     <div echarts [options]="chartOption" theme="dark"
       [autoResize]="true" #chart (chartInit)="onChartInit($event)"
-      class="chart">
+      class="chart" [class.chart-hidden]="loadedResults == null">
     </div>
   }
-  
+
   <!-- Custom Legend -->
   @if (allSeries.length > 0) {
     <div class="custom-legend">
       <!-- Dropdown Button -->
       <div class="legend-dropdown-container">
-        <button 
-          tuiButton 
-          type="button" 
-          size="l" 
+        <button
+          tuiButton
+          type="button"
+          size="l"
           appearance="outline"
           (click)="toggleLegendDropdown()"
           class="legend-dropdown-button">
@@ -98,24 +109,24 @@
           <span class="mx-0.5">Filter</span>
           <tui-icon icon="@tui.chevron-down" [class.rotated]="legendDropdownOpen" class="ml-1"></tui-icon>
         </button>
-        
+
         <!-- Dropdown Content -->
         @if (legendDropdownOpen) {
           <div class="legend-dropdown-content">
             <div class="legend-dropdown-header">
-              <button 
-                tuiButton 
-                type="button" 
-                size="s" 
+              <button
+                tuiButton
+                type="button"
+                size="s"
                 appearance="outline"
                 (click)="deselectAll()"
                 class="legend-action-button">
                 Deselect All
               </button>
-              <button 
-                tuiButton 
-                type="button" 
-                size="s" 
+              <button
+                tuiButton
+                type="button"
+                size="s"
                 appearance="outline"
                 (click)="selectAll()"
                 class="legend-action-button">
@@ -124,12 +135,12 @@
             </div>
             <div class="legend-chips-container">
               @for (series of allSeries; track series.name) {
-                <div 
+                <div
                   class="legend-chip"
                   [class.selected]="isSeriesSelected(series.name)"
                   (click)="toggleSeries(series.name)">
-                  <span 
-                    class="legend-chip-indicator" 
+                  <span
+                    class="legend-chip-indicator"
                     [style.background-color]="series.color">
                   </span>
                   <span class="legend-chip-label">{{ series.name }}</span>
@@ -142,7 +153,7 @@
           </div>
         }
       </div>
-      
+
       <!-- Main Legend Items (Chips) -->
       <div class="legend-items">
         @for (series of allSeries; track series.name) {
@@ -150,8 +161,8 @@
             <tui-chip
               class="legend-chip-item"
               size="s">
-              <span 
-                class="legend-chip-indicator" 
+              <span
+                class="legend-chip-indicator"
                 [style.background-color]="series.color">
               </span>
               <span class="legend-chip-label">{{ series.name }}</span>

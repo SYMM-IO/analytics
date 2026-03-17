@@ -135,11 +135,19 @@ export class ChartComponent implements OnInit, OnDestroy {
 			darkMode: true,
 			xAxis: {
 				type: "time",
+				axisLine: { show: false },
+				axisTick: { show: false },
+				axisLabel: {
+					color: "rgba(245, 240, 240, 0.4)",
+					fontSize: 11,
+				},
+				splitLine: { show: false },
 				axisPointer: {
 					snap: true,
 					lineStyle: {
-						color: "#ffffff",
+						color: "rgba(255, 122, 110, 0.3)",
 						width: 1,
+						type: "dashed",
 					},
 				},
 			},
@@ -148,7 +156,12 @@ export class ChartComponent implements OnInit, OnDestroy {
 				splitNumber: 4,
 				axisLabel: {
 					formatter: this.formatYAxisLabel,
+					color: "rgba(245, 240, 240, 0.4)",
+					fontSize: 11,
 				},
+				axisLine: { show: false },
+				axisTick: { show: false },
+				splitLine: { show: false },
 			},
 			title: { show: false },
 			animationDelay: function (idx) {
@@ -166,13 +179,14 @@ export class ChartComponent implements OnInit, OnDestroy {
 				formatter: (params: CallbackDataParams | CallbackDataParams[]) => {
 					return this.formatTooltip(Array.isArray(params) ? params : [params])
 				},
-				backgroundColor: "rgba(54,54,54,0.9)",
-				borderWidth: 0, // Remove border
-				padding: [5, 10],
+				backgroundColor: "rgba(21, 15, 15, 0.95)",
+				borderWidth: 1,
+				borderColor: "rgba(132, 125, 125, 0.15)",
+				padding: [0, 0],
 				textStyle: {
-					color: "#ffffff",
+					color: "#F5F0F0",
 				},
-				extraCssText: "box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);", // Add shadow for depth
+				extraCssText: "box-shadow: 0 8px 32px rgba(10, 5, 5, 0.5); backdrop-filter: blur(12px); border-radius: 4px;",
 				triggerOn: "mousemove|click",
 			},
 			legend: {
@@ -468,22 +482,22 @@ export class ChartComponent implements OnInit, OnDestroy {
 		const columnCount = validItems.length > 16 ? 3 : validItems.length > 8 ? 2 : 1
 
 		let content = `
-      <div style="font-family: Manrope, sans-serif; padding: 10px; border-radius: 5px; border: 0; max-width: ${useMultiColumn ? "600px" : "300px"};">
-        <div style="font-size: 14px; color: #ffffff; margin-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.2); padding-bottom: 5px;">
-          <strong>${dateString}</strong>
+      <div style="font-family: Manrope, sans-serif; padding: 12px 14px; border-radius: 4px; border: 1px solid rgba(132,125,125,0.15); max-width: ${useMultiColumn ? "600px" : "300px"}; background: rgba(21,15,15,0.95); backdrop-filter: blur(12px);">
+        <div style="font-size: 13px; color: #F5F0F0; margin-bottom: 10px; border-bottom: 1px solid rgba(132,125,125,0.15); padding-bottom: 6px; font-weight: 600;">
+          ${dateString}
         </div>
         <div style="max-height: 350px; overflow-y: auto; overflow-x: hidden;">
-          <div style="display: grid; grid-template-columns: repeat(${columnCount}, 1fr); gap: 2px 15px;">
+          <div style="display: grid; grid-template-columns: repeat(${columnCount}, 1fr); gap: 2px 12px;">
     `
 
 		validItems.forEach(item => {
 			content += `
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 3px 5px; min-width: 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 3px 4px; min-width: 0; border-radius: 4px;">
               <div style="display: flex; align-items: center; min-width: 0; flex: 1; margin-right: 8px;">
-                <span style="flex-shrink: 0; width: 10px; height: 10px; background-color: ${item.color}; border-radius: 50%; margin-right: 5px;"></span>
-                <span style="color: #cccccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</span>
+                <span style="flex-shrink: 0; width: 8px; height: 8px; background-color: ${item.color}; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 4px ${item.color}40;"></span>
+                <span style="color: rgba(245,240,240,0.7); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</span>
               </div>
-              <span style="color: #ffffff; font-weight: bold; white-space: nowrap;">${this.yAxisFormatter(item.value)}</span>
+              <span style="color: #F5F0F0; font-weight: 600; white-space: nowrap; font-size: 12px;">${this.yAxisFormatter(item.value)}</span>
             </div>
 			`
 		})
@@ -496,9 +510,9 @@ export class ChartComponent implements OnInit, OnDestroy {
 		// Add Aggregated row
 		if (this.fieldName.match("average") == null)
 			content += `
-        <div style="border-top: 1px solid rgba(255, 255, 255, 0.2); margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between;">
-          <span style="color: #cccccc;"><strong>Aggregated</strong></span>
-          <span style="color: #ffffff; font-weight: bold;">${this.yAxisFormatter(sum)}</span>
+        <div style="border-top: 1px solid rgba(132,125,125,0.15); margin-top: 8px; padding: 8px 4px 4px; display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+          <span style="color: rgba(245,240,240,0.7); font-size: 12px; font-weight: 600;">Aggregated</span>
+          <span style="color: #FF7A6E; font-weight: 700; font-size: 13px;">${this.yAxisFormatter(sum)}</span>
         </div>
     `
 

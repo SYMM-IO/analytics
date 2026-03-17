@@ -31,6 +31,7 @@ import { httpInterceptor } from "./http.Interceptor"
 import { BigNumberFormatPipe } from "./big-number-format.pipe"
 import { AffiliatesChartsComponent } from "./affiliate-chart/affiliates-charts.component"
 import { SolversChartsComponent } from "./solvers-charts/solvers-charts.component"
+import { GlowingDotsComponent } from "./glowing-dots/glowing-dots.component"
 
 @NgModule({
 	declarations: [
@@ -80,6 +81,7 @@ import { SolversChartsComponent } from "./solvers-charts/solvers-charts.componen
 		TuiSegmented,
 		TuiSkeleton,
 		TuiChip,
+		GlowingDotsComponent,
 	],
 	providers: [provideHttpClient(withInterceptors([httpInterceptor])), { provide: ENVIRONMENT, useValue: environment }, NG_EVENT_PLUGINS],
 	bootstrap: [AppComponent],

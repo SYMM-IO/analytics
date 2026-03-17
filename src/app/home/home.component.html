@@ -1,5 +1,8 @@
-<div class="flex flex-column flex-grow gap-2 pb-2">
-  <div class="infos flex flex-row gap-2 w-full flex-grow-1 flex-wrap">
+<div class="page-wrapper dots-background flex flex-column flex-grow gap-2 pb-2">
+  <app-glowing-dots [numberOfDots]="14" [glowSpeed]="14"></app-glowing-dots>
+
+  <!-- Info cards -->
+  <div class="infos w-full" style="position: relative; z-index: 1">
     <div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
       <app-info title="Deposits" [totalValue]="totalHistory?.deposit" [lastMonthValue]="lastMonthHistory?.deposit"
         [formatMoney]="true">
@@ -20,23 +23,27 @@
       </app-info>
     </div>
   </div>
-  <tui-segmented size="l">
+
+  <tui-segmented size="l" style="position: relative; z-index: 1">
     <button type="button" class="w-full text-xl" (click)="viewMode = ViewMode.FRONTENDS">Frontends</button>
     <button type="button" class="w-full text-xl" (click)="viewMode = ViewMode.SOLVERS">Solvers</button>
   </tui-segmented>
 
-  @switch (viewMode) {
-    @case (ViewMode.FRONTENDS) {
-      @if (groupedHistories != null) {
-        <app-affiliates-charts
-          [groupedHistories]="groupedHistories"
-          [decimalsMap]="decimalsMap"
-          (totalMonthlyHistory)="monthlyActiveUsers = ($event).activeUsers">
-        </app-affiliates-charts>
+  <!-- Charts -->
+  <div style="position: relative; z-index: 1">
+    @switch (viewMode) {
+      @case (ViewMode.FRONTENDS) {
+        @if (groupedHistories != null) {
+          <app-affiliates-charts
+            [groupedHistories]="groupedHistories"
+            [decimalsMap]="decimalsMap"
+            (totalMonthlyHistory)="monthlyActiveUsers = ($event).activeUsers">
+          </app-affiliates-charts>
+        }
+      }
+      @case (ViewMode.SOLVERS) {
+        <app-solvers-charts></app-solvers-charts>
       }
     }
-    @case (ViewMode.SOLVERS) {
-      <app-solvers-charts></app-solvers-charts>
-    }
-  }
+  </div>
 </div>
