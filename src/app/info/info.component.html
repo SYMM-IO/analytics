@@ -1,8 +1,6 @@
 <div class="info-inner flex flex-column p-3 gap-1">
-    <span class="info-label text-xs" style="text-transform: uppercase; letter-spacing: 0.06em">{{ title }}</span>
-    <span class="info-value text-2xl font-bold" [tuiSkeleton]="totalValue == null" style="min-width: 10em; line-height: 1.2">&lrm;
-        {{ totalValue != null ? formatValue(totalValue) : '' }}
-    </span>
+    <span class="info-label text-sm" style="text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600">{{ title }}</span>
+    <span class="info-value text-2xl font-bold" [tuiSkeleton]="totalValue == null" style="min-width: 10em; line-height: 1.2">{{ totalValue != null ? formatValue(totalValue) : '&nbsp;' }}</span>
     <div class="flex flex-row align-items-center gap-1" style="min-height: 1em">
         <span class="info-monthly-label text-xs">
             Monthly

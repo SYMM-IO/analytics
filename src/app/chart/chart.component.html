@@ -1,7 +1,7 @@
 <section class="chart-container w-full h-full" style="position: relative">
-  <div class="flex flex-row align-items-center gap-2">
-    <span tuiTitle class="w-full text-xl pb-2">{{ chartTitle }}</span>
-    <div class="flex flex-row justify-content-end align-items-center gap-2 pr-4">
+  <div class="chart-header">
+    <span tuiTitle class="chart-title">{{ chartTitle }}</span>
+    <div class="chart-actions">
       @if (partyBVolumeIncluded != undefined) {
         <button tuiButton type="button" size="s" appearance="outline" (click)="onShowPartyBVolumeChanged()"
           [ngClass]="{'selected-button': showPartyBVolume}" tuiHint="Show PartyB Volume"
@@ -114,24 +114,12 @@
         @if (legendDropdownOpen) {
           <div class="legend-dropdown-content">
             <div class="legend-dropdown-header">
-              <button
-                tuiButton
-                type="button"
-                size="s"
-                appearance="outline"
-                (click)="deselectAll()"
-                class="legend-action-button">
-                Deselect All
-              </button>
-              <button
-                tuiButton
-                type="button"
-                size="s"
-                appearance="outline"
-                (click)="selectAll()"
-                class="legend-action-button">
-                Select All
-              </button>
+              <span class="legend-dropdown-title">Series</span>
+              <div class="legend-header-actions">
+                <button type="button" class="legend-link-button" (click)="selectAll()">All</button>
+                <span class="legend-link-divider"></span>
+                <button type="button" class="legend-link-button" (click)="deselectAll()">None</button>
+              </div>
             </div>
             <div class="legend-chips-container">
               @for (series of allSeries; track series.name) {
@@ -140,13 +128,15 @@
                   [class.selected]="isSeriesSelected(series.name)"
                   (click)="toggleSeries(series.name)">
                   <span
-                    class="legend-chip-indicator"
+                    class="legend-chip-color"
                     [style.background-color]="series.color">
                   </span>
-                  <span class="legend-chip-label">{{ series.name }}</span>
-                  @if (isSeriesSelected(series.name)) {
-                    <tui-icon icon="@tui.check" class="legend-chip-check"></tui-icon>
-                  }
+                  <span class="legend-chip-name">{{ series.name }}</span>
+                  <span class="legend-chip-toggle">
+                    @if (isSeriesSelected(series.name)) {
+                      <tui-icon icon="@tui.check" class="legend-chip-check"></tui-icon>
+                    }
+                  </span>
                 </div>
               }
             </div>
@@ -170,9 +160,9 @@
                 iconStart="@tui.x"
                 tuiIconButton
                 type="button"
+                tuiHint="Remove"
                 (click.stop)="removeSeries(series.name)"
                 class="legend-chip-remove">
-                Remove
               </button>
             </tui-chip>
           }
