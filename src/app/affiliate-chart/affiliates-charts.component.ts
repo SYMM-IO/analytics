@@ -52,6 +52,10 @@ export class AffiliatesChartsComponent implements OnInit {
 	ngOnInit(): void {
 		const flatAffiliates = this.environments.map((env: EnvironmentInterface) => env.affiliates!).flat()
 
+		// Only fetch data within the max UI range (730 days) to avoid loading years of unused history
+		const maxRangeDays = 730
+		const minFetchTimestamp = Math.floor((Date.now() - maxRangeDays * 24 * 60 * 60 * 1000) / 1000).toString()
+
 		this.groupedHistories = this.groupedHistories.pipe(
 			switchMap(value => {
 				return zip(
@@ -99,8 +103,8 @@ export class AffiliatesChartsComponent implements OnInit {
 							]
 
 							const startPaginationFields = {
-								monthlyHistories: "0",
-								weeklyHistories: "0",
+								monthlyHistories: minFetchTimestamp,
+								weeklyHistories: minFetchTimestamp,
 							}
 
 							return context.graphQlClient.loadAll(configs, 1000, startPaginationFields).pipe(

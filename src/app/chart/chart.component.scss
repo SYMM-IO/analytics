@@ -303,13 +303,24 @@
 	}
 }
 
-.chart-hidden {
-	position: absolute !important;
-	width: 0;
-	height: 0;
-	overflow: hidden;
+.chart-stage {
+	position: relative;
+	min-height: 22em;
+}
+
+.chart-stage .chart-skeleton,
+.chart-stage .chart {
+	position: absolute;
+	inset: 0;
+}
+
+.chart {
 	opacity: 0;
-	pointer-events: none;
+	transition: opacity 0.8s ease-in;
+
+	&.chart-visible {
+		opacity: 1;
+	}
 }
 
 // Animated bar chart skeleton
@@ -317,8 +328,15 @@
 	display: flex;
 	align-items: flex-end;
 	justify-content: center;
-	height: 22em;
+	height: 100%;
 	padding: 2rem 3rem;
+	opacity: 1;
+	transition: opacity 0.8s ease-out;
+
+	&.skeleton-hidden {
+		opacity: 0;
+		pointer-events: none;
+	}
 }
 
 .skeleton-bars {
@@ -337,7 +355,7 @@
 		rgba(233, 76, 61, 0.15) 0%,
 		rgba(132, 125, 125, 0.06) 100%
 	);
-	animation: barPulse 2s ease-in-out infinite;
+	animation: barPulse 3.5s ease-in-out infinite;
 }
 
 @keyframes barPulse {

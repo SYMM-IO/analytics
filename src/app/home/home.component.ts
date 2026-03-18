@@ -48,6 +48,10 @@ export class HomeComponent implements OnInit {
 	ngOnInit(): void {
 		const flatAffiliates = this.environments.map((env: EnvironmentInterface) => env.affiliates!).flat()
 
+		// Only fetch data within the max UI range (730 days = "All" option) to avoid loading years of unused history
+		const maxRangeDays = 730
+		const minFetchTimestamp = Math.floor((Date.now() - maxRangeDays * 24 * 60 * 60 * 1000) / 1000).toString()
+
 		this.groupedHistories = zip(
 			this.environments
 				.map((env: EnvironmentInterface) => {
@@ -62,6 +66,8 @@ export class HomeComponent implements OnInit {
 				.flat()
 				.map(context => {
 					let collaterals = context.env.collaterals!.map(c => `\"${c.toLowerCase()}\"`).join(",")
+					// Use affiliate's fromTimestamp if set, otherwise cap at max UI range
+					const dailyFromTimestamp = context.affiliate.fromTimestamp || minFetchTimestamp
 					const configs: QueryConfig<any>[] = [
 						{
 							method: "dailyHistories",
@@ -113,7 +119,7 @@ export class HomeComponent implements OnInit {
 					]
 
 					const startPaginationFields = {
-						dailyHistories: context.affiliate.fromTimestamp || null,
+						dailyHistories: dailyFromTimestamp,
 						totalHistories: "0",
 					}
 					return context.graphQlClient.loadAll(configs, 1000, startPaginationFields).pipe(

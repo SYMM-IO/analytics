@@ -1,19 +1,14 @@
-<div class="info-inner flex flex-column p-3 gap-2">
+<div class="info-inner flex flex-column p-3 gap-1">
     <span class="info-label text-xs" style="text-transform: uppercase; letter-spacing: 0.06em">{{ title }}</span>
-    @if (totalValue != null) {
-    <span class="info-value text-2xl font-bold">
-        {{ formatValue(totalValue) }}
+    <span class="info-value text-2xl font-bold" [tuiSkeleton]="totalValue == null" style="min-width: 10em; line-height: 1.2">&lrm;
+        {{ totalValue != null ? formatValue(totalValue) : '' }}
     </span>
-    <div class="flex flex-row align-items-center gap-1">
+    <div class="flex flex-row align-items-center gap-1" style="min-height: 1em">
         <span class="info-monthly-label text-xs">
             Monthly
         </span>
-        <span class="info-monthly-value text-xs font-medium">
-            {{ lastMonthValue != null ? formatValue(lastMonthValue): '' }}
+        <span class="info-monthly-value text-xs font-medium" [tuiSkeleton]="totalValue == null" style="min-width: 8em">
+            {{ lastMonthValue != null ? formatValue(lastMonthValue) : '' }}
         </span>
     </div>
-    } @else if (loadingService.loading()) {
-    <section [class.tui-skeleton]="true" style="width: 10em; height: 1.75em; border-radius: 2px" [tuiSkeleton]="true"></section>
-    <section [class.tui-skeleton]="true" style="width: 14em; height: 1em; border-radius: 2px" [tuiSkeleton]="true"></section>
-    }
 </div>

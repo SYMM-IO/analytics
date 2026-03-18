@@ -76,22 +76,22 @@
     </div>
   </div>
 
-  <!-- Animated bar chart skeleton (shown while loading) -->
-  @if (loadedResults == null) {
-    <div class="chart-skeleton">
+  <div class="chart-stage">
+    <!-- Animated bar chart skeleton (shown while loading) -->
+    <div class="chart-skeleton" [class.skeleton-hidden]="loadedResults != null">
       <div class="skeleton-bars">
         @for (bar of [1,2,3,4,5,6,7,8,9,10,11,12]; track bar) {
           <div class="skeleton-bar" [style.animation-delay]="bar * 0.12 + 's'"></div>
         }
       </div>
     </div>
-  }
-  @if (chartOption) {
-    <div echarts [options]="chartOption" theme="dark"
-      [autoResize]="true" #chart (chartInit)="onChartInit($event)"
-      class="chart" [class.chart-hidden]="loadedResults == null">
-    </div>
-  }
+    @if (chartOption) {
+      <div echarts [options]="chartOption" theme="dark"
+        [autoResize]="true" #chart (chartInit)="onChartInit($event)"
+        class="chart" [class.chart-visible]="loadedResults != null">
+      </div>
+    }
+  </div>
 
   <!-- Custom Legend -->
   @if (allSeries.length > 0) {

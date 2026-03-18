@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, Input, OnDestroy, OnInit, ViewChild } from "@angular/core"
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, Input, OnDestroy, OnInit, ViewChild } from "@angular/core"
 import { EChartsOption } from "echarts"
 import { Observable, Subscription } from "rxjs"
 import { DailyHistory, MonthlyHistory, WeeklyHistory } from "../models"
@@ -17,6 +17,7 @@ const stringifier = (item: any): string => item.name || item
     templateUrl: "./chart.component.html",
     styleUrls: ["./chart.component.scss"],
     providers: [tuiItemsHandlersProvider({ stringify: stringifier })],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: false
 })
 export class ChartComponent implements OnInit, OnDestroy {
@@ -67,7 +68,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 
 	private subscriptions: Subscription[] = []
 
-	constructor(readonly stateService: StateService) {}
+	constructor(readonly stateService: StateService, private cdr: ChangeDetectorRef) {}
 
 	ngOnInit(): void {
 		this.initChartOptions()
@@ -126,8 +127,10 @@ export class ChartComponent implements OnInit, OnDestroy {
 
 	private initChartOptions() {
 		this.chartOption = {
-			progressive: 300,
-			progressiveThreshold: 500,
+			progressive: 500,
+			progressiveThreshold: 1000,
+			large: true,
+			largeThreshold: 500,
 			backgroundColor: "transparent",
 			color: ["#3398DB", "#7CFC00", "#FF7F50", "#8B0000", "#D2691E"],
 			grid: { left: "60", right: "20", top: "15", bottom: "0" },
@@ -165,7 +168,6 @@ export class ChartComponent implements OnInit, OnDestroy {
 			},
 			title: { show: false },
 			animationDelay: function (idx) {
-				// delay for later data is larger
 				return idx * 3
 			},
 			tooltip: {
@@ -219,6 +221,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 			this.loadedResults = results
 			this.determineViewOptions()
 			this.updateChart(results, this.fieldName)
+			this.cdr.markForCheck()
 		})
 		this.subscriptions.push(subscription)
 	}
@@ -332,8 +335,9 @@ export class ChartComponent implements OnInit, OnDestroy {
 	}
 
 	private createSeriesItem(groupedHistory: GroupedHistory, preparedResults: any, fieldName: string, view: string) {
+		const divisor = BigNumber(10).pow(this.decimals)
 		let data = preparedResults.data.map((history: any) => {
-			return [new Date(this.getTimeByView(history, view)), (history[fieldName] as BigNumber).div(BigNumber(10).pow(this.decimals)).toNumber()]
+			return [new Date(this.getTimeByView(history, view)), (history[fieldName] as BigNumber).div(divisor).toNumber()]
 		})
 		
 		// If cumulative mode is enabled, make the values cumulative
@@ -347,11 +351,12 @@ export class ChartComponent implements OnInit, OnDestroy {
 		
 		return {
 			type: "bar",
+			large: true,
 			stack: fieldName.match("average") == null ? "total" : undefined,
 			color: groupedHistory.index.mainColor,
 			name: this.fixedValueName || groupedHistory.index.name,
 			data: data,
-			animation: true,
+			sampling: "lttb",
 		}
 	}
 

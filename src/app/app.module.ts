@@ -50,7 +50,7 @@ import { GlowingDotsComponent } from "./glowing-dots/glowing-dots.component"
 		BrowserAnimationsModule,
 		AppRoutingModule,
 		NgxEchartsModule.forRoot({
-			echarts: () => import("echarts"),
+			echarts: () => import("./echarts-modules"),
 		}),
 		TuiRoot,
 		TuiDialog,
