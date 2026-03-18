@@ -1,16 +1,27 @@
-.chart-card {
-  min-width: 40em;
-  width: calc(50% - 2.3rem);
-  flex-grow: 1;
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid rgba(132, 125, 125, 0.25);
+}
+
+.chart-cell {
+  border-bottom: 1px solid rgba(132, 125, 125, 0.25);
+  padding-right: 1rem;
+
+  // Odd cells (left column) get a right border
+  &:nth-child(odd) {
+    border-right: 1px solid rgba(132, 125, 125, 0.25);
+  }
 }
 
 @media (max-width: 75em) {
-  .chart-card {
-    width: 100%;
-    min-width: auto;
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-cell {
+    &:nth-child(odd) {
+      border-right: none;
+    }
   }
 }

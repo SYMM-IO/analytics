@@ -1,8 +1,6 @@
 .chart-container {
 	min-height: 25em;
-	border: 1px solid rgba(132, 125, 125, 0.12);
-	border-radius: 6px;
-	padding: 1rem;
+	padding: 1.25rem 1rem;
 
 	button[tuiButton],
 	button[tuiIconButton] {
@@ -181,8 +179,14 @@
 	padding: 0.375rem 0.5rem;
 	margin-top: 0.5rem;
 	flex-wrap: wrap;
-	min-height: 1.75rem;
-	border-top: 1px solid var(--tui-base-03);
+	min-height: 5.5rem;
+	border-top: 1px solid rgba(132, 125, 125, 0.1);
+	transition: opacity 0.4s ease;
+
+	&.legend-hidden {
+		opacity: 0;
+		pointer-events: none;
+	}
 }
 
 .legend-dropdown-container {
@@ -365,6 +369,8 @@
 	gap: 0.5rem;
 	flex-wrap: wrap;
 	flex: 1;
+	max-height: 5rem;
+	overflow-y: auto;
 }
 
 .legend-chip-item {

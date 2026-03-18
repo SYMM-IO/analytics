@@ -94,8 +94,7 @@
   </div>
 
   <!-- Custom Legend -->
-  @if (allSeries.length > 0) {
-    <div class="custom-legend">
+    <div class="custom-legend" [class.legend-hidden]="allSeries.length === 0">
       <!-- Dropdown Button -->
       <div class="legend-dropdown-container">
         <button
@@ -169,5 +168,4 @@
         }
       </div>
     </div>
-  }
 </section>

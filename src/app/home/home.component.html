@@ -24,9 +24,9 @@
     </div>
   </div>
 
-  <tui-segmented size="l" style="position: relative; z-index: 1">
-    <button type="button" class="w-full text-xl" (click)="viewMode = ViewMode.FRONTENDS">Frontends</button>
-    <button type="button" class="w-full text-xl" (click)="viewMode = ViewMode.SOLVERS">Solvers</button>
+  <tui-segmented size="l" class="tab-header" style="position: relative; z-index: 1">
+    <button type="button" class="w-full tab-button" (click)="viewMode = ViewMode.FRONTENDS">Frontends</button>
+    <button type="button" class="w-full tab-button" (click)="viewMode = ViewMode.SOLVERS">Solvers</button>
   </tui-segmented>
 
   <!-- Charts -->

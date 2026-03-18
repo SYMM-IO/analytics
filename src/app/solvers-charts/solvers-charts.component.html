@@ -1,27 +1,26 @@
-<div class="top-charts flex flex-row gap-2 w-full flex-wrap flex-grow-1">
-	<div *ngIf="groupedHistories | async as histories">
-	</div>
-	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
+<div *ngIf="groupedHistories | async as histories"></div>
+<div class="charts-grid">
+	<div class="chart-cell">
 		<app-chart
 			[groupedHistories]="groupedHistories!" [fieldName]="'positionsCount'"
 			[chartTitle]="'Positions'">
 		</app-chart>
 	</div>
-	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
+	<div class="chart-cell">
 		<app-chart
 			[groupedHistories]="groupedHistories!" [fieldName]="'tradeVolume'"
 			[chartTitle]="'Trade Volume'"
 			[yAxisFormatter]="moneyValueFormatter" [decimals]="18">
 		</app-chart>
 	</div>
-	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
+	<div class="chart-cell">
 		<app-chart
 			[groupedHistories]="groupedHistories!" [fieldName]="'openInterest'"
 			[chartTitle]="'Open Interest'"
 			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasCumulative]="false">
 		</app-chart>
 	</div>
-	<div tuiCardLarge tuiSurface="elevated" class="chart-card">
+	<div class="chart-cell">
 		<app-chart
 			[groupedHistories]="groupedHistories!" [fieldName]="'averagePositionSize'"
 			[chartTitle]="'Average Position Size'"

@@ -26,7 +26,8 @@ export class ChartComponent implements OnInit, OnDestroy {
 	@Input() fixedValueName?: string
 	@Input() decimals = 0
 	@Input() chartTitle!: string
-	@Input() yAxisFormatter: (x: any) => string = a => a
+	private defaultFormatter = (a: any) => a
+	@Input() yAxisFormatter: (x: any) => string = this.defaultFormatter
 	@Input() tooltipFormatter?: any
 	@Input() hasGroupByMonthAction = true
 	@Input() hasCumulative = true
@@ -449,15 +450,21 @@ export class ChartComponent implements OnInit, OnDestroy {
 		return value.toString()
 	}
 
+	private formatNumber(value: number): string {
+		return value.toLocaleString("en-US", { maximumFractionDigits: 3 })
+	}
+
 	private formatTooltip(params: CallbackDataParams[]): string {
 		if (params.length === 0) return ""
 
 		const dateValue = params[0]?.value
 		let dateString = "N/A"
 		if (Array.isArray(dateValue) && dateValue[0] != null) {
-			dateString = new Date(dateValue[0] as number).toLocaleDateString()
+			const d = new Date(dateValue[0] as number)
+			dateString = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })
 		} else if (typeof dateValue === "number") {
-			dateString = new Date(dateValue).toLocaleDateString()
+			const d = new Date(dateValue)
+			dateString = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })
 		}
 
 		// Filter items with values > 0 and calculate sum
@@ -487,43 +494,46 @@ export class ChartComponent implements OnInit, OnDestroy {
 		const columnCount = validItems.length > 16 ? 3 : validItems.length > 8 ? 2 : 1
 
 		let content = `
-      <div style="font-family: Manrope, sans-serif; padding: 12px 14px; border-radius: 4px; border: 1px solid rgba(132,125,125,0.15); max-width: ${useMultiColumn ? "600px" : "300px"}; background: rgba(21,15,15,0.95); backdrop-filter: blur(12px);">
-        <div style="font-size: 13px; color: #F5F0F0; margin-bottom: 10px; border-bottom: 1px solid rgba(132,125,125,0.15); padding-bottom: 6px; font-weight: 600;">
+      <div style="font-family: Manrope, sans-serif; padding: 0; border-radius: 6px; border: 1px solid rgba(132,125,125,0.12); max-width: ${useMultiColumn ? "600px" : "320px"}; background: rgba(21,15,15,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 12px 40px rgba(10,5,5,0.6);">
+        <div style="font-size: 0.75rem; color: rgba(245,240,240,0.5); padding: 10px 14px 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">
           ${dateString}
         </div>
-        <div style="max-height: 350px; overflow-y: auto; overflow-x: hidden;">
-          <div style="display: grid; grid-template-columns: repeat(${columnCount}, 1fr); gap: 2px 12px;">
+        <div style="max-height: 300px; overflow-y: auto; padding: 0 4px;">
+          <div style="display: grid; grid-template-columns: repeat(${columnCount}, 1fr); gap: 1px 12px;">
     `
 
 		validItems.forEach(item => {
+			const formattedValue = this.yAxisFormatter !== this.defaultFormatter
+				? this.yAxisFormatter(item.value)
+				: this.formatNumber(item.value)
 			content += `
-            <div style="display: flex; align-items: center; justify-content: space-between; padding: 3px 4px; min-width: 0; border-radius: 4px;">
-              <div style="display: flex; align-items: center; min-width: 0; flex: 1; margin-right: 8px;">
-                <span style="flex-shrink: 0; width: 8px; height: 8px; background-color: ${item.color}; border-radius: 50%; margin-right: 6px; box-shadow: 0 0 4px ${item.color}40;"></span>
-                <span style="color: rgba(245,240,240,0.7); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 5px 10px; min-width: 0; border-radius: 4px; transition: background 0.1s;" onmouseover="this.style.background='rgba(255,255,255,0.04)'" onmouseout="this.style.background='transparent'">
+              <div style="display: flex; align-items: center; min-width: 0; flex: 1; margin-right: 12px;">
+                <span style="flex-shrink: 0; width: 7px; height: 7px; background-color: ${item.color}; border-radius: 50%; margin-right: 8px;"></span>
+                <span style="color: rgba(245,240,240,0.6); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.name}</span>
               </div>
-              <span style="color: #F5F0F0; font-weight: 600; white-space: nowrap; font-size: 12px;">${this.yAxisFormatter(item.value)}</span>
-            </div>
-			`
+              <span style="color: #F5F0F0; font-weight: 600; white-space: nowrap; font-size: 0.8rem; font-variant-numeric: tabular-nums;">${formattedValue}</span>
+            </div>`
 		})
 
 		content += `
           </div>
-        </div>
-    `
+        </div>`
 
 		// Add Aggregated row
-		if (this.fieldName.match("average") == null)
+		if (this.fieldName.match("average") == null) {
+			const formattedSum = this.yAxisFormatter !== this.defaultFormatter
+				? this.yAxisFormatter(sum)
+				: this.formatNumber(sum)
 			content += `
-        <div style="border-top: 1px solid rgba(132,125,125,0.15); margin-top: 8px; padding: 8px 4px 4px; display: flex; justify-content: space-between; align-items: center; gap: 16px;">
-          <span style="color: rgba(245,240,240,0.7); font-size: 12px; font-weight: 600;">Aggregated</span>
-          <span style="color: #FF7A6E; font-weight: 700; font-size: 13px;">${this.yAxisFormatter(sum)}</span>
-        </div>
-    `
+        <div style="border-top: 1px solid rgba(132,125,125,0.12); margin: 4px 0 0; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: rgba(245,240,240,0.5); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;">Total</span>
+          <span style="color: #FF7A6E; font-weight: 700; font-size: 0.85rem; font-variant-numeric: tabular-nums;">${formattedSum}</span>
+        </div>`
+		}
 
 		content += `
-      </div>
-    `
+      </div>`
 
 		return content
 	}
