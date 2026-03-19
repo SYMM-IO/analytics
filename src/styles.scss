@@ -3,10 +3,244 @@
 body {
   font-family: Manrope, sans-serif;
   background-color: var(--tui-background-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: Inter, sans-serif;
+}
+
+// Symmio Brand Theme Overrides
+[tuiTheme="dark"] {
+  // Font overrides — Inter for headings, Manrope for body
+  --tui-font-heading: 'Inter', -apple-system, 'BlinkMacSystemFont', system-ui, sans-serif;
+  --tui-font-text: 'Manrope', -apple-system, 'BlinkMacSystemFont', system-ui, sans-serif;
+
+  // Radii — sharp geometric style
+  --tui-radius-xs: 2px;
+  --tui-radius-s: 4px;
+  --tui-radius-m: 6px;
+  --tui-radius-l: 8px;
+  --tui-radius-xl: 8px;
+
+  // Backgrounds — Symmio Void Red base (#0A0505)
+  --tui-background-base: #0A0505;
+  --tui-background-base-alt: #150f0f;
+  --tui-background-elevation-1: #150f0f;
+  --tui-background-elevation-2: #1d1515;
+  --tui-background-elevation-3: #261c1c;
+  --tui-background-neutral-1: rgba(255, 255, 255, 0.06);
+  --tui-background-neutral-1-hover: rgba(255, 255, 255, 0.12);
+  --tui-background-neutral-1-pressed: rgba(255, 255, 255, 0.18);
+  --tui-background-neutral-2: rgba(255, 255, 255, 0.18);
+  --tui-background-neutral-2-hover: rgba(255, 255, 255, 0.24);
+  --tui-background-neutral-2-pressed: rgba(255, 255, 255, 0.32);
+
+  // Borders — warm grey tint
+  --tui-border-normal: rgba(132, 125, 125, 0.2);
+  --tui-border-hover: rgba(132, 125, 125, 0.5);
+  --tui-border-focus: rgba(255, 122, 110, 0.64);
+
+  // Text — Symmio Light Grey foreground
+  --tui-text-primary: #F5F0F0;
+  --tui-text-secondary: rgba(245, 240, 240, 0.72);
+  --tui-text-tertiary: rgba(245, 240, 240, 0.5);
+  --tui-text-action: #FF7A6E;
+  --tui-text-action-hover: #FFA69D;
+  --tui-text-positive: #4AC99B;
+  --tui-text-positive-hover: #3aa981;
+  --tui-text-negative: #FF7A6E;
+  --tui-text-negative-hover: #E94C3D;
+
+  // Accent colors — Symmio Bright Red for buttons, tabs, checked states
+  --tui-background-accent-1: #E94C3D;
+  --tui-background-accent-1-hover: #FF7A6E;
+  --tui-background-accent-1-pressed: #c93a2c;
+  --tui-background-accent-2: #FF7A6E;
+  --tui-background-accent-2-hover: #FFA69D;
+  --tui-background-accent-2-pressed: #E94C3D;
+  --tui-text-primary-on-accent-1: #fff;
+  --tui-text-primary-on-accent-2: #fff;
+
+  // Statuses — brand-aligned
+  --tui-status-negative: #FF7A6E;
+  --tui-status-negative-pale: rgba(233, 76, 61, 0.32);
+  --tui-status-negative-pale-hover: rgba(233, 76, 61, 0.4);
+  --tui-status-positive: #4AC99B;
+  --tui-status-positive-pale: rgba(74, 201, 155, 0.24);
+  --tui-status-positive-pale-hover: rgba(74, 201, 155, 0.32);
+  --tui-status-warning: hsl(46, 100%, 50%);
+  --tui-status-warning-pale: hsla(46, 100%, 50%, 0.24);
+  --tui-status-info: hsl(196, 81%, 62%);
+  --tui-status-info-pale: hsla(196, 81%, 62%, 0.24);
+
+  // Shadows — warmer tint
+  --tui-shadow-small: 0 0.25rem 1.25rem rgba(10, 5, 5, 0.25);
+  --tui-shadow-small-hover: 0 1rem 2.5rem rgba(10, 5, 5, 0.35);
+  --tui-shadow-medium: 0 0.375rem 2rem rgba(10, 5, 5, 0.3);
+
+  // Symmio Brand Color Scales
+  --bright-red-100: 6 100% 94%;
+  --bright-red-200: 5 100% 86%;
+  --bright-red-300: 6 100% 81%;
+  --bright-red-400: 5 100% 72%;
+  --bright-red-500: 5 80% 58%;
+
+  --naples-yellow-100: 46 100% 89%;
+  --naples-yellow-200: 46 98% 82%;
+  --naples-yellow-300: 46 96% 73%;
+  --naples-yellow-400: 46 84% 65%;
+  --naples-yellow-500: 46 59% 37%;
+
+  --picton-blue-100: 196 100% 89%;
+  --picton-blue-200: 196 88% 80%;
+  --picton-blue-300: 196 88% 71%;
+  --picton-blue-400: 196 81% 62%;
+  --picton-blue-500: 196 59% 49%;
+
+  --primary-light-grey: 0 20% 95%;
+  --primary-mid-grey: 0 5% 75%;
+  --primary-dark-grey: 0 3% 50%;
+  --primary-void-grey: 0 33% 3%;
+  --primary-bright-red: 5 100% 72%;
+}
+
+// Scrollbar styling
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(132, 125, 125, 0.3);
+  border-radius: 4px;
+
+  &:hover {
+    background-color: rgba(132, 125, 125, 0.5);
+  }
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+// Global card polish — sharp corners
+[tuiCardLarge] {
+  border-radius: 6px !important;
+}
+
+[tuiCardLarge][tuiSurface="elevated"] {
+  border: 1px solid rgba(132, 125, 125, 0.08);
+  border-radius: 6px !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+// Segmented control — sharp, matching symmtoken tabs
+tui-segmented {
+  border-radius: 4px !important;
+  border: 1px solid rgba(132, 125, 125, 0.1) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  // Active indicator color — make it visible against void background
+  color: var(--tui-background-elevation-2) !important;
+
+  // The sliding ::before indicator inherits border-radius
+  &::before {
+    border-radius: 3px !important;
+    filter: none !important; // Remove default drop-shadow
+    box-shadow: 0 1px 4px rgba(10, 5, 5, 0.4) !important;
+  }
+
+  > button,
+  > a,
+  > label {
+    font-weight: 600 !important;
+    letter-spacing: 0.02em;
+    border-radius: 3px !important;
+    transition: color 0.15s ease, background 0.15s ease !important;
+    font-size: 0.9375rem !important;
+
+    // Active tab text — brighter
+    &.tui-segmented_active {
+      color: var(--tui-text-primary) !important;
+    }
+  }
+}
+
+// Buttons — sharper
+[tuiButton],
+[tuiIconButton] {
+  border-radius: 4px !important;
+}
+
+// Block radio labels (environment tabs) — sharper, better active state
+[tuiBlock] {
+  border-radius: 4px !important;
+}
+
+// tuiGroup — sharper corners for grouped radio tabs
+[tuiGroup] {
+  border-radius: 4px !important;
+
+  [tuiBlock] {
+    &:first-child {
+      border-radius: 4px 0 0 4px !important;
+    }
+
+    &:last-child {
+      border-radius: 0 4px 4px 0 !important;
+    }
+  }
+}
+
+// Inputs — sharper
+[tuiTextfieldLegacy],
+tui-input {
+  border-radius: 4px !important;
+}
+
+// Dropdowns — sharper
+tui-dropdown,
+[tuiDropdown] {
+  border-radius: 6px !important;
+}
+
+// Selection color
+::selection {
+  background: rgba(233, 76, 61, 0.3);
+  color: #F5F0F0;
+}
+
+// Glowing dots keyframe
+@keyframes glowingDot {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+// Dotted grid background pattern
+.dots-background {
+  position: relative;
+  background-image: radial-gradient(circle, rgba(233, 76, 61, 0.12) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+// Squared grid background pattern
+.grid-background {
+  position: relative;
+  background-image:
+    linear-gradient(rgba(132, 125, 125, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(132, 125, 125, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
 .surface-card {

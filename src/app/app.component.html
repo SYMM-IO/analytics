@@ -1,15 +1,16 @@
 <tui-root tuiTheme="dark" class="h-full">
     <div class="root flex flex-column h-full flex-grow p-2">
-        <div tuiCardLarge class="flex flex-row align-content-center justify-content-between toolbar p-2">
-            <div class="align-items-end flex flex-row gap-2">
+        <div tuiCardLarge class="flex flex-row align-content-center justify-content-between toolbar">
+            <div class="align-items-center flex flex-row gap-3">
                 <img [src]="'../assets/'+assetsFolder+'/logo.svg'" class="clover-logo">
                 @if (aggregated || panel) {
-                    <div class="flex flex-column  justify-content-center h-full">
-                        <span class="text-xs powered-by font-semibold">Analytics</span>
+                    <div class="flex flex-column justify-content-center h-full">
+                        <span class="text-sm powered-by font-semibold" style="letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.5">Analytics</span>
                     </div>
                 } @else {
-                    <div class="flex flex-row align-items-center justify-content-center gap-1 h-full">
-                        <span class="text-xs powered-by">Powered by SYMMIO</span>
+                    <div class="flex flex-row align-items-center justify-content-center gap-2 h-full"
+                         style="padding: 4px 10px; border-radius: 3px; background: rgba(255,255,255,0.04); border: 1px solid rgba(132,125,125,0.1)">
+                        <span class="text-xs powered-by" style="letter-spacing: 0.04em">Powered by</span>
                         <img src="../assets/poweredByLogo.svg" class="symmio-logo">
                     </div>
                 }

@@ -7,6 +7,7 @@ import {LoadingService} from "../services/Loading.service"
 import {AuthService} from "../services/auth.service"
 import {Router} from "@angular/router"
 import {TuiCardLarge} from "@taiga-ui/layout";
+import {GlowingDotsComponent} from "../glowing-dots/glowing-dots.component";
 
 @Component({
     selector: 'app-login',
@@ -18,7 +19,8 @@ import {TuiCardLarge} from "@taiga-ui/layout";
         ReactiveFormsModule,
         TuiInputModule,
         TuiButtonLoading,
-        TuiCardLarge
+        TuiCardLarge,
+        GlowingDotsComponent,
     ],
     templateUrl: './login.component.html',
     styleUrl: './login.component.scss'

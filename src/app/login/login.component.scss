@@ -1,3 +1,12 @@
 .root {
   height: 100%;
+  background: radial-gradient(ellipse at 50% 80%, rgba(233, 76, 61, 0.06) 0%, transparent 60%);
+}
+
+.login-card {
+  max-width: 400px;
+  width: 100%;
+  padding: 2rem !important;
+  border: 1px solid rgba(132, 125, 125, 0.12);
+  box-shadow: 0 8px 40px rgba(10, 5, 5, 0.5);
 }

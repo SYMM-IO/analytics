@@ -3,18 +3,47 @@
 }
 
 .clover-logo {
-  height: 28px;
+  height: 32px;
 }
 
 .powered-by {
+  opacity: 0.6;
+  letter-spacing: 0.03em;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 1;
+  }
 }
 
 .symmio-logo {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
+  opacity: 0.8;
 }
 
 .toolbar {
   background-color: var(--tui-background-base-alt);
-  padding: 15px !important;
+  padding: 12px 20px !important;
+  border-bottom: 1px solid rgba(132, 125, 125, 0.12);
+  box-shadow: 0 1px 8px rgba(10, 5, 5, 0.4);
+  position: relative;
+
+  // Subtle red accent glow on bottom edge
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(233, 76, 61, 0.3) 30%,
+      rgba(255, 122, 110, 0.4) 50%,
+      rgba(233, 76, 61, 0.3) 70%,
+      transparent 100%
+    );
+  }
 }
