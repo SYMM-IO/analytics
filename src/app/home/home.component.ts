@@ -1,16 +1,24 @@
-import { ChangeDetectorRef, Component, Inject, OnInit } from "@angular/core"
-import { catchError, Observable, shareReplay, tap, zip } from "rxjs"
+import { ChangeDetectorRef, Component, HostListener, Inject, OnInit } from "@angular/core"
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop"
+import { catchError, combineLatest, BehaviorSubject, Observable, of, shareReplay, tap, zip } from "rxjs"
 import { map } from "rxjs/operators"
 import { GraphQlClient, QueryConfig } from "../services/graphql-client"
 import { LoadingService } from "../services/Loading.service"
 import { EnvironmentService } from "../services/enviroment.service"
-import { EnvironmentInterface } from "../../environments/environment-interface"
+import { Affiliate, EnvironmentInterface } from "../../environments/environment-interface"
 import { TuiAlertService } from "@taiga-ui/core"
 import { BaseHistory, DailyHistory, TotalHistory } from "../models"
 import { aggregateDailyHistories, aggregateTotalHistories } from "../utils/aggregate-utils"
 import { GroupedHistory } from "../groupedHistory"
 import { aggregateHistories, collectAllDates, justifyHistoriesToDates } from "../utils/common-utils"
 import BigNumber from "bignumber.js"
+
+type EnvironmentHistoryResult = {
+	environmentName: string
+	affiliate: Affiliate
+	dailyHistories: DailyHistory[]
+	totalHistories: TotalHistory[]
+}
 
 export enum ViewMode {
 	SOLVERS = "SOLVERS",
@@ -34,6 +42,12 @@ export class HomeComponent implements OnInit {
 	viewMode: ViewMode = ViewMode.FRONTENDS
 	monthlyActiveUsers: any
 	zero  = BigNumber(0)
+	loadedChainNames: string[] = []
+	ignoredChainNames: string[] = []
+	selectedChainNames: string[] = []
+	chainDropdownOpen = false
+	private readonly selectedChainNames$ = new BehaviorSubject<string[]>([])
+	private hasCustomizedChainSelection = false
 	constructor(
 		private loadingService: LoadingService,
 		readonly environmentService: EnvironmentService,
@@ -43,16 +57,37 @@ export class HomeComponent implements OnInit {
 		this.environments = environmentService.getValue("environments")
 		for (const env of this.environments)
 			for (const affiliate of env.affiliates!) this.decimalsMap.set(affiliate.address!.toLowerCase(), env.collateralDecimal!)
+
+		this.environmentService.loadedSubgraphs
+			.pipe(takeUntilDestroyed())
+			.subscribe(loadedChainNames => {
+				this.loadedChainNames = loadedChainNames
+
+				if (!this.hasCustomizedChainSelection) {
+					this.selectedChainNames = [...loadedChainNames]
+				} else {
+					const loadedChainsSet = new Set(loadedChainNames)
+					this.selectedChainNames = this.selectedChainNames.filter(chainName => loadedChainsSet.has(chainName))
+				}
+
+				this.selectedChainNames$.next([...this.selectedChainNames])
+				this.cdr.markForCheck()
+			})
+
+		this.environmentService.ignoredSubgraphNames
+			.pipe(takeUntilDestroyed())
+			.subscribe(ignoredChainNames => {
+				this.ignoredChainNames = ignoredChainNames
+				this.cdr.markForCheck()
+			})
 	}
 
 	ngOnInit(): void {
-		const flatAffiliates = this.environments.map((env: EnvironmentInterface) => env.affiliates!).flat()
-
 		// Only fetch data within the max UI range (730 days = "All" option) to avoid loading years of unused history
 		const maxRangeDays = 730
 		const minFetchTimestamp = Math.floor((Date.now() - maxRangeDays * 24 * 60 * 60 * 1000) / 1000).toString()
 
-		this.groupedHistories = zip(
+		const environmentResults$ = zip(
 			this.environments.map((env: EnvironmentInterface) => {
 				const graphQlClient = new GraphQlClient(env.subgraphUrl!, this.loadingService)
 				let collaterals = env.collaterals!.map(c => `\"${c.toLowerCase()}\"`).join(",")
@@ -116,32 +151,52 @@ export class HomeComponent implements OnInit {
 					}
 				})
 
-				return graphQlClient.batchLoadAll(configSets, 1000).pipe(
-					map(results => results.map(r => [r["dailyHistories"] || [], r["totalHistories"] || []])),
+				return this.loadEnvironmentResults(
+					env,
+					graphQlClient.batchLoadAll(configSets, 1000).pipe(
+						map(results =>
+							results.map((result, index) => ({
+								environmentName: env.name,
+								affiliate: env.affiliates![index],
+								dailyHistories: result["dailyHistories"] || [],
+								totalHistories: result["totalHistories"] || [],
+							})),
+						),
+					),
+					() =>
+						env.affiliates!.map(affiliate => ({
+							environmentName: env.name,
+							affiliate,
+							dailyHistories: [],
+							totalHistories: [],
+						})),
 				)
 			}),
-		).pipe(
-			map(envResults => envResults.flat()),
+		).pipe(map(envResults => envResults.flat()), shareReplay(1))
+
+		this.groupedHistories = combineLatest([environmentResults$, this.selectedChainNames$]).pipe(
+			map(([environmentResults, selectedChainNames]) => {
+				const selectedChainsSet = new Set(selectedChainNames)
+				return environmentResults.filter(result => selectedChainsSet.has(result.environmentName))
+			}),
 			catchError(err => {
 				this.loadingService.setLoading(false)
 				this.alert.open("Error loading data from subgraph\n" + err.message).subscribe()
 				throw err
 			}),
-			tap(value => {
-				const totalHistories: TotalHistory[] = value.flatMap(v => v[1]).filter(th => th != null)
+			tap(environmentResults => {
+				const totalHistories: TotalHistory[] = environmentResults.flatMap(result => result.totalHistories).filter(th => th != null)
 				this.totalHistory = totalHistories.length > 0 ? aggregateTotalHistories(totalHistories) : undefined
 				this.cdr.markForCheck()
 			}),
-			map(value => {
-				const dailyHistories: DailyHistory[][] = value.map(v => v[0])
+			map(environmentResults => {
 				const out: GroupedHistory[] = []
 
-				for (let i = 0; i < dailyHistories.length; i++) {
-					const affiliateDailyHistories = dailyHistories[i]
-					if (affiliateDailyHistories.length > 0)
+				for (const result of environmentResults) {
+					if (result.dailyHistories.length > 0)
 						out.push({
-							index: flatAffiliates[i],
-							dailyHistories: affiliateDailyHistories,
+							index: result.affiliate,
+							dailyHistories: result.dailyHistories,
 							weeklyHistories: [],
 							monthlyHistories: [],
 						})
@@ -188,17 +243,89 @@ export class HomeComponent implements OnInit {
 				return [...map.values()]
 			}),
 			tap((affiliateHistories: GroupedHistory[]) => {
-				this.todayHistory = aggregateDailyHistories(affiliateHistories.map(a => a.dailyHistories[a.dailyHistories.length - 1]))
+				const latestHistories = affiliateHistories.map(a => a.dailyHistories[a.dailyHistories.length - 1] as DailyHistory).filter(Boolean)
+				this.todayHistory = latestHistories.length > 0 ? aggregateDailyHistories(latestHistories) : undefined
 
 				const lastMonthHistoriesPerAffiliate = affiliateHistories.map(a => this.getLastCalendarMonthHistories(a.dailyHistories))
-
 				const allLastMonthHistories = lastMonthHistoriesPerAffiliate.flat()
-				this.lastMonthHistory = aggregateDailyHistories(allLastMonthHistories)
+				this.lastMonthHistory = allLastMonthHistories.length > 0 ? aggregateDailyHistories(allLastMonthHistories) : undefined
 				this.cdr.markForCheck()
 			}),
 			shareReplay(1),
 		)
 	}
+
+	private loadEnvironmentResults<T>(env: EnvironmentInterface, source$: Observable<T>, fallbackFactory: () => T): Observable<T> {
+		return source$.pipe(
+			tap(() => this.environmentService.markSubgraphLoaded(env.name)),
+			catchError(error => {
+				this.notifyIgnoredEnvironment(env, error)
+				return of(fallbackFactory())
+			}),
+		)
+	}
+
+	private notifyIgnoredEnvironment(env: EnvironmentInterface, error: unknown) {
+		if (!this.environmentService.markSubgraphIgnored(env.name)) return
+
+		const message =
+			error instanceof Error && error.message.includes("timed out")
+				? `${env.name} is ignored because its subgraph did not respond within ${GraphQlClient.REQUEST_TIMEOUT_MS / 1000}s.`
+				: `${env.name} is ignored because its subgraph is unavailable.`
+
+		this.alert.open(message).subscribe()
+	}
+
+	toggleChainDropdown() {
+		if (this.loadedChainNames.length === 0 && this.ignoredChainNames.length === 0) return
+		this.chainDropdownOpen = !this.chainDropdownOpen
+	}
+
+	toggleChain(chainName: string) {
+		const selectedChains = new Set(this.selectedChainNames)
+		if (selectedChains.has(chainName)) {
+			selectedChains.delete(chainName)
+		} else {
+			selectedChains.add(chainName)
+		}
+		this.hasCustomizedChainSelection = true
+		this.selectedChainNames = this.loadedChainNames.filter(name => selectedChains.has(name))
+		this.selectedChainNames$.next([...this.selectedChainNames])
+		this.cdr.markForCheck()
+	}
+
+	selectAllChains() {
+		this.hasCustomizedChainSelection = false
+		this.selectedChainNames = [...this.loadedChainNames]
+		this.selectedChainNames$.next([...this.selectedChainNames])
+		this.cdr.markForCheck()
+	}
+
+	clearChainSelection() {
+		this.hasCustomizedChainSelection = true
+		this.selectedChainNames = []
+		this.selectedChainNames$.next([])
+		this.cdr.markForCheck()
+	}
+
+	isChainSelected(chainName: string): boolean {
+		return this.selectedChainNames.includes(chainName)
+	}
+
+	removeChain(chainName: string) {
+		if (!this.isChainSelected(chainName)) return
+		this.toggleChain(chainName)
+	}
+
+	@HostListener("document:click", ["$event"])
+	onDocumentClick(event: MouseEvent) {
+		const target = event.target as HTMLElement
+		const dropdownContainer = target.closest(".chain-filter-container")
+		if (!dropdownContainer && this.chainDropdownOpen) {
+			this.chainDropdownOpen = false
+		}
+	}
+
 	private getLastCalendarMonthHistories(histories: DailyHistory[]): DailyHistory[] {
 		const now = new Date()
 		const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1

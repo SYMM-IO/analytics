@@ -24,7 +24,7 @@ export const rasa_solver: Solver = {
 }
 
 export const environment: EnvironmentInterface = {
-	name: "FTM_8",
+	name: "Fantom",
 	serverUrl: "https://analytics-api.symm.io",
 	subgraphUrl: "https://api.goldsky.com/api/public/project_cm1hfr4527p0f01u85mz499u8/subgraphs/fantom_0_8_0_analytics/latest/gn",
 	collateralDecimal: 6,

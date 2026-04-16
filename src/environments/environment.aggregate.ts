@@ -9,10 +9,11 @@ import { environment as arbitrumEnv } from "./environment.arbitrum"
 import { environment as beraEnv } from "./environment.bera"
 import { environment as sonicEnv } from "./environment.sonic"
 import { environment as cotiEnv } from "./environment.coti"
+import { environment as hyperEvmEnv } from "./environment.hyperevm"
 
 export const environment: EnvironmentInterface = {
 	name: "aggregate",
 	assetsFolder: "aggregate",
 	serverUrl: "https://analytics-api.symm.io",
-	environments: [ftm8Env, bnbEnv, baseEnv, blastEnv, mantleEnv, arbitrumEnv, beraEnv, sonicEnv, cotiEnv],
+	environments: [ftm8Env, bnbEnv, baseEnv, blastEnv, mantleEnv, arbitrumEnv, beraEnv, sonicEnv, cotiEnv, hyperEvmEnv],
 }

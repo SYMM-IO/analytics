@@ -18,6 +18,8 @@ export interface QueryConfig<T> {
 }
 
 export class GraphQlClient {
+	static readonly REQUEST_TIMEOUT_MS = 10000
+
 	constructor(
 		private graphqlUrl: string,
 		private loadingService: LoadingService,
@@ -56,33 +58,51 @@ export class GraphQlClient {
     `
 	}
 
+	private async executeQuery(queryString: string): Promise<any> {
+		const controller = new AbortController()
+		const timeoutId = setTimeout(() => controller.abort(), GraphQlClient.REQUEST_TIMEOUT_MS)
+
+		try {
+			const response = await fetch(this.graphqlUrl, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				signal: controller.signal,
+				body: JSON.stringify({
+					query: queryString,
+				}),
+			})
+
+			if (!response.ok) {
+				throw new Error(`GraphQL request failed: ${response.status} ${response.statusText}`)
+			}
+
+			const result = await response.json()
+
+			if (result.errors) {
+				throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`)
+			}
+
+			return result.data
+		} catch (error) {
+			if (error instanceof DOMException && error.name === "AbortError") {
+				throw new Error(`GraphQL request timed out after ${GraphQlClient.REQUEST_TIMEOUT_MS / 1000}s`)
+			}
+			throw error instanceof Error ? error : new Error(String(error))
+		} finally {
+			clearTimeout(timeoutId)
+		}
+	}
+
 	private async fetchGraphQL<T>(configs: QueryConfig<T>[]): Promise<{ [method: string]: T[] }> {
 		const queryString = this.createGraphQlQuery(configs)
-
-		const response = await fetch(this.graphqlUrl, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				query: queryString,
-			}),
-		})
-
-		if (!response.ok) {
-			throw new Error(`GraphQL request failed: ${response.status} ${response.statusText}`)
-		}
-
-		const result = await response.json()
-
-		if (result.errors) {
-			throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`)
-		}
+		const resultData = await this.executeQuery(queryString)
 
 		const processedData: { [method: string]: T[] } = {}
 
 		for (const config of configs) {
-			let res = (result.data as any)[config.method]
+			let res = (resultData as any)[config.method]
 			if (!Array.isArray(res)) res = [res]
 			processedData[config.method] = res.map((obj: any) => config.createFunction(obj))
 		}
@@ -258,33 +278,19 @@ export class GraphQlClient {
 			})
 
 			// Single batched request
-			let result: any
+			let resultData: any
 			self.loadingService.setLoading(true)
 			try {
-				const response = await fetch(self.graphqlUrl, {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ query: `query { ${aliasedQueries.join("\n")} }` }),
-				})
-
-				if (!response.ok) {
-					throw new Error(`GraphQL request failed: ${response.status} ${response.statusText}`)
-				}
-
-				result = await response.json()
+				resultData = await self.executeQuery(`query { ${aliasedQueries.join("\n")} }`)
 			} finally {
 				self.loadingService.setLoading(false)
-			}
-
-			if (result.errors) {
-				throw new Error(`GraphQL errors: ${JSON.stringify(result.errors)}`)
 			}
 
 			// Parse results by alias prefix
 			const batchResults: { [method: string]: T[] }[] = setMeta.map(({ prefix, configs }) => {
 				const processed: { [method: string]: T[] } = {}
 				for (const config of configs) {
-					let res = (result.data as any)[`${prefix}_${config.method}`]
+					let res = (resultData as any)[`${prefix}_${config.method}`]
 					if (!Array.isArray(res)) res = res != null ? [res] : []
 					processed[config.method] = res.map((obj: any) => config.createFunction(obj))
 				}

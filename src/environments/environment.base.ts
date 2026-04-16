@@ -178,5 +178,16 @@ export const environment: EnvironmentInterface = {
 	version: Version.LATEST,
 	startDate: new Date(1702466963000),
 	affiliates: [based_v1, intentx_v1, based, intentx, bmx, beFi, privex, cloverfield, xpanse, vibe, carbon, pear, quickswap, treble, NULL_AFFILIATE],
-	solvers: [rasa_v1_solver, rasa_solver, perps_solver, perps2_solver, perps3_solver, perps4_solver, zenith_solver, zenith2_solver, carbon_solver, carbon2_solver],
+	solvers: [
+		rasa_v1_solver,
+		rasa_solver,
+		perps_solver,
+		perps2_solver,
+		perps3_solver,
+		perps4_solver,
+		zenith_solver,
+		zenith2_solver,
+		carbon_solver,
+		carbon2_solver,
+	],
 }
