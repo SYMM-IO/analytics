@@ -32,19 +32,11 @@ export class SolversChartsComponent implements OnInit {
 	ngOnInit(): void {
 		const flatSolvers = this.environments.map((env: EnvironmentInterface) => env.solvers!).flat()
 		this.groupedHistories = zip(
-			this.environments
-				.map((env: EnvironmentInterface) => {
-					return env.solvers!.map(solver => {
-						return {
-							solver: solver,
-							env: env,
-							graphQlClient: new GraphQlClient(env.subgraphUrl!, this.loadingService),
-						}
-					})
-				})
-				.flat()
-				.map(context => {
-					const configs: QueryConfig<any>[] = [
+			this.environments.map((env: EnvironmentInterface) => {
+				const graphQlClient = new GraphQlClient(env.subgraphUrl!, this.loadingService)
+
+				const configSets = env.solvers!.map(solver => ({
+					configs: [
 						{
 							method: "solverDailyHistories",
 							fields: [
@@ -65,15 +57,25 @@ export class SolversChartsComponent implements OnInit {
 								{
 									field: "solver",
 									operator: "contains",
-									value: `"${context.solver.address!.toLowerCase()}"`,
+									value: `"${solver.address!.toLowerCase()}"`,
+								},
+								{
+									field: "tradeVolume",
+									operator: "gt",
+									value: `"0"`,
 								},
 							],
-							createFunction: (obj: any) => SolverDailyHistory.fromRawObject(obj).applyDecimals(context.env.collateralDecimal!),
+							createFunction: (obj: any) => SolverDailyHistory.fromRawObject(obj).applyDecimals(env.collateralDecimal!),
 						},
-					]
-					return context.graphQlClient.loadAll(configs, 1000).pipe(map(result => result["solverDailyHistories"] || []))
-				}),
+					] as QueryConfig<any>[],
+				}))
+
+				return graphQlClient.batchLoadAll(configSets, 1000).pipe(
+					map(results => results.map(r => r["solverDailyHistories"] || [])),
+				)
+			}),
 		).pipe(
+			map(envResults => envResults.flat()),
 			catchError(err => {
 				this.loadingService.setLoading(false)
 				this.alert.open("Error loading data from subgraph\n" + err.message).subscribe()

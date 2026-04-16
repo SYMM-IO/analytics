@@ -59,19 +59,11 @@ export class AffiliatesChartsComponent implements OnInit {
 		this.groupedHistories = this.groupedHistories.pipe(
 			switchMap(value => {
 				return zip(
-					this.environments
-						.map((env: EnvironmentInterface) => {
-							return env.affiliates!.map(aff => {
-								return {
-									affiliate: aff,
-									env: env,
-									graphQlClient: new GraphQlClient(env.subgraphUrl!, this.loadingService),
-								}
-							})
-						})
-						.flat()
-						.map(context => {
-							const configs: QueryConfig<any>[] = [
+					this.environments.map((env: EnvironmentInterface) => {
+						const graphQlClient = new GraphQlClient(env.subgraphUrl!, this.loadingService)
+
+						const configSets = env.affiliates!.map(aff => ({
+							configs: [
 								{
 									method: "monthlyHistories",
 									fields: ["id", "timestamp", "tradeVolume", "activeUsers", "accountSource"],
@@ -81,10 +73,10 @@ export class AffiliatesChartsComponent implements OnInit {
 										{
 											field: "accountSource",
 											operator: "contains",
-											value: `"${context.affiliate.address!.toLowerCase()}"`,
+											value: `"${aff.address!.toLowerCase()}"`,
 										},
 									],
-									createFunction: (obj: any) => MonthlyHistory.fromRawObject(obj).applyDecimals(context.env.collateralDecimal!),
+									createFunction: (obj: any) => MonthlyHistory.fromRawObject(obj).applyDecimals(env.collateralDecimal!),
 								},
 								{
 									method: "weeklyHistories",
@@ -95,25 +87,24 @@ export class AffiliatesChartsComponent implements OnInit {
 										{
 											field: "accountSource",
 											operator: "contains",
-											value: `"${context.affiliate.address!.toLowerCase()}"`,
+											value: `"${aff.address!.toLowerCase()}"`,
 										},
 									],
-									createFunction: (obj: any) => WeeklyHistory.fromRawObject(obj).applyDecimals(context.env.collateralDecimal!),
+									createFunction: (obj: any) => WeeklyHistory.fromRawObject(obj).applyDecimals(env.collateralDecimal!),
 								},
-							]
-
-							const startPaginationFields = {
+							] as QueryConfig<any>[],
+							startPaginationFields: {
 								monthlyHistories: minFetchTimestamp,
 								weeklyHistories: minFetchTimestamp,
-							}
+							},
+						}))
 
-							return context.graphQlClient.loadAll(configs, 1000, startPaginationFields).pipe(
-								map(result => {
-									return [result["monthlyHistories"] || [], result["weeklyHistories"] || []]
-								}),
-							)
-						}),
+						return graphQlClient.batchLoadAll(configSets, 1000).pipe(
+							map(results => results.map(r => [r["monthlyHistories"] || [], r["weeklyHistories"] || []])),
+						)
+					}),
 				).pipe(
+					map(envResults => envResults.flat()),
 					catchError(err => {
 						this.loadingService.setLoading(false)
 						this.alert.open("Error loading data from subgraph\n" + err.message).subscribe()

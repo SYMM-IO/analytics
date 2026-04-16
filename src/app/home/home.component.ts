@@ -53,90 +53,83 @@ export class HomeComponent implements OnInit {
 		const minFetchTimestamp = Math.floor((Date.now() - maxRangeDays * 24 * 60 * 60 * 1000) / 1000).toString()
 
 		this.groupedHistories = zip(
-			this.environments
-				.map((env: EnvironmentInterface) => {
-					return env.affiliates!.map(aff => {
-						return {
-							affiliate: aff,
-							env: env,
-							graphQlClient: new GraphQlClient(env.subgraphUrl!, this.loadingService),
-						}
-					})
-				})
-				.flat()
-				.map(context => {
-					let collaterals = context.env.collaterals!.map(c => `\"${c.toLowerCase()}\"`).join(",")
-					// Use affiliate's fromTimestamp if set, otherwise cap at max UI range
-					const dailyFromTimestamp = context.affiliate.fromTimestamp || minFetchTimestamp
-					const configs: QueryConfig<any>[] = [
-						{
-							method: "dailyHistories",
-							fields: [
-								"id",
-								"tradeVolume",
-								"liquidateTradeVolume",
-								"averagePositionSize",
-								"quotesCount",
-								"newUsers",
-								"activeUsers",
-								"newAccounts",
-								"deposit",
-								"platformFee",
-								"openInterest",
-								"accountSource",
-								"timestamp",
-							],
-							first: 1000,
-							orderBy: "timestamp",
-							conditions: [
-								{
-									field: "accountSource",
-									operator: "contains",
-									value: `"${context.affiliate.address!.toLowerCase()}"`,
-								},
-							],
-							createFunction: (obj: any) => DailyHistory.fromRawObject(obj).applyDecimals(context.env.collateralDecimal!),
-						},
-						{
-							method: "totalHistories",
-							fields: ["id", "users", "accounts", "deposit", "tradeVolume", "quotesCount", "accountSource", "timestamp"],
-							first: 1000,
-							orderBy: "timestamp",
-							conditions: [
-								{
-									field: "accountSource",
-									operator: "contains",
-									value: `"${context.affiliate.address!.toLowerCase()}"`,
-								},
-								{
-									field: "collateral",
-									operator: "in",
-									value: `[${collaterals}]`,
-								},
-							],
-							createFunction: (obj: any) => TotalHistory.fromRawObject(obj).applyDecimals(context.env.collateralDecimal!),
-						},
-					]
+			this.environments.map((env: EnvironmentInterface) => {
+				const graphQlClient = new GraphQlClient(env.subgraphUrl!, this.loadingService)
+				let collaterals = env.collaterals!.map(c => `\"${c.toLowerCase()}\"`).join(",")
 
-					const startPaginationFields = {
-						dailyHistories: dailyFromTimestamp,
-						totalHistories: "0",
+				const configSets = env.affiliates!.map(aff => {
+					const dailyFromTimestamp = aff.fromTimestamp || minFetchTimestamp
+					return {
+						configs: [
+							{
+								method: "dailyHistories",
+								fields: [
+									"id",
+									"tradeVolume",
+									"liquidateTradeVolume",
+									"averagePositionSize",
+									"quotesCount",
+									"newUsers",
+									"activeUsers",
+									"newAccounts",
+									"deposit",
+									"platformFee",
+									"openInterest",
+									"accountSource",
+									"timestamp",
+								],
+								first: 1000,
+								orderBy: "timestamp",
+								conditions: [
+									{
+										field: "accountSource",
+										operator: "contains",
+										value: `"${aff.address!.toLowerCase()}"`,
+									},
+								],
+								createFunction: (obj: any) => DailyHistory.fromRawObject(obj).applyDecimals(env.collateralDecimal!),
+							},
+							{
+								method: "totalHistories",
+								fields: ["id", "users", "accounts", "deposit", "tradeVolume", "quotesCount", "accountSource", "timestamp"],
+								first: 1000,
+								orderBy: "timestamp",
+								conditions: [
+									{
+										field: "accountSource",
+										operator: "contains",
+										value: `"${aff.address!.toLowerCase()}"`,
+									},
+									{
+										field: "collateral",
+										operator: "in",
+										value: `[${collaterals}]`,
+									},
+								],
+								createFunction: (obj: any) => TotalHistory.fromRawObject(obj).applyDecimals(env.collateralDecimal!),
+							},
+						] as QueryConfig<any>[],
+						startPaginationFields: {
+							dailyHistories: dailyFromTimestamp,
+							totalHistories: "0",
+						},
 					}
-					return context.graphQlClient.loadAll(configs, 1000, startPaginationFields).pipe(
-						map(result => {
-							return [result["dailyHistories"] || [], result["totalHistories"] || []]
-						}),
-					)
-				}),
+				})
+
+				return graphQlClient.batchLoadAll(configSets, 1000).pipe(
+					map(results => results.map(r => [r["dailyHistories"] || [], r["totalHistories"] || []])),
+				)
+			}),
 		).pipe(
+			map(envResults => envResults.flat()),
 			catchError(err => {
 				this.loadingService.setLoading(false)
 				this.alert.open("Error loading data from subgraph\n" + err.message).subscribe()
 				throw err
 			}),
 			tap(value => {
-				const totalHistories: TotalHistory[] = value.map(v => v[1][0]).filter(th => th != null)
-				this.totalHistory = aggregateTotalHistories(totalHistories)
+				const totalHistories: TotalHistory[] = value.flatMap(v => v[1]).filter(th => th != null)
+				this.totalHistory = totalHistories.length > 0 ? aggregateTotalHistories(totalHistories) : undefined
 				this.cdr.markForCheck()
 			}),
 			map(value => {
