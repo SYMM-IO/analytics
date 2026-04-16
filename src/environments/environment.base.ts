@@ -9,6 +9,22 @@ import {
 	SolverName,
 	Version,
 } from "./environment-interface"
+import BigNumber from "bignumber.js"
+
+export const based_v1: Affiliate = {
+	name: AffiliateName.BASED,
+	mainColor: affiliateColors.get(AffiliateName.BASED),
+	address: "0x5de6949717f3aa8e0fbed5ce8b611ebcf1e44ae9",
+	fromTimestamp: "1692265765",
+	depositDiff: BigNumber("1289164045865600000000"),
+}
+
+export const intentx_v1: Affiliate = {
+	name: AffiliateName.INTENTX,
+	mainColor: affiliateColors.get(AffiliateName.INTENTX),
+	address: "0x724796d2e9143920b1b58651b04e1ed201b8cc98",
+	fromTimestamp: "0",
+}
 
 export const based: Affiliate = {
 	name: AffiliateName.BASED,
@@ -94,6 +110,12 @@ export const treble: Affiliate = {
 	fromTimestamp: "0",
 }
 
+export const rasa_v1_solver: Solver = {
+	name: SolverName.RASA,
+	address: "0xed85c23e307e0f40cc38d6aa42fe25e0a5d07ea7",
+	mainColor: solverColors.get(SolverName.RASA),
+}
+
 export const rasa_solver: Solver = {
 	name: SolverName.RASA,
 	address: "0x9206d9d8f7f1b212a4183827d20de32af3a23c59",
@@ -152,9 +174,20 @@ export const environment: EnvironmentInterface = {
 	serverUrl: "https://analytics-api.symm.io",
 	subgraphUrl: "https://api.goldsky.com/api/public/project_cm1hfr4527p0f01u85mz499u8/subgraphs/base_analytics/latest/gn",
 	collateralDecimal: 6,
-	collaterals: ["0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"],
+	collaterals: ["0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", "0xd9aAEc86B65D86f6A7B5B1b0c42FFA531710b6CA"],
 	version: Version.LATEST,
 	startDate: new Date(1702466963000),
-	affiliates: [based, intentx, bmx, beFi, privex, cloverfield, xpanse, vibe, carbon, pear, quickswap, treble, NULL_AFFILIATE],
-	solvers: [rasa_solver, perps_solver, perps2_solver, perps3_solver, perps4_solver, zenith_solver, zenith2_solver, carbon_solver, carbon2_solver],
+	affiliates: [based_v1, intentx_v1, based, intentx, bmx, beFi, privex, cloverfield, xpanse, vibe, carbon, pear, quickswap, treble, NULL_AFFILIATE],
+	solvers: [
+		rasa_v1_solver,
+		rasa_solver,
+		perps_solver,
+		perps2_solver,
+		perps3_solver,
+		perps4_solver,
+		zenith_solver,
+		zenith2_solver,
+		carbon_solver,
+		carbon2_solver,
+	],
 }

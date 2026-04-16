@@ -81,6 +81,7 @@ export enum SolverName {
 	CARBON = "Carbon Solver",
 	RASA = "Rasa",
 	ZENITH = "Zenith",
+	SUPERFLOW = "Superflow",
 }
 
 export let solverColors = new Map<SolverName, string>()
@@ -89,6 +90,7 @@ solverColors.set(SolverName.RASA, "#A2D4EA")
 solverColors.set(SolverName.ZENITH, "#e9de7d")
 solverColors.set(SolverName.PRIVEX, "#0000ff")
 solverColors.set(SolverName.CARBON, "#e7e7e7")
+solverColors.set(SolverName.SUPERFLOW, "#66d1ff")
 
 export interface Solver extends GroupIndex {
 	name?: string

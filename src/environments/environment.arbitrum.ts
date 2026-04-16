@@ -17,6 +17,13 @@ export const pear: Affiliate = {
 	fromTimestamp: "0",
 }
 
+export const carbon: Affiliate = {
+	name: AffiliateName.CARBON,
+	mainColor: affiliateColors.get(AffiliateName.CARBON),
+	address: "0xd600A4F314D3F1ee8869A340D298a69Ff070E574",
+	fromTimestamp: "0",
+}
+
 export const intentx: Affiliate = {
 	name: AffiliateName.INTENTX,
 	mainColor: affiliateColors.get(AffiliateName.INTENTX),
@@ -64,6 +71,6 @@ export const environment: EnvironmentInterface = {
 	collaterals: ["0xaf88d065e77c8cC2239327C5EDb3A432268e5831"],
 	version: Version.LATEST,
 	startDate: new Date(1715990400000),
-	affiliates: [pear, intentx, cloverfield, xpanse, NULL_AFFILIATE],
+	affiliates: [pear, intentx, cloverfield, xpanse, carbon, NULL_AFFILIATE],
 	solvers: [perps1, perps2, perps3],
 }

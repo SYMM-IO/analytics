@@ -10,6 +10,20 @@ import {
 	Version,
 } from "./environment-interface"
 
+export const alpha_v1: Affiliate = {
+	name: AffiliateName.THENA,
+	mainColor: affiliateColors.get(AffiliateName.THENA),
+	address: "0x058Ba7574d8bC66F1a1DCc44bb5B18894D4190e0",
+	fromTimestamp: null,
+}
+
+export const alpha_v2: Affiliate = {
+	name: AffiliateName.THENA,
+	mainColor: affiliateColors.get(AffiliateName.THENA),
+	address: "0x75c539eFB5300234e5DaA684502735Fc3886e8b4",
+	fromTimestamp: null,
+}
+
 export const alpha_v3_1: Affiliate = {
 	name: AffiliateName.THENA,
 	mainColor: affiliateColors.get(AffiliateName.THENA),
@@ -87,11 +101,24 @@ export const alpha_v3_11: Affiliate = {
 	fromTimestamp: null,
 }
 
+export const cloverfield_v1: Affiliate = {
+	name: AffiliateName.CLOVERFIELD,
+	mainColor: affiliateColors.get(AffiliateName.CLOVERFIELD),
+	address: "0x10acc15db0d432280be4885dae65e1cc76da3c54",
+	fromTimestamp: null,
+}
+
 export const cloverfield: Affiliate = {
 	name: AffiliateName.CLOVERFIELD,
 	mainColor: affiliateColors.get(AffiliateName.CLOVERFIELD),
 	address: "0xcCc8CC82868B94Bc2759c69375fC7Ae769703EB8",
 	fromTimestamp: "0",
+}
+
+export const rasa_v1_solver: Solver = {
+	name: SolverName.RASA,
+	address: "0x62ad8de6740314677f06723a7a07797ae5082dbb",
+	mainColor: solverColors.get(SolverName.RASA),
 }
 
 export const rasa_solver: Solver = {
@@ -139,6 +166,6 @@ export const environment: EnvironmentInterface = {
 	collaterals: ["0x55d398326f99059ff775485246999027b3197955"],
 	version: Version.LATEST,
 	startDate: new Date(1702058147000),
-	affiliates: [alpha_v3_1, alpha_v3_2, alpha_v3_3, alpha_v3_4, alpha_v3_5, alpha_v3_6, alpha_v3_7, alpha_v3_8, cloverfield, NULL_AFFILIATE],
-	solvers: [rasa_solver, perps1_solver, perps2_solver, perps3_solver, zenith1_solver, zenith2_solver],
+	affiliates: [alpha_v1, alpha_v2, alpha_v3_1, alpha_v3_2, alpha_v3_3, alpha_v3_4, alpha_v3_5, alpha_v3_6, alpha_v3_7, alpha_v3_8, cloverfield_v1, cloverfield, NULL_AFFILIATE],
+	solvers: [rasa_v1_solver, rasa_solver, perps1_solver, perps2_solver, perps3_solver, zenith1_solver, zenith2_solver],
 }

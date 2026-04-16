@@ -276,9 +276,15 @@ export class ChartComponent implements OnInit, OnDestroy {
 			name: s.name,
 			color: s.color || colors[index % colors.length] || colors[0],
 		}))
+
+		const currentSeriesNames = new Set(this.allSeries.map(s => s.name))
+		const hasVisibleSeries = currentSeriesNames.size > 0
+
+		// Drop selections for series that are no longer present after a chain filter change.
+		this.selectedSeries = new Set([...this.selectedSeries].filter(seriesName => currentSeriesNames.has(seriesName)))
 		
 		// Initialize selectedSeries if empty (first load)
-		if (this.selectedSeries.size === 0) {
+		if (this.selectedSeries.size === 0 && hasVisibleSeries) {
 			this.allSeries.forEach(s => {
 				this.selectedSeries.add(s.name)
 			})
@@ -306,8 +312,11 @@ export class ChartComponent implements OnInit, OnDestroy {
 					},
 				},
 			},
-			false,
-			false,
+			{
+				notMerge: false,
+				lazyUpdate: false,
+				replaceMerge: ["series"],
+			},
 		)
 	}
 
