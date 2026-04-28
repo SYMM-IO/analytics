@@ -24,103 +24,204 @@
     </div>
   </div>
 
-  <div class="chain-toolbar">
-    <div class="chain-status">
-      <span class="chain-status-label">Loaded Chains</span>
-      <span class="chain-status-count">{{ selectedChainNames.length }}/{{ loadedChainNames.length }} selected</span>
-      @if (ignoredChainNames.length > 0) {
-        <span class="chain-status-ignored">{{ ignoredChainNames.length }} ignored</span>
-      }
+  <div class="filter-toolbar">
+    <div class="filter-row">
+      <div class="filter-status">
+        <span class="filter-status-label">Chains</span>
+        <span class="filter-status-count">{{ selectedChainNames.length }}/{{ loadedChainNames.length }} selected</span>
+        @if (ignoredChainNames.length > 0) {
+          <span class="filter-status-ignored">{{ ignoredChainNames.length }} ignored</span>
+        }
+      </div>
+
+      <div class="filter-dropdown-container chain-filter-container">
+        <button
+          tuiButton
+          type="button"
+          size="l"
+          appearance="outline"
+          class="filter-button"
+          (click)="toggleChainDropdown()">
+          <tui-icon icon="@tui.filter" class="mr-1"></tui-icon>
+          <span class="mx-0.5">Filter Chains</span>
+          <tui-icon icon="@tui.chevron-down" [class.rotated]="chainDropdownOpen" class="ml-1"></tui-icon>
+        </button>
+
+        @if (chainDropdownOpen) {
+          <div class="filter-dropdown-content" (wheel)="onFilterDropdownWheel($event)">
+            <div class="filter-dropdown-header">
+              <span class="filter-dropdown-title">Chains</span>
+              <div class="filter-header-actions">
+                <button type="button" class="filter-link-button" (click)="selectAllChains()">All</button>
+                <span class="filter-link-divider"></span>
+                <button type="button" class="filter-link-button" (click)="clearChainSelection()">None</button>
+              </div>
+            </div>
+            @if (loadedChainNames.length > 0) {
+              <div class="filter-dropdown-section">
+                <div class="filter-dropdown-list">
+                  @for (chain of loadedChainNames; track chain) {
+                    <button
+                      type="button"
+                      class="filter-dropdown-item"
+                      [class.selected]="isChainSelected(chain)"
+                      (click)="toggleChain(chain)">
+                      @if (chainLogo(chain); as logoSrc) {
+                        <img class="filter-dropdown-item-logo" [src]="logoSrc" [alt]="chain" loading="lazy">
+                      } @else {
+                        <span class="filter-dropdown-item-logo filter-dropdown-item-logo-fallback">{{ chainInitials(chain) }}</span>
+                      }
+                      <span class="filter-dropdown-item-name">{{ chain }}</span>
+                      <span class="filter-dropdown-item-toggle">
+                        @if (isChainSelected(chain)) {
+                          <tui-icon icon="@tui.check" class="filter-dropdown-item-check"></tui-icon>
+                        }
+                      </span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+            @if (ignoredChainNames.length > 0) {
+              <div class="filter-dropdown-section filter-dropdown-section-muted">
+                <div class="filter-section-header">
+                  <span class="filter-section-title">Ignored</span>
+                  <span class="filter-section-note">Unavailable or timed out</span>
+                </div>
+                <div class="filter-dropdown-list">
+                  @for (chain of ignoredChainNames; track chain) {
+                    <button
+                      type="button"
+                      class="filter-dropdown-item filter-dropdown-item-muted"
+                      disabled>
+                      @if (chainLogo(chain); as logoSrc) {
+                        <img class="filter-dropdown-item-logo filter-dropdown-item-logo-muted" [src]="logoSrc" [alt]="chain" loading="lazy">
+                      } @else {
+                        <span class="filter-dropdown-item-logo filter-dropdown-item-logo-fallback filter-dropdown-item-logo-muted">{{ chainInitials(chain) }}</span>
+                      }
+                      <span class="filter-dropdown-item-name">{{ chain }}</span>
+                      <span class="filter-dropdown-item-warning">Ignored</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="selected-filter-items">
+        @if (loadedChainNames.length === 0) {
+          <span class="filter-empty-state">Loading chain availability...</span>
+        } @else if (selectedChainNames.length === 0) {
+          <span class="filter-empty-state">No chains selected</span>
+        } @else {
+          @for (chain of selectedChainNames; track chain) {
+            <tui-chip class="selected-filter-chip" size="s">
+              @if (chainLogo(chain); as logoSrc) {
+                <img class="selected-filter-logo" [src]="logoSrc" [alt]="chain" loading="lazy">
+              } @else {
+                <span class="selected-filter-logo selected-filter-logo-fallback">{{ chainInitials(chain) }}</span>
+              }
+              <span class="selected-filter-label">{{ chain }}</span>
+              <button
+                iconStart="@tui.x"
+                tuiIconButton
+                type="button"
+                tuiHint="Remove"
+                (click.stop)="removeChain(chain)"
+                class="selected-filter-remove">
+              </button>
+            </tui-chip>
+          }
+        }
+      </div>
     </div>
 
-    <div class="chain-filter-container">
-      <button
-        tuiButton
-        type="button"
-        size="l"
-        appearance="outline"
-        class="chain-filter-button"
-        (click)="toggleChainDropdown()">
-        <tui-icon icon="@tui.filter" class="mr-1"></tui-icon>
-        <span class="mx-0.5">Filter Chains</span>
-        <tui-icon icon="@tui.chevron-down" [class.rotated]="chainDropdownOpen" class="ml-1"></tui-icon>
-      </button>
+    <div class="filter-row">
+      <div class="filter-status">
+        <span class="filter-status-label">Frontends</span>
+        <span class="filter-status-count">{{ selectedFrontendNames.length }}/{{ availableFrontendNames.length }} selected</span>
+      </div>
 
-      @if (chainDropdownOpen) {
-        <div class="chain-dropdown-content">
-          <div class="chain-dropdown-header">
-            <span class="chain-dropdown-title">Chains</span>
-            <div class="chain-header-actions">
-              <button type="button" class="chain-link-button" (click)="selectAllChains()">All</button>
-              <span class="chain-link-divider"></span>
-              <button type="button" class="chain-link-button" (click)="clearChainSelection()">None</button>
+      <div class="filter-dropdown-container frontend-filter-container">
+        <button
+          tuiButton
+          type="button"
+          size="l"
+          appearance="outline"
+          class="filter-button"
+          (click)="toggleFrontendDropdown()">
+          <tui-icon icon="@tui.filter" class="mr-1"></tui-icon>
+          <span class="mx-0.5">Filter Frontends</span>
+          <tui-icon icon="@tui.chevron-down" [class.rotated]="frontendDropdownOpen" class="ml-1"></tui-icon>
+        </button>
+
+        @if (frontendDropdownOpen) {
+          <div class="filter-dropdown-content" (wheel)="onFilterDropdownWheel($event)">
+            <div class="filter-dropdown-header">
+              <span class="filter-dropdown-title">Frontends</span>
+              <div class="filter-header-actions">
+                <button type="button" class="filter-link-button" (click)="selectAllFrontends()">All</button>
+                <span class="filter-link-divider"></span>
+                <button type="button" class="filter-link-button" (click)="clearFrontendSelection()">None</button>
+              </div>
             </div>
-          </div>
-          @if (loadedChainNames.length > 0) {
-            <div class="chain-dropdown-section">
-              <div class="chain-dropdown-list">
-                @for (chain of loadedChainNames; track chain) {
+            <div class="filter-dropdown-section">
+              <div class="filter-dropdown-list">
+                @for (frontend of availableFrontendNames; track frontend) {
                   <button
                     type="button"
-                    class="chain-dropdown-item"
-                    [class.selected]="isChainSelected(chain)"
-                    (click)="toggleChain(chain)">
-                    <span class="chain-dropdown-item-indicator"></span>
-                    <span class="chain-dropdown-item-name">{{ chain }}</span>
-                    <span class="chain-dropdown-item-toggle">
-                      @if (isChainSelected(chain)) {
-                        <tui-icon icon="@tui.check" class="chain-dropdown-item-check"></tui-icon>
+                    class="filter-dropdown-item"
+                    [class.selected]="isFrontendSelected(frontend)"
+                    (click)="toggleFrontend(frontend)">
+                    @if (frontendLogo(frontend); as logoSrc) {
+                      <img class="filter-dropdown-item-logo" [src]="logoSrc" [alt]="frontend" loading="lazy">
+                    } @else {
+                      <span class="filter-dropdown-item-logo filter-dropdown-item-logo-fallback">{{ chainInitials(frontend) }}</span>
+                    }
+                    <span class="filter-dropdown-item-name">{{ frontend }}</span>
+                    <span class="filter-dropdown-item-toggle">
+                      @if (isFrontendSelected(frontend)) {
+                        <tui-icon icon="@tui.check" class="filter-dropdown-item-check"></tui-icon>
                       }
                     </span>
                   </button>
                 }
               </div>
             </div>
-          }
-          @if (ignoredChainNames.length > 0) {
-            <div class="chain-dropdown-section chain-dropdown-section-ignored">
-              <div class="chain-section-header">
-                <span class="chain-section-title">Ignored</span>
-                <span class="chain-section-note">Unavailable or timed out</span>
-              </div>
-              <div class="chain-dropdown-list">
-                @for (chain of ignoredChainNames; track chain) {
-                  <button
-                    type="button"
-                    class="chain-dropdown-item chain-dropdown-item-ignored"
-                    disabled>
-                    <span class="chain-dropdown-item-indicator chain-dropdown-item-indicator-warning"></span>
-                    <span class="chain-dropdown-item-name">{{ chain }}</span>
-                    <span class="chain-dropdown-item-warning">Ignored</span>
-                  </button>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      }
-    </div>
-
-    <div class="loaded-chain-items">
-      @if (loadedChainNames.length === 0) {
-        <span class="chain-empty-state">Loading chain availability...</span>
-      } @else if (selectedChainNames.length === 0) {
-        <span class="chain-empty-state">No chains selected</span>
-      } @else {
-        @for (chain of selectedChainNames; track chain) {
-          <tui-chip class="loaded-chain-chip" size="s">
-            <span class="loaded-chain-label">{{ chain }}</span>
-            <button
-              iconStart="@tui.x"
-              tuiIconButton
-              type="button"
-              tuiHint="Remove"
-              (click.stop)="removeChain(chain)"
-              class="loaded-chain-remove">
-            </button>
-          </tui-chip>
+          </div>
         }
-      }
+      </div>
+
+      <div class="selected-filter-items">
+        @if (loadedChainNames.length === 0 && ignoredChainNames.length === 0) {
+          <span class="filter-empty-state">Loading frontend availability...</span>
+        } @else if (availableFrontendNames.length === 0) {
+          <span class="filter-empty-state">No frontends available</span>
+        } @else if (selectedFrontendNames.length === 0) {
+          <span class="filter-empty-state">No frontends selected</span>
+        } @else {
+          @for (frontend of selectedFrontendNames; track frontend) {
+            <tui-chip class="selected-filter-chip" size="s">
+              @if (frontendLogo(frontend); as logoSrc) {
+                <img class="selected-filter-logo" [src]="logoSrc" [alt]="frontend" loading="lazy">
+              } @else {
+                <span class="selected-filter-logo selected-filter-logo-fallback">{{ chainInitials(frontend) }}</span>
+              }
+              <span class="selected-filter-label">{{ frontend }}</span>
+              <button
+                iconStart="@tui.x"
+                tuiIconButton
+                type="button"
+                tuiHint="Remove"
+                (click.stop)="removeFrontend(frontend)"
+                class="selected-filter-remove">
+              </button>
+            </tui-chip>
+          }
+        }
+      </div>
     </div>
   </div>
 
@@ -137,6 +238,7 @@
           <app-affiliates-charts
             [groupedHistories]="groupedHistories"
             [selectedChainNames]="selectedChainNames"
+            [selectedFrontendNames]="selectedFrontendNames"
             [decimalsMap]="decimalsMap"
             (totalMonthlyHistory)="monthlyActiveUsers = ($event).activeUsers">
           </app-affiliates-charts>

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, HostListener, Input, OnDestroy, OnInit, ViewChild } from "@angular/core"
 import { EChartsOption } from "echarts"
-import { Observable, Subscription } from "rxjs"
+import { BehaviorSubject, Observable, Subscription } from "rxjs"
 import { DailyHistory, MonthlyHistory, WeeklyHistory } from "../models"
 import BigNumber from "bignumber.js"
 import { StateService } from "../services/state.service"
@@ -31,8 +31,17 @@ export class ChartComponent implements OnInit, OnDestroy {
 	@Input() tooltipFormatter?: any
 	@Input() hasGroupByMonthAction = true
 	@Input() hasCumulative = true
+	@Input() allowSeriesFilter = true
 	@Input() partyBVolumeIncluded: boolean | undefined = undefined
 	@Input() groupedHistories!: Observable<GroupedHistory[]>
+	// External (parent-driven) series visibility. When set, only these series are rendered.
+	// Toggling this is animated via legend.selected — no series replaceMerge — so the chart
+	// transitions smoothly instead of flickering.
+	@Input() set seriesVisibilityFilter(value: string[] | null | undefined) {
+		this.visibilityFilter$.next(value == null ? null : new Set(value))
+	}
+	private readonly visibilityFilter$ = new BehaviorSubject<Set<string> | null>(null)
+	private currentVisibilityFilter: Set<string> | null = null
 
 	chartOption?: EChartsOption
 	chart: any
@@ -68,6 +77,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 	legendDropdownOpen = false
 
 	private subscriptions: Subscription[] = []
+	private previousSeriesNames = new Set<string>()
 
 	constructor(readonly stateService: StateService, private cdr: ChangeDetectorRef) {}
 
@@ -84,6 +94,28 @@ export class ChartComponent implements OnInit, OnDestroy {
 		this.chart = chart
 		this.subscribeToDataChanges()
 		this.setupChartEventListeners()
+		this.subscribeToVisibilityFilter()
+	}
+
+	private subscribeToVisibilityFilter() {
+		const sub = this.visibilityFilter$.subscribe(filter => {
+			this.currentVisibilityFilter = filter
+			this.applyVisibilityFilter()
+		})
+		this.subscriptions.push(sub)
+	}
+
+	private applyVisibilityFilter() {
+		if (!this.chart || this.allSeries.length === 0) return
+		if (this.currentVisibilityFilter == null) {
+			this.selectedSeries = new Set(this.allSeries.map(s => s.name))
+		} else {
+			const filter = this.currentVisibilityFilter
+			this.selectedSeries = new Set(
+				this.allSeries.map(s => s.name).filter(name => filter.has(name)),
+			)
+		}
+		this.updateChartVisibility()
 	}
 
 	onGroupByMonthChanged() {
@@ -279,19 +311,36 @@ export class ChartComponent implements OnInit, OnDestroy {
 
 		const currentSeriesNames = new Set(this.allSeries.map(s => s.name))
 		const hasVisibleSeries = currentSeriesNames.size > 0
+		const previousSeriesNames = this.previousSeriesNames
 
-		// Drop selections for series that are no longer present after a chain filter change.
+		const visibilityFilter = this.currentVisibilityFilter
+		const passesFilter = (name: string) => visibilityFilter == null || visibilityFilter.has(name)
+
+		// Drop selections for series that are no longer present after a chain change.
 		this.selectedSeries = new Set([...this.selectedSeries].filter(seriesName => currentSeriesNames.has(seriesName)))
-		
-		// Initialize selectedSeries if empty (first load)
+
+		// Newly available series should be visible by default — but only if they pass the visibility filter.
+		for (const series of this.allSeries) {
+			if (!previousSeriesNames.has(series.name) && passesFilter(series.name)) {
+				this.selectedSeries.add(series.name)
+			}
+		}
+
+		// Initialize selectedSeries if empty (first load) — also respect the visibility filter.
 		if (this.selectedSeries.size === 0 && hasVisibleSeries) {
 			this.allSeries.forEach(s => {
-				this.selectedSeries.add(s.name)
+				if (passesFilter(s.name)) this.selectedSeries.add(s.name)
 			})
+		}
+
+		// Always intersect with the active visibility filter so externally-hidden series stay hidden.
+		if (visibilityFilter != null) {
+			this.selectedSeries = new Set([...this.selectedSeries].filter(name => visibilityFilter.has(name)))
 		}
 		
 		// Update visibleSeries based on selectedSeries
 		this.visibleSeries = Array.from(this.selectedSeries)
+		this.previousSeriesNames = currentSeriesNames
 		
 		// Build selected object for ECharts
 		const selected: Record<string, boolean> = {}
@@ -647,6 +696,29 @@ export class ChartComponent implements OnInit, OnDestroy {
 	
 	closeLegendDropdown() {
 		this.legendDropdownOpen = false
+	}
+
+	onLegendDropdownWheel(event: WheelEvent) {
+		const dropdown = event.currentTarget as HTMLElement
+		const target = event.target as HTMLElement
+		const list = target.closest(".legend-chips-container") as HTMLElement | null || dropdown.querySelector(".legend-chips-container")
+
+		event.stopPropagation()
+
+		if (!list || list.scrollHeight <= list.clientHeight) {
+			event.preventDefault()
+			return
+		}
+
+		const delta =
+			event.deltaMode === WheelEvent.DOM_DELTA_LINE
+				? event.deltaY * 16
+				: event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+					? event.deltaY * list.clientHeight
+					: event.deltaY
+
+		event.preventDefault()
+		list.scrollTop += delta
 	}
 	
 	@HostListener('document:click', ['$event'])

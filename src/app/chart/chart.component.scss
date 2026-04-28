@@ -229,6 +229,7 @@
 	min-width: 240px;
 	max-width: 320px;
 	overflow: hidden;
+	overscroll-behavior: contain;
 	animation: popIn 0.15s ease-out;
 }
 
@@ -292,6 +293,7 @@
 	padding: 0.375rem 0;
 	max-height: 280px;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 
 	&::-webkit-scrollbar {
 		width: 4px;
@@ -393,6 +395,18 @@
 				0 0 0 1px var(--tui-base-05),
 				0 0 0 2px currentColor;
 		}
+	}
+}
+
+.legend-chip-item-toggleable {
+	cursor: pointer;
+}
+
+.legend-chip-item-muted {
+	opacity: 0.42;
+
+	.legend-chip-indicator {
+		box-shadow: none;
 	}
 }
 
