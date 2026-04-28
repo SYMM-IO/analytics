@@ -1,10 +1,11 @@
-import { ChangeDetectorRef, Component, DestroyRef, HostListener, Inject, OnInit, inject } from "@angular/core"
+import { ChangeDetectorRef, Component, DestroyRef, Inject, OnDestroy, OnInit, inject } from "@angular/core"
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop"
-import { catchError, combineLatest, BehaviorSubject, Observable, of, shareReplay, tap, zip } from "rxjs"
+import { catchError, combineLatest, Observable, of, shareReplay, tap, zip } from "rxjs"
 import { map } from "rxjs/operators"
 import { GraphQlClient, QueryConfig } from "../services/graphql-client"
 import { LoadingService } from "../services/Loading.service"
 import { EnvironmentService } from "../services/enviroment.service"
+import { FilterToolbarService } from "../services/filter-toolbar.service"
 import { Affiliate, EnvironmentInterface } from "../../environments/environment-interface"
 import { TuiAlertService } from "@taiga-ui/core"
 import { BaseHistory, DailyHistory, TotalHistory } from "../models"
@@ -31,7 +32,7 @@ export enum ViewMode {
     styleUrls: ["./home.component.scss"],
     standalone: false
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
 	groupedHistories?: Observable<GroupedHistory[]>
 	totalHistory?: TotalHistory
 	todayHistory?: DailyHistory
@@ -41,66 +42,16 @@ export class HomeComponent implements OnInit {
 	ViewMode = ViewMode
 	viewMode: ViewMode = ViewMode.FRONTENDS
 	monthlyActiveUsers: any
-	zero  = BigNumber(0)
-	loadedChainNames: string[] = []
-	ignoredChainNames: string[] = []
-	selectedChainNames: string[] = []
-	availableFrontendNames: string[] = []
-	selectedFrontendNames: string[] = []
-	chainDropdownOpen = false
-	frontendDropdownOpen = false
-	private readonly selectedChainNames$ = new BehaviorSubject<string[]>([])
-	private readonly selectedFrontendNames$ = new BehaviorSubject<string[]>([])
+	zero = BigNumber(0)
 	private readonly destroyRef = inject(DestroyRef)
-	hasCustomizedChainSelection = false
-	hasCustomizedFrontendSelection = false
 
-	private static readonly CHAIN_LOGOS: Record<string, string> = {
-		fantom: "assets/chains/fantom.svg",
-		bnb: "assets/chains/binance.svg",
-		binance: "assets/chains/binance.svg",
-		base: "assets/chains/base.png",
-		blast: "assets/chains/blast.svg",
-		mantle: "assets/chains/mantle.svg",
-		arbitrum: "assets/chains/arbitrum.png",
-		sonic: "assets/chains/sonic.svg",
-		hyperevm: "assets/chains/hyperevm.svg",
-	}
+	get selectedChainNames(): string[] { return this.filterToolbar.selectedChainNames }
+	get selectedFrontendNames(): string[] { return this.filterToolbar.selectedFrontendNames }
 
-	private static readonly FRONTEND_LOGOS: Record<string, string> = {
-		intentx: "assets/frontends/intentx-rounded-branded.svg",
-		thena: "assets/frontends/thena-rounded-branded.svg",
-		befi: "assets/frontends/befi-labs-rounded-branded.svg",
-		cloverfield: "assets/frontends/cloverfield-rounded-branded.svg",
-		core: "assets/frontends/core-rounded-branded.svg",
-		bmx: "assets/frontends/bmx-rounded-branded.svg",
-		privex: "assets/frontends/privex-rounded-branded.svg",
-		pear: "assets/frontends/pear-rounded-branded.svg",
-		based: "assets/frontends/based-rounded-branded.svg",
-		xpanse: "assets/frontends/xpanse-rounded-branded.svg",
-		ivx: "assets/frontends/ivx-rounded-branded.svg",
-		lode: "assets/frontends/lode-rounded-branded.svg",
-		spooky: "assets/frontends/spooky-rounded-branded.svg",
-		vibe: "assets/frontends/vibe-rounded-branded.svg",
-		carbon: "assets/frontends/carbon-rounded-branded.svg",
-		quickswap: "assets/frontends/quickswap-rounded-branded.svg",
-		treble: "assets/frontends/treble-rounded-branded.svg",
-	}
-
-	chainLogo(name: string): string | null {
-		return HomeComponent.CHAIN_LOGOS[name.toLowerCase()] ?? null
-	}
-
-	frontendLogo(name: string): string | null {
-		return HomeComponent.FRONTEND_LOGOS[name.toLowerCase()] ?? null
-	}
-
-	chainInitials(name: string): string {
-		return name.slice(0, 2).toUpperCase()
-	}
 	constructor(
 		private loadingService: LoadingService,
 		readonly environmentService: EnvironmentService,
+		readonly filterToolbar: FilterToolbarService,
 		@Inject(TuiAlertService) protected readonly alert: TuiAlertService,
 		private cdr: ChangeDetectorRef,
 	) {
@@ -111,29 +62,34 @@ export class HomeComponent implements OnInit {
 		this.environmentService.loadedSubgraphs
 			.pipe(takeUntilDestroyed())
 			.subscribe(loadedChainNames => {
-				this.loadedChainNames = loadedChainNames
-
-				if (!this.hasCustomizedChainSelection) {
-					this.selectedChainNames = [...loadedChainNames]
-				} else {
-					const loadedChainsSet = new Set(loadedChainNames)
-					this.selectedChainNames = this.selectedChainNames.filter(chainName => loadedChainsSet.has(chainName))
-				}
-
-				this.selectedChainNames$.next([...this.selectedChainNames])
-				this.syncAvailableFrontends(loadedChainNames)
+				// Initial order is alphabetical (predictable while volume data is still loading).
+				// After environmentResults$ emits, this gets re-sorted by trade volume below.
+				const alpha = [...loadedChainNames].sort((a, b) => a.localeCompare(b))
+				this.filterToolbar.setLoadedChains(alpha)
+				const frontends = this.getFrontendNamesForChains(alpha).sort((a, b) => a.localeCompare(b))
+				this.filterToolbar.setAvailableFrontends(frontends)
 				this.cdr.markForCheck()
 			})
 
 		this.environmentService.ignoredSubgraphNames
 			.pipe(takeUntilDestroyed())
 			.subscribe(ignoredChainNames => {
-				this.ignoredChainNames = ignoredChainNames
+				this.filterToolbar.setIgnoredChains(ignoredChainNames)
 				this.cdr.markForCheck()
 			})
+
+		this.filterToolbar.selectedChainNames$
+			.pipe(takeUntilDestroyed())
+			.subscribe(() => this.cdr.markForCheck())
+
+		this.filterToolbar.selectedFrontendNames$
+			.pipe(takeUntilDestroyed())
+			.subscribe(() => this.cdr.markForCheck())
 	}
 
 	ngOnInit(): void {
+		this.filterToolbar.setVisible(true)
+
 		// Only fetch data within the max UI range (730 days = "All" option) to avoid loading years of unused history
 		const maxRangeDays = 730
 		const minFetchTimestamp = Math.floor((Date.now() - maxRangeDays * 24 * 60 * 60 * 1000) / 1000).toString()
@@ -225,7 +181,7 @@ export class HomeComponent implements OnInit {
 			}),
 		).pipe(map(envResults => envResults.flat()), shareReplay(1))
 
-		const chainFilteredEnvResults$ = combineLatest([environmentResults$, this.selectedChainNames$]).pipe(
+		const chainFilteredEnvResults$ = combineLatest([environmentResults$, this.filterToolbar.selectedChainNames$]).pipe(
 			map(([results, chains]) => {
 				const selectedChainsSet = new Set(chains)
 				return results.filter(result => selectedChainsSet.has(result.environmentName))
@@ -242,7 +198,7 @@ export class HomeComponent implements OnInit {
 		// toggling the frontend filter doesn't re-emit groupedHistories — that re-emission would
 		// trigger the ECharts series replaceMerge flicker. Chart visibility is handled inside
 		// chart.component via legend.selected (smooth, animated).
-		combineLatest([chainFilteredEnvResults$, this.selectedFrontendNames$])
+		combineLatest([chainFilteredEnvResults$, this.filterToolbar.selectedFrontendNames$])
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe(([envResults, frontends]) => {
 				const fs = new Set(frontends)
@@ -265,6 +221,48 @@ export class HomeComponent implements OnInit {
 			map(envResults => this.aggregateAffiliateHistories(envResults)),
 			shareReplay(1),
 		)
+
+		// Once environment results are in, re-sort the chain & frontend filter lists by total
+		// trade volume (descending). Alphabetical sort applied earlier remains the fallback if
+		// this never fires.
+		environmentResults$
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe(envResults => {
+				const chainVolume = new Map<string, BigNumber>()
+				const frontendVolume = new Map<string, BigNumber>()
+
+				for (const r of envResults) {
+					const total = r.totalHistories.reduce(
+						(acc, h) => acc.plus(h.tradeVolume ?? BigNumber(0)),
+						BigNumber(0),
+					)
+					chainVolume.set(
+						r.environmentName,
+						(chainVolume.get(r.environmentName) ?? BigNumber(0)).plus(total),
+					)
+					if (r.affiliate.name) {
+						frontendVolume.set(
+							r.affiliate.name,
+							(frontendVolume.get(r.affiliate.name) ?? BigNumber(0)).plus(total),
+						)
+					}
+				}
+
+				const byVolume = (vols: Map<string, BigNumber>) => (a: string, b: string): number => {
+					const cmp = (vols.get(b) ?? BigNumber(0)).comparedTo(vols.get(a) ?? BigNumber(0)) ?? 0
+					return cmp !== 0 ? cmp : a.localeCompare(b)
+				}
+
+				const sortedChains = [...this.filterToolbar.loadedChainNames].sort(byVolume(chainVolume))
+				this.filterToolbar.setLoadedChains(sortedChains)
+
+				const sortedFrontends = this.getFrontendNamesForChains(sortedChains).sort(byVolume(frontendVolume))
+				this.filterToolbar.setAvailableFrontends(sortedFrontends)
+			})
+	}
+
+	ngOnDestroy(): void {
+		this.filterToolbar.setVisible(false)
 	}
 
 	private aggregateAffiliateHistories(environmentResults: EnvironmentHistoryResult[]): GroupedHistory[] {
@@ -333,149 +331,6 @@ export class HomeComponent implements OnInit {
 				: `${env.name} is ignored because its subgraph is unavailable.`
 
 		this.alert.open(message).subscribe()
-	}
-
-	toggleChainDropdown() {
-		if (this.loadedChainNames.length === 0 && this.ignoredChainNames.length === 0) return
-		this.chainDropdownOpen = !this.chainDropdownOpen
-		if (this.chainDropdownOpen) this.frontendDropdownOpen = false
-	}
-
-	toggleFrontendDropdown() {
-		if (this.availableFrontendNames.length === 0) return
-		this.frontendDropdownOpen = !this.frontendDropdownOpen
-		if (this.frontendDropdownOpen) this.chainDropdownOpen = false
-	}
-
-	toggleChain(chainName: string) {
-		const selectedChains = new Set(this.selectedChainNames)
-		if (selectedChains.has(chainName)) {
-			selectedChains.delete(chainName)
-		} else {
-			selectedChains.add(chainName)
-		}
-		this.hasCustomizedChainSelection = true
-		this.selectedChainNames = this.loadedChainNames.filter(name => selectedChains.has(name))
-		this.selectedChainNames$.next([...this.selectedChainNames])
-		this.cdr.markForCheck()
-	}
-
-	selectAllChains() {
-		this.hasCustomizedChainSelection = false
-		this.selectedChainNames = [...this.loadedChainNames]
-		this.selectedChainNames$.next([...this.selectedChainNames])
-		this.cdr.markForCheck()
-	}
-
-	clearChainSelection() {
-		this.hasCustomizedChainSelection = true
-		this.selectedChainNames = []
-		this.selectedChainNames$.next([])
-		this.cdr.markForCheck()
-	}
-
-	isChainSelected(chainName: string): boolean {
-		return this.selectedChainNames.includes(chainName)
-	}
-
-	removeChain(chainName: string) {
-		if (!this.isChainSelected(chainName)) return
-		this.toggleChain(chainName)
-	}
-
-	toggleFrontend(frontendName: string) {
-		const selectedFrontends = new Set(this.selectedFrontendNames)
-		if (selectedFrontends.has(frontendName)) {
-			selectedFrontends.delete(frontendName)
-		} else {
-			selectedFrontends.add(frontendName)
-		}
-		this.hasCustomizedFrontendSelection = true
-		this.selectedFrontendNames = this.availableFrontendNames.filter(name => selectedFrontends.has(name))
-		this.selectedFrontendNames$.next([...this.selectedFrontendNames])
-		this.cdr.markForCheck()
-	}
-
-	selectAllFrontends() {
-		this.hasCustomizedFrontendSelection = false
-		this.selectedFrontendNames = [...this.availableFrontendNames]
-		this.selectedFrontendNames$.next([...this.selectedFrontendNames])
-		this.cdr.markForCheck()
-	}
-
-	clearFrontendSelection() {
-		this.hasCustomizedFrontendSelection = true
-		this.selectedFrontendNames = []
-		this.selectedFrontendNames$.next([])
-		this.cdr.markForCheck()
-	}
-
-	isFrontendSelected(frontendName: string): boolean {
-		return this.selectedFrontendNames.includes(frontendName)
-	}
-
-	removeFrontend(frontendName: string) {
-		if (!this.isFrontendSelected(frontendName)) return
-		this.toggleFrontend(frontendName)
-	}
-
-	onFilterDropdownWheel(event: WheelEvent) {
-		const dropdown = event.currentTarget as HTMLElement
-		const target = event.target as HTMLElement
-		const list = target.closest(".filter-dropdown-list") as HTMLElement | null || dropdown.querySelector(".filter-dropdown-list")
-		this.scrollDropdownList(event, list)
-	}
-
-	@HostListener("document:click", ["$event"])
-	onDocumentClick(event: MouseEvent) {
-		const target = event.target as HTMLElement
-		const chainDropdownContainer = target.closest(".chain-filter-container")
-		if (!chainDropdownContainer && this.chainDropdownOpen) {
-			this.chainDropdownOpen = false
-		}
-
-		const frontendDropdownContainer = target.closest(".frontend-filter-container")
-		if (!frontendDropdownContainer && this.frontendDropdownOpen) {
-			this.frontendDropdownOpen = false
-		}
-	}
-
-	private syncAvailableFrontends(loadedChainNames: string[]) {
-		this.availableFrontendNames = this.getFrontendNamesForChains(loadedChainNames)
-
-		if (!this.hasCustomizedFrontendSelection) {
-			this.selectedFrontendNames = [...this.availableFrontendNames]
-		} else {
-			const availableFrontendSet = new Set(this.availableFrontendNames)
-			this.selectedFrontendNames = this.selectedFrontendNames.filter(frontendName => availableFrontendSet.has(frontendName))
-		}
-
-		this.selectedFrontendNames$.next([...this.selectedFrontendNames])
-	}
-
-	private scrollDropdownList(event: WheelEvent, list: HTMLElement | null) {
-		event.stopPropagation()
-
-		if (!list) {
-			event.preventDefault()
-			return
-		}
-
-		const scrollable = list.scrollHeight > list.clientHeight
-		if (!scrollable) {
-			event.preventDefault()
-			return
-		}
-
-		const delta =
-			event.deltaMode === WheelEvent.DOM_DELTA_LINE
-				? event.deltaY * 16
-				: event.deltaMode === WheelEvent.DOM_DELTA_PAGE
-					? event.deltaY * list.clientHeight
-					: event.deltaY
-
-		event.preventDefault()
-		list.scrollTop += delta
 	}
 
 	private getFrontendNamesForChains(chainNames: string[]): string[] {
