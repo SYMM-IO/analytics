@@ -40,10 +40,15 @@ export class HomeComponent implements OnInit, OnDestroy {
 	environments: EnvironmentInterface[]
 	decimalsMap = new Map<string, number>()
 	ViewMode = ViewMode
-	viewMode: ViewMode = ViewMode.FRONTENDS
+	get viewMode(): ViewMode { return this.filterToolbar.view as ViewMode }
 	monthlyActiveUsers: any
 	zero = BigNumber(0)
+	depositsSpark: number[] = []
+	volumeSpark: number[] = []
+	quotesSpark: number[] = []
+	usersSpark: number[] = []
 	private readonly destroyRef = inject(DestroyRef)
+	private readonly SPARK_DAYS = 60
 
 	get selectedChainNames(): string[] { return this.filterToolbar.selectedChainNames }
 	get selectedFrontendNames(): string[] { return this.filterToolbar.selectedFrontendNames }
@@ -83,6 +88,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 			.subscribe(() => this.cdr.markForCheck())
 
 		this.filterToolbar.selectedFrontendNames$
+			.pipe(takeUntilDestroyed())
+			.subscribe(() => this.cdr.markForCheck())
+
+		this.filterToolbar.view$
 			.pipe(takeUntilDestroyed())
 			.subscribe(() => this.cdr.markForCheck())
 	}
@@ -214,6 +223,8 @@ export class HomeComponent implements OnInit, OnDestroy {
 				const lastMonth = aggregated.map(a => this.getLastCalendarMonthHistories(a.dailyHistories)).flat()
 				this.lastMonthHistory = lastMonth.length > 0 ? aggregateDailyHistories(lastMonth) : undefined
 
+				this.refreshSparklines(aggregated)
+
 				this.cdr.markForCheck()
 			})
 
@@ -264,6 +275,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 	ngOnDestroy(): void {
 		this.filterToolbar.setVisible(false)
 	}
+
 
 	private aggregateAffiliateHistories(environmentResults: EnvironmentHistoryResult[]): GroupedHistory[] {
 		const out: GroupedHistory[] = []
@@ -343,6 +355,30 @@ export class HomeComponent implements OnInit, OnDestroy {
 			}
 		}
 		return [...names]
+	}
+
+	private refreshSparklines(aggregated: GroupedHistory[]): void {
+		// Sum daily histories across affiliates by timestamp, then take the last N days.
+		const byTime = new Map<number, { deposit: BigNumber; volume: BigNumber; quotes: BigNumber; users: BigNumber }>()
+		for (const ah of aggregated) {
+			for (const raw of ah.dailyHistories) {
+				const d = raw as DailyHistory
+				const t = DailyHistory.getTime(d)
+				if (t == null) continue
+				const slot = byTime.get(t) ?? { deposit: BigNumber(0), volume: BigNumber(0), quotes: BigNumber(0), users: BigNumber(0) }
+				slot.deposit = slot.deposit.plus(d.deposit ?? BigNumber(0))
+				slot.volume = slot.volume.plus(d.tradeVolume ?? BigNumber(0))
+				slot.quotes = slot.quotes.plus(d.quotesCount ?? BigNumber(0))
+				slot.users = slot.users.plus(d.activeUsers ?? BigNumber(0))
+				byTime.set(t, slot)
+			}
+		}
+		const sorted = [...byTime.entries()].sort((a, b) => a[0] - b[0])
+		const tail = sorted.slice(-this.SPARK_DAYS)
+		this.depositsSpark = tail.map(([, v]) => v.deposit.toNumber())
+		this.volumeSpark = tail.map(([, v]) => v.volume.toNumber())
+		this.quotesSpark = tail.map(([, v]) => v.quotes.toNumber())
+		this.usersSpark = tail.map(([, v]) => v.users.toNumber())
 	}
 
 	private getLastCalendarMonthHistories(histories: DailyHistory[]): DailyHistory[] {

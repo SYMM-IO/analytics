@@ -1,70 +1,195 @@
-.info-card {
-  min-width: 12em;
-  position: relative;
-  overflow: hidden;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
-
-  // Glassmorphism — let the dots and glow show through
-  background: rgba(21, 15, 15, 0.4) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(132, 125, 125, 0.08) !important;
-
-  // Top accent border
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: linear-gradient(
-      90deg,
-      rgba(233, 76, 61, 0.6) 0%,
-      rgba(255, 122, 110, 0.4) 50%,
-      rgba(233, 76, 61, 0.2) 100%
-    );
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-
-  &:hover {
-    background: rgba(21, 15, 15, 0.55) !important;
-    box-shadow: 0 4px 16px rgba(10, 5, 5, 0.3);
-    border-color: rgba(132, 125, 125, 0.15) !important;
-
-    &::before {
-      opacity: 1;
-    }
-  }
-}
-
 .page-wrapper {
   position: relative;
   overflow: hidden;
 }
 
-// Info cards row — equal size
-.infos {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
+// ---- Hero panel: filters + 4 metrics in one elevated surface ----------------
+
+.hero-panel {
+  position: relative;
+  z-index: 5;
+  isolation: isolate;
+  overflow: visible;
+  border-radius: 4px;
+  background:
+    radial-gradient(120% 60% at 0% 0%, rgba(255, 122, 110, 0.05), transparent 55%),
+    linear-gradient(180deg, rgba(28, 20, 20, 0.55), rgba(18, 12, 12, 0.55));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    0 24px 60px rgba(10, 5, 5, 0.45),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+
+  // Animated red gradient hairline along the top edge.
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 1.25rem;
+    right: 1.25rem;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 122, 110, 0.55) 30%,
+      rgba(233, 76, 61, 0.85) 50%,
+      rgba(255, 122, 110, 0.55) 70%,
+      transparent 100%
+    );
+    opacity: 0.85;
+  }
 }
 
-.infos-section {
+.hero-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 1.25rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-wrap: wrap;
+}
+
+.hero-title-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.hero-eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(245, 240, 240, 0.62);
+}
+
+.hero-eyebrow-divider {
+  width: 1px;
+  height: 0.7rem;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.hero-eyebrow-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 122, 110, 0.85);
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 122, 110, 0.95);
+    box-shadow: 0 0 0 3px rgba(255, 122, 110, 0.18);
+    animation: heroPulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes heroPulse {
+  0%, 100% { opacity: 0.95; transform: scale(1); }
+  50%      { opacity: 0.55; transform: scale(0.85); }
+}
+
+.hero-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.hero-metric {
   position: relative;
-  z-index: 1;
+  padding: 1.4rem 1.5rem;
+  min-width: 0;
+  overflow: hidden;
+  transition: background 0.2s ease;
+
+  app-info {
+    position: relative;
+    z-index: 1;
+  }
+
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 1.25rem;
+    bottom: 1.25rem;
+    right: 0;
+    width: 1px;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.08) 25%,
+      rgba(255, 255, 255, 0.08) 75%,
+      transparent 100%
+    );
+  }
+
+  &:hover {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 122, 110, 0.04),
+      transparent 70%
+    );
+
+    .hero-spark {
+      opacity: 1;
+    }
+  }
+}
+
+.hero-spark {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 62%;
+  z-index: 0;
+  opacity: 0.78;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  // Fade from left (transparent — keeps numbers/labels readable) to right (visible).
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.25) 35%, #000 70%, #000 100%);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.25) 35%, #000 70%, #000 100%);
 }
 
 @media (max-width: 75em) {
-  .infos {
+  .hero-metrics {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .hero-metric:nth-child(2)::after {
+    display: none;
+  }
+
+  .hero-metric:nth-child(1),
+  .hero-metric:nth-child(2) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 }
 
 @media (max-width: 40em) {
-  .infos {
+  .hero-metrics {
     grid-template-columns: 1fr;
+  }
+
+  .hero-metric::after { display: none; }
+
+  .hero-metric:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
 }
 

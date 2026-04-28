@@ -32,6 +32,27 @@
 
             @if (filterToolbar.visible$ | async) {
                 <div class="toolbar-filters">
+                    <div class="view-switch" role="tablist" aria-label="Dashboard view">
+                        <button
+                            type="button"
+                            role="tab"
+                            class="view-switch-option"
+                            [class.active]="filterToolbar.view === 'FRONTENDS'"
+                            [attr.aria-selected]="filterToolbar.view === 'FRONTENDS'"
+                            (click)="filterToolbar.setView('FRONTENDS')">
+                            Frontends
+                        </button>
+                        <button
+                            type="button"
+                            role="tab"
+                            class="view-switch-option"
+                            [class.active]="filterToolbar.view === 'SOLVERS'"
+                            [attr.aria-selected]="filterToolbar.view === 'SOLVERS'"
+                            (click)="filterToolbar.setView('SOLVERS')">
+                            Solvers
+                        </button>
+                    </div>
+
                     <div class="filter-dropdown-container chain-filter-container">
                         <button
                             type="button"
@@ -115,6 +136,9 @@
                             type="button"
                             class="filter-pill"
                             [class.is-customized]="filterToolbar.hasCustomizedFrontendSelection"
+                            [class.is-disabled]="filterToolbar.view === 'SOLVERS'"
+                            [disabled]="filterToolbar.view === 'SOLVERS'"
+                            [attr.title]="filterToolbar.view === 'SOLVERS' ? 'Switch to Frontends view to filter frontends' : null"
                             (click)="filterToolbar.toggleFrontendDropdown()">
                             <tui-icon icon="@tui.app-window" class="filter-pill-icon"></tui-icon>
                             <span class="filter-pill-label">Frontends</span>

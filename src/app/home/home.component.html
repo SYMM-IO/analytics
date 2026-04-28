@@ -1,33 +1,34 @@
 <div class="page-wrapper dots-background flex flex-column flex-grow gap-2 pb-2">
   <app-glowing-dots [numberOfDots]="14" [glowSpeed]="14"></app-glowing-dots>
 
-  <!-- Info cards -->
-  <div class="infos w-full infos-section">
-    <div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
-      <app-info title="Deposits" [totalValue]="totalHistory?.deposit" [lastMonthValue]="lastMonthHistory?.deposit"
-        [formatMoney]="true">
-      </app-info>
+  <!-- Hero panel: the four headline metrics with sparklines, on one elevated surface. -->
+  <section class="hero-panel">
+    <div class="hero-metrics">
+      <div class="hero-metric">
+        <div class="hero-spark"><app-sparkline [data]="depositsSpark" color="#FF7A6E"></app-sparkline></div>
+        <app-info title="Deposits" [totalValue]="totalHistory?.deposit" [lastMonthValue]="lastMonthHistory?.deposit"
+          [formatMoney]="true">
+        </app-info>
+      </div>
+      <div class="hero-metric">
+        <div class="hero-spark"><app-sparkline [data]="volumeSpark" color="#FFB36B"></app-sparkline></div>
+        <app-info title="Traded Volume" [totalValue]="totalHistory?.tradeVolume"
+          [lastMonthValue]="lastMonthHistory?.tradeVolume"
+          [formatMoney]="true">
+        </app-info>
+      </div>
+      <div class="hero-metric">
+        <div class="hero-spark"><app-sparkline [data]="quotesSpark" color="#7FD3F0"></app-sparkline></div>
+        <app-info title="Quotes" [totalValue]="totalHistory?.quotesCount" [lastMonthValue]="lastMonthHistory?.quotesCount">
+        </app-info>
+      </div>
+      <div class="hero-metric">
+        <div class="hero-spark"><app-sparkline [data]="usersSpark" color="#A98EFF"></app-sparkline></div>
+        <app-info title="Users" [totalValue]="totalHistory?.users" [lastMonthValue]="monthlyActiveUsers">
+        </app-info>
+      </div>
     </div>
-    <div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
-      <app-info title="Traded Volume" [totalValue]="totalHistory?.tradeVolume"
-        [lastMonthValue]="lastMonthHistory?.tradeVolume"
-        [formatMoney]="true">
-      </app-info>
-    </div>
-    <div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
-      <app-info title="Quotes" [totalValue]="totalHistory?.quotesCount" [lastMonthValue]="lastMonthHistory?.quotesCount">
-      </app-info>
-    </div>
-    <div tuiCardLarge tuiSurface="elevated" class="info-card h-full flex-grow-1">
-      <app-info title="Users" [totalValue]="totalHistory?.users" [lastMonthValue]="monthlyActiveUsers">
-      </app-info>
-    </div>
-  </div>
-
-  <tui-segmented size="l" class="tab-header">
-    <button type="button" class="w-full tab-button" (click)="viewMode = ViewMode.FRONTENDS">Frontends</button>
-    <button type="button" class="w-full tab-button" (click)="viewMode = ViewMode.SOLVERS">Solvers</button>
-  </tui-segmented>
+  </section>
 
   <!-- Charts -->
   <div class="charts-section">
