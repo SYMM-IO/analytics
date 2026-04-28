@@ -82,28 +82,13 @@
   isolation: isolate;
   overflow: visible;
   display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgba(132, 125, 125, 0.08);
-  border-radius: 0.9rem;
-  background: rgba(21, 15, 15, 0.58);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 12px 28px rgba(10, 5, 5, 0.18);
-}
-
-.filter-row {
-  display: grid;
-  grid-template-columns: minmax(11.5rem, 14rem) auto minmax(0, 1fr);
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
-  min-height: 2.35rem;
-}
-
-.filter-row + .filter-row {
-  padding-top: 0.65rem;
-  border-top: 1px solid rgba(132, 125, 125, 0.08);
+  gap: 0.5rem;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
 
 .tab-header {
@@ -153,6 +138,103 @@
 // absolutely-positioned content isn't hidden behind a later filter-row.
 .filter-dropdown-container:has(.filter-dropdown-content) {
   z-index: 50;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  background: rgba(28, 20, 20, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: rgba(245, 240, 240, 0.88);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+  font: inherit;
+  user-select: none;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba(40, 28, 28, 0.75);
+    border-color: rgba(255, 122, 110, 0.28);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &.is-customized {
+    border-color: rgba(255, 122, 110, 0.38);
+    box-shadow: 0 0 0 1px rgba(255, 122, 110, 0.12) inset;
+
+    .filter-pill-count {
+      color: #FFA69D;
+    }
+  }
+}
+
+.filter-pill-icon {
+  width: 14px;
+  height: 14px;
+  color: rgba(255, 122, 110, 0.85);
+}
+
+.filter-pill-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 240, 240, 0.62);
+}
+
+.filter-pill-count {
+  display: inline-flex;
+  align-items: baseline;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: rgba(245, 240, 240, 0.85);
+  transition: color 0.15s ease;
+}
+
+.filter-pill-count-divider {
+  margin: 0 0.1rem;
+  opacity: 0.4;
+}
+
+.filter-pill-warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 170, 122, 0.16);
+  color: rgba(255, 185, 145, 0.95);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.filter-pill-chevron {
+  width: 12px;
+  height: 12px;
+  margin-left: 0.1rem;
+  color: rgba(245, 240, 240, 0.55);
+  transition: transform 0.18s ease;
+
+  &.rotated {
+    transform: rotate(180deg);
+  }
 }
 
 .filter-button {

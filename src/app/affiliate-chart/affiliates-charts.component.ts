@@ -204,9 +204,8 @@ export class AffiliatesChartsComponent implements OnInit {
 			shareReplay(1),
 		)
 
-		// monthlyActiveUsers in the info card respects the frontend filter (intersection with the
-		// unfiltered grouped histories). Done as a separate subscription so the chart pipeline
-		// above stays stable across frontend toggles.
+		// monthlyActiveUsers respects chain + frontend filters. Computed as a separate
+		// subscription so it doesn't force the chart pipeline to re-emit on frontend toggles.
 		combineLatest([this.groupedHistories, this.selectedFrontendNames$])
 			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe(([affiliateHistories, frontends]) => {

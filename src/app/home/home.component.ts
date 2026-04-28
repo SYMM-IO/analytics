@@ -52,8 +52,8 @@ export class HomeComponent implements OnInit {
 	private readonly selectedChainNames$ = new BehaviorSubject<string[]>([])
 	private readonly selectedFrontendNames$ = new BehaviorSubject<string[]>([])
 	private readonly destroyRef = inject(DestroyRef)
-	private hasCustomizedChainSelection = false
-	private hasCustomizedFrontendSelection = false
+	hasCustomizedChainSelection = false
+	hasCustomizedFrontendSelection = false
 
 	private static readonly CHAIN_LOGOS: Record<string, string> = {
 		fantom: "assets/chains/fantom.svg",
@@ -238,9 +238,9 @@ export class HomeComponent implements OnInit {
 			shareReplay(1),
 		)
 
-		// Info cards reflect both chain AND frontend filters. Computed in a separate stream so that
-		// toggling the frontend filter doesn't re-emit groupedHistories — that re-emission is what
-		// triggers the ECharts series replaceMerge flicker. Chart visibility is handled inside
+		// Info cards reflect both chain AND frontend filters. Computed in a separate stream so
+		// toggling the frontend filter doesn't re-emit groupedHistories — that re-emission would
+		// trigger the ECharts series replaceMerge flicker. Chart visibility is handled inside
 		// chart.component via legend.selected (smooth, animated).
 		combineLatest([chainFilteredEnvResults$, this.selectedFrontendNames$])
 			.pipe(takeUntilDestroyed(this.destroyRef))
