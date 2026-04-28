@@ -24,106 +24,6 @@
     </div>
   </div>
 
-  <div class="chain-toolbar">
-    <div class="chain-status">
-      <span class="chain-status-label">Loaded Chains</span>
-      <span class="chain-status-count">{{ selectedChainNames.length }}/{{ loadedChainNames.length }} selected</span>
-      @if (ignoredChainNames.length > 0) {
-        <span class="chain-status-ignored">{{ ignoredChainNames.length }} ignored</span>
-      }
-    </div>
-
-    <div class="chain-filter-container">
-      <button
-        tuiButton
-        type="button"
-        size="l"
-        appearance="outline"
-        class="chain-filter-button"
-        (click)="toggleChainDropdown()">
-        <tui-icon icon="@tui.filter" class="mr-1"></tui-icon>
-        <span class="mx-0.5">Filter Chains</span>
-        <tui-icon icon="@tui.chevron-down" [class.rotated]="chainDropdownOpen" class="ml-1"></tui-icon>
-      </button>
-
-      @if (chainDropdownOpen) {
-        <div class="chain-dropdown-content">
-          <div class="chain-dropdown-header">
-            <span class="chain-dropdown-title">Chains</span>
-            <div class="chain-header-actions">
-              <button type="button" class="chain-link-button" (click)="selectAllChains()">All</button>
-              <span class="chain-link-divider"></span>
-              <button type="button" class="chain-link-button" (click)="clearChainSelection()">None</button>
-            </div>
-          </div>
-          @if (loadedChainNames.length > 0) {
-            <div class="chain-dropdown-section">
-              <div class="chain-dropdown-list">
-                @for (chain of loadedChainNames; track chain) {
-                  <button
-                    type="button"
-                    class="chain-dropdown-item"
-                    [class.selected]="isChainSelected(chain)"
-                    (click)="toggleChain(chain)">
-                    <span class="chain-dropdown-item-indicator"></span>
-                    <span class="chain-dropdown-item-name">{{ chain }}</span>
-                    <span class="chain-dropdown-item-toggle">
-                      @if (isChainSelected(chain)) {
-                        <tui-icon icon="@tui.check" class="chain-dropdown-item-check"></tui-icon>
-                      }
-                    </span>
-                  </button>
-                }
-              </div>
-            </div>
-          }
-          @if (ignoredChainNames.length > 0) {
-            <div class="chain-dropdown-section chain-dropdown-section-ignored">
-              <div class="chain-section-header">
-                <span class="chain-section-title">Ignored</span>
-                <span class="chain-section-note">Unavailable or timed out</span>
-              </div>
-              <div class="chain-dropdown-list">
-                @for (chain of ignoredChainNames; track chain) {
-                  <button
-                    type="button"
-                    class="chain-dropdown-item chain-dropdown-item-ignored"
-                    disabled>
-                    <span class="chain-dropdown-item-indicator chain-dropdown-item-indicator-warning"></span>
-                    <span class="chain-dropdown-item-name">{{ chain }}</span>
-                    <span class="chain-dropdown-item-warning">Ignored</span>
-                  </button>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      }
-    </div>
-
-    <div class="loaded-chain-items">
-      @if (loadedChainNames.length === 0) {
-        <span class="chain-empty-state">Loading chain availability...</span>
-      } @else if (selectedChainNames.length === 0) {
-        <span class="chain-empty-state">No chains selected</span>
-      } @else {
-        @for (chain of selectedChainNames; track chain) {
-          <tui-chip class="loaded-chain-chip" size="s">
-            <span class="loaded-chain-label">{{ chain }}</span>
-            <button
-              iconStart="@tui.x"
-              tuiIconButton
-              type="button"
-              tuiHint="Remove"
-              (click.stop)="removeChain(chain)"
-              class="loaded-chain-remove">
-            </button>
-          </tui-chip>
-        }
-      }
-    </div>
-  </div>
-
   <tui-segmented size="l" class="tab-header">
     <button type="button" class="w-full tab-button" (click)="viewMode = ViewMode.FRONTENDS">Frontends</button>
     <button type="button" class="w-full tab-button" (click)="viewMode = ViewMode.SOLVERS">Solvers</button>
@@ -137,6 +37,7 @@
           <app-affiliates-charts
             [groupedHistories]="groupedHistories"
             [selectedChainNames]="selectedChainNames"
+            [selectedFrontendNames]="selectedFrontendNames"
             [decimalsMap]="decimalsMap"
             (totalMonthlyHistory)="monthlyActiveUsers = ($event).activeUsers">
           </app-affiliates-charts>

@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, OnInit, Output } from "@angular/core"
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, inject } from "@angular/core"
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop"
 import { GroupedHistory } from "../groupedHistory"
 import { EnvironmentService } from "../services/enviroment.service"
 import { GraphQlClient, QueryConfig } from "../services/graphql-client"
@@ -31,10 +32,20 @@ export class AffiliatesChartsComponent implements OnInit {
 	@Input() set selectedChainNames(value: string[] | null | undefined) {
 		this.selectedChainNames$.next(value ? [...value] : [])
 	}
+	@Input() set selectedFrontendNames(value: string[] | null | undefined) {
+		this._selectedFrontendNames = value ? [...value] : []
+		this.selectedFrontendNames$.next(this._selectedFrontendNames)
+	}
+	get selectedFrontendNames(): string[] {
+		return this._selectedFrontendNames
+	}
 	@Output() totalMonthlyHistory = new EventEmitter<MonthlyHistory>()
 
 	environments: EnvironmentInterface[]
+	private _selectedFrontendNames: string[] = []
+	private readonly destroyRef = inject(DestroyRef)
 	private readonly selectedChainNames$ = new BehaviorSubject<string[]>([])
+	private readonly selectedFrontendNames$ = new BehaviorSubject<string[]>([])
 
 	constructor(
 		private loadingService: LoadingService,
@@ -123,10 +134,15 @@ export class AffiliatesChartsComponent implements OnInit {
 			shareReplay(1),
 		)
 
+		// Frontend filter is applied at the chart level via legend.selected (smooth animation),
+		// not in the data pipeline. Filtering data here would force ECharts to replaceMerge series
+		// on every toggle, causing a visible flicker.
 		this.groupedHistories = combineLatest([baseGroupedHistories, environmentResults$, this.selectedChainNames$]).pipe(
 			map(([value, environmentResults, selectedChainNames]) => {
 				const selectedChainsSet = new Set(selectedChainNames)
-				const filteredResults = environmentResults.filter(result => selectedChainsSet.has(result.environmentName))
+				const filteredResults = environmentResults.filter(
+					result => selectedChainsSet.has(result.environmentName),
+				)
 				const newValue: GroupedHistory[] = value.map(groupedHistory => ({
 					index: { ...groupedHistory.index },
 					dailyHistories: groupedHistory.dailyHistories.map(dh => ({ ...dh })),
@@ -185,26 +201,29 @@ export class AffiliatesChartsComponent implements OnInit {
 				}
 				return [...map.values()]
 			}),
-			tap((affiliateHistories: GroupedHistory[]) => {
-				// Collect each affiliate's second-last monthly history
+			shareReplay(1),
+		)
+
+		// monthlyActiveUsers respects chain + frontend filters. Computed as a separate
+		// subscription so it doesn't force the chart pipeline to re-emit on frontend toggles.
+		combineLatest([this.groupedHistories, this.selectedFrontendNames$])
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe(([affiliateHistories, frontends]) => {
+				const fs = new Set(frontends)
 				const lastMonthEntries = affiliateHistories
+					.filter(ah => !!ah.index.name && fs.has(ah.index.name))
 					.map(ah => {
 						const m = ah.monthlyHistories
-						// only grab it if there's at least 2 months
 						return m.length >= 2 ? m[m.length - 2] : null
 					})
 					.filter(Boolean) as MonthlyHistory[]
 
 				if (lastMonthEntries.length > 0) {
-					// Aggregate them
-					const aggregatedLastMonth = aggregateMonthlyHistories(lastMonthEntries)
-					this.totalMonthlyHistory.emit(aggregatedLastMonth)
+					this.totalMonthlyHistory.emit(aggregateMonthlyHistories(lastMonthEntries))
 				} else {
 					this.totalMonthlyHistory.emit(new MonthlyHistory())
 				}
-			}),
-			shareReplay(1),
-		)
+			})
 	}
 
 	private loadEnvironmentResults<T>(env: EnvironmentInterface, source$: Observable<T>, fallbackFactory: () => T): Observable<T> {

@@ -1,10 +1,11 @@
-import { ChangeDetectorRef, Component, HostListener, Inject, OnInit } from "@angular/core"
+import { ChangeDetectorRef, Component, DestroyRef, Inject, OnDestroy, OnInit, inject } from "@angular/core"
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop"
-import { catchError, combineLatest, BehaviorSubject, Observable, of, shareReplay, tap, zip } from "rxjs"
+import { catchError, combineLatest, Observable, of, shareReplay, tap, zip } from "rxjs"
 import { map } from "rxjs/operators"
 import { GraphQlClient, QueryConfig } from "../services/graphql-client"
 import { LoadingService } from "../services/Loading.service"
 import { EnvironmentService } from "../services/enviroment.service"
+import { FilterToolbarService } from "../services/filter-toolbar.service"
 import { Affiliate, EnvironmentInterface } from "../../environments/environment-interface"
 import { TuiAlertService } from "@taiga-ui/core"
 import { BaseHistory, DailyHistory, TotalHistory } from "../models"
@@ -31,7 +32,7 @@ export enum ViewMode {
     styleUrls: ["./home.component.scss"],
     standalone: false
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
 	groupedHistories?: Observable<GroupedHistory[]>
 	totalHistory?: TotalHistory
 	todayHistory?: DailyHistory
@@ -41,16 +42,16 @@ export class HomeComponent implements OnInit {
 	ViewMode = ViewMode
 	viewMode: ViewMode = ViewMode.FRONTENDS
 	monthlyActiveUsers: any
-	zero  = BigNumber(0)
-	loadedChainNames: string[] = []
-	ignoredChainNames: string[] = []
-	selectedChainNames: string[] = []
-	chainDropdownOpen = false
-	private readonly selectedChainNames$ = new BehaviorSubject<string[]>([])
-	private hasCustomizedChainSelection = false
+	zero = BigNumber(0)
+	private readonly destroyRef = inject(DestroyRef)
+
+	get selectedChainNames(): string[] { return this.filterToolbar.selectedChainNames }
+	get selectedFrontendNames(): string[] { return this.filterToolbar.selectedFrontendNames }
+
 	constructor(
 		private loadingService: LoadingService,
 		readonly environmentService: EnvironmentService,
+		readonly filterToolbar: FilterToolbarService,
 		@Inject(TuiAlertService) protected readonly alert: TuiAlertService,
 		private cdr: ChangeDetectorRef,
 	) {
@@ -61,28 +62,34 @@ export class HomeComponent implements OnInit {
 		this.environmentService.loadedSubgraphs
 			.pipe(takeUntilDestroyed())
 			.subscribe(loadedChainNames => {
-				this.loadedChainNames = loadedChainNames
-
-				if (!this.hasCustomizedChainSelection) {
-					this.selectedChainNames = [...loadedChainNames]
-				} else {
-					const loadedChainsSet = new Set(loadedChainNames)
-					this.selectedChainNames = this.selectedChainNames.filter(chainName => loadedChainsSet.has(chainName))
-				}
-
-				this.selectedChainNames$.next([...this.selectedChainNames])
+				// Initial order is alphabetical (predictable while volume data is still loading).
+				// After environmentResults$ emits, this gets re-sorted by trade volume below.
+				const alpha = [...loadedChainNames].sort((a, b) => a.localeCompare(b))
+				this.filterToolbar.setLoadedChains(alpha)
+				const frontends = this.getFrontendNamesForChains(alpha).sort((a, b) => a.localeCompare(b))
+				this.filterToolbar.setAvailableFrontends(frontends)
 				this.cdr.markForCheck()
 			})
 
 		this.environmentService.ignoredSubgraphNames
 			.pipe(takeUntilDestroyed())
 			.subscribe(ignoredChainNames => {
-				this.ignoredChainNames = ignoredChainNames
+				this.filterToolbar.setIgnoredChains(ignoredChainNames)
 				this.cdr.markForCheck()
 			})
+
+		this.filterToolbar.selectedChainNames$
+			.pipe(takeUntilDestroyed())
+			.subscribe(() => this.cdr.markForCheck())
+
+		this.filterToolbar.selectedFrontendNames$
+			.pipe(takeUntilDestroyed())
+			.subscribe(() => this.cdr.markForCheck())
 	}
 
 	ngOnInit(): void {
+		this.filterToolbar.setVisible(true)
+
 		// Only fetch data within the max UI range (730 days = "All" option) to avoid loading years of unused history
 		const maxRangeDays = 730
 		const minFetchTimestamp = Math.floor((Date.now() - maxRangeDays * 24 * 60 * 60 * 1000) / 1000).toString()
@@ -174,85 +181,135 @@ export class HomeComponent implements OnInit {
 			}),
 		).pipe(map(envResults => envResults.flat()), shareReplay(1))
 
-		this.groupedHistories = combineLatest([environmentResults$, this.selectedChainNames$]).pipe(
-			map(([environmentResults, selectedChainNames]) => {
-				const selectedChainsSet = new Set(selectedChainNames)
-				return environmentResults.filter(result => selectedChainsSet.has(result.environmentName))
+		const chainFilteredEnvResults$ = combineLatest([environmentResults$, this.filterToolbar.selectedChainNames$]).pipe(
+			map(([results, chains]) => {
+				const selectedChainsSet = new Set(chains)
+				return results.filter(result => selectedChainsSet.has(result.environmentName))
 			}),
 			catchError(err => {
 				this.loadingService.setLoading(false)
 				this.alert.open("Error loading data from subgraph\n" + err.message).subscribe()
 				throw err
 			}),
-			tap(environmentResults => {
-				const totalHistories: TotalHistory[] = environmentResults.flatMap(result => result.totalHistories).filter(th => th != null)
-				this.totalHistory = totalHistories.length > 0 ? aggregateTotalHistories(totalHistories) : undefined
-				this.cdr.markForCheck()
-			}),
-			map(environmentResults => {
-				const out: GroupedHistory[] = []
-
-				for (const result of environmentResults) {
-					if (result.dailyHistories.length > 0)
-						out.push({
-							index: result.affiliate,
-							dailyHistories: result.dailyHistories,
-							weeklyHistories: [],
-							monthlyHistories: [],
-						})
-				}
-				return out
-			}),
-			map((groupedHistories: GroupedHistory[]) => {
-				const all_dates = collectAllDates(groupedHistories, "dailyHistories")
-				groupedHistories.forEach(groupedHistory => {
-					// Aggregate multiple dailyHistories for the same day and accountSource
-					let mapped_data = new Map<number, DailyHistory>()
-					for (const history of groupedHistory.dailyHistories) {
-						const time = BaseHistory.getTime(history)!
-						if (mapped_data.has(time)) {
-							let lastHistory = mapped_data.get(time)!
-							let aggregatedHistory = aggregateDailyHistories([lastHistory, history])
-							aggregatedHistory.timestamp = lastHistory.timestamp! >= history.timestamp! ? lastHistory.timestamp : history.timestamp
-							mapped_data.set(time, aggregatedHistory)
-						} else {
-							mapped_data.set(time, history)
-						}
-					}
-					groupedHistory.dailyHistories = justifyHistoriesToDates([...mapped_data.values()], all_dates)
-				})
-				return groupedHistories
-			}),
-			map((affiliateHistories: GroupedHistory[]) => {
-				// Aggregate histories for affiliates with the same name 
-				const map = new Map<string, GroupedHistory>()
-				for (const affiliateHistory of affiliateHistories) {
-					const affiliate = affiliateHistory.index.name!
-					if (map.has(affiliate)) {
-						let existingHistory = map.get(affiliate)!
-						existingHistory.dailyHistories = aggregateHistories(
-							affiliateHistory.dailyHistories,
-							existingHistory.dailyHistories,
-							aggregateDailyHistories,
-						)
-						map.set(affiliate, existingHistory)
-					} else {
-						map.set(affiliate, affiliateHistory)
-					}
-				}
-				return [...map.values()]
-			}),
-			tap((affiliateHistories: GroupedHistory[]) => {
-				const latestHistories = affiliateHistories.map(a => a.dailyHistories[a.dailyHistories.length - 1] as DailyHistory).filter(Boolean)
-				this.todayHistory = latestHistories.length > 0 ? aggregateDailyHistories(latestHistories) : undefined
-
-				const lastMonthHistoriesPerAffiliate = affiliateHistories.map(a => this.getLastCalendarMonthHistories(a.dailyHistories))
-				const allLastMonthHistories = lastMonthHistoriesPerAffiliate.flat()
-				this.lastMonthHistory = allLastMonthHistories.length > 0 ? aggregateDailyHistories(allLastMonthHistories) : undefined
-				this.cdr.markForCheck()
-			}),
 			shareReplay(1),
 		)
+
+		// Info cards reflect both chain AND frontend filters. Computed in a separate stream so
+		// toggling the frontend filter doesn't re-emit groupedHistories — that re-emission would
+		// trigger the ECharts series replaceMerge flicker. Chart visibility is handled inside
+		// chart.component via legend.selected (smooth, animated).
+		combineLatest([chainFilteredEnvResults$, this.filterToolbar.selectedFrontendNames$])
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe(([envResults, frontends]) => {
+				const fs = new Set(frontends)
+				const filtered = envResults.filter(r => !!r.affiliate.name && fs.has(r.affiliate.name))
+
+				const totalHistories: TotalHistory[] = filtered.flatMap(r => r.totalHistories).filter(th => th != null)
+				this.totalHistory = totalHistories.length > 0 ? aggregateTotalHistories(totalHistories) : undefined
+
+				const aggregated = this.aggregateAffiliateHistories(filtered)
+				const latestHistories = aggregated.map(a => a.dailyHistories[a.dailyHistories.length - 1] as DailyHistory).filter(Boolean)
+				this.todayHistory = latestHistories.length > 0 ? aggregateDailyHistories(latestHistories) : undefined
+
+				const lastMonth = aggregated.map(a => this.getLastCalendarMonthHistories(a.dailyHistories)).flat()
+				this.lastMonthHistory = lastMonth.length > 0 ? aggregateDailyHistories(lastMonth) : undefined
+
+				this.cdr.markForCheck()
+			})
+
+		this.groupedHistories = chainFilteredEnvResults$.pipe(
+			map(envResults => this.aggregateAffiliateHistories(envResults)),
+			shareReplay(1),
+		)
+
+		// Once environment results are in, re-sort the chain & frontend filter lists by total
+		// trade volume (descending). Alphabetical sort applied earlier remains the fallback if
+		// this never fires.
+		environmentResults$
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe(envResults => {
+				const chainVolume = new Map<string, BigNumber>()
+				const frontendVolume = new Map<string, BigNumber>()
+
+				for (const r of envResults) {
+					const total = r.totalHistories.reduce(
+						(acc, h) => acc.plus(h.tradeVolume ?? BigNumber(0)),
+						BigNumber(0),
+					)
+					chainVolume.set(
+						r.environmentName,
+						(chainVolume.get(r.environmentName) ?? BigNumber(0)).plus(total),
+					)
+					if (r.affiliate.name) {
+						frontendVolume.set(
+							r.affiliate.name,
+							(frontendVolume.get(r.affiliate.name) ?? BigNumber(0)).plus(total),
+						)
+					}
+				}
+
+				const byVolume = (vols: Map<string, BigNumber>) => (a: string, b: string): number => {
+					const cmp = (vols.get(b) ?? BigNumber(0)).comparedTo(vols.get(a) ?? BigNumber(0)) ?? 0
+					return cmp !== 0 ? cmp : a.localeCompare(b)
+				}
+
+				const sortedChains = [...this.filterToolbar.loadedChainNames].sort(byVolume(chainVolume))
+				this.filterToolbar.setLoadedChains(sortedChains)
+
+				const sortedFrontends = this.getFrontendNamesForChains(sortedChains).sort(byVolume(frontendVolume))
+				this.filterToolbar.setAvailableFrontends(sortedFrontends)
+			})
+	}
+
+	ngOnDestroy(): void {
+		this.filterToolbar.setVisible(false)
+	}
+
+	private aggregateAffiliateHistories(environmentResults: EnvironmentHistoryResult[]): GroupedHistory[] {
+		const out: GroupedHistory[] = []
+		for (const result of environmentResults) {
+			if (result.dailyHistories.length > 0)
+				out.push({
+					index: result.affiliate,
+					dailyHistories: result.dailyHistories,
+					weeklyHistories: [],
+					monthlyHistories: [],
+				})
+		}
+
+		const all_dates = collectAllDates(out, "dailyHistories")
+		out.forEach(groupedHistory => {
+			const mapped_data = new Map<number, DailyHistory>()
+			for (const history of groupedHistory.dailyHistories) {
+				const time = BaseHistory.getTime(history)!
+				if (mapped_data.has(time)) {
+					const lastHistory = mapped_data.get(time)!
+					const aggregatedHistory = aggregateDailyHistories([lastHistory, history])
+					aggregatedHistory.timestamp = lastHistory.timestamp! >= history.timestamp! ? lastHistory.timestamp : history.timestamp
+					mapped_data.set(time, aggregatedHistory)
+				} else {
+					mapped_data.set(time, history)
+				}
+			}
+			groupedHistory.dailyHistories = justifyHistoriesToDates([...mapped_data.values()], all_dates)
+		})
+
+		const byName = new Map<string, GroupedHistory>()
+		for (const affiliateHistory of out) {
+			const affiliate = affiliateHistory.index.name!
+			if (byName.has(affiliate)) {
+				const existingHistory = byName.get(affiliate)!
+				existingHistory.dailyHistories = aggregateHistories(
+					affiliateHistory.dailyHistories,
+					existingHistory.dailyHistories,
+					aggregateDailyHistories,
+				)
+				byName.set(affiliate, existingHistory)
+			} else {
+				byName.set(affiliate, affiliateHistory)
+			}
+		}
+		return [...byName.values()]
 	}
 
 	private loadEnvironmentResults<T>(env: EnvironmentInterface, source$: Observable<T>, fallbackFactory: () => T): Observable<T> {
@@ -276,54 +333,16 @@ export class HomeComponent implements OnInit {
 		this.alert.open(message).subscribe()
 	}
 
-	toggleChainDropdown() {
-		if (this.loadedChainNames.length === 0 && this.ignoredChainNames.length === 0) return
-		this.chainDropdownOpen = !this.chainDropdownOpen
-	}
-
-	toggleChain(chainName: string) {
-		const selectedChains = new Set(this.selectedChainNames)
-		if (selectedChains.has(chainName)) {
-			selectedChains.delete(chainName)
-		} else {
-			selectedChains.add(chainName)
+	private getFrontendNamesForChains(chainNames: string[]): string[] {
+		const names = new Set<string>()
+		const chainNameSet = new Set(chainNames)
+		for (const env of this.environments) {
+			if (!chainNameSet.has(env.name)) continue
+			for (const affiliate of env.affiliates ?? []) {
+				if (affiliate.name) names.add(affiliate.name)
+			}
 		}
-		this.hasCustomizedChainSelection = true
-		this.selectedChainNames = this.loadedChainNames.filter(name => selectedChains.has(name))
-		this.selectedChainNames$.next([...this.selectedChainNames])
-		this.cdr.markForCheck()
-	}
-
-	selectAllChains() {
-		this.hasCustomizedChainSelection = false
-		this.selectedChainNames = [...this.loadedChainNames]
-		this.selectedChainNames$.next([...this.selectedChainNames])
-		this.cdr.markForCheck()
-	}
-
-	clearChainSelection() {
-		this.hasCustomizedChainSelection = true
-		this.selectedChainNames = []
-		this.selectedChainNames$.next([])
-		this.cdr.markForCheck()
-	}
-
-	isChainSelected(chainName: string): boolean {
-		return this.selectedChainNames.includes(chainName)
-	}
-
-	removeChain(chainName: string) {
-		if (!this.isChainSelected(chainName)) return
-		this.toggleChain(chainName)
-	}
-
-	@HostListener("document:click", ["$event"])
-	onDocumentClick(event: MouseEvent) {
-		const target = event.target as HTMLElement
-		const dropdownContainer = target.closest(".chain-filter-container")
-		if (!dropdownContainer && this.chainDropdownOpen) {
-			this.chainDropdownOpen = false
-		}
+		return [...names]
 	}
 
 	private getLastCalendarMonthHistories(histories: DailyHistory[]): DailyHistory[] {

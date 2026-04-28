@@ -29,6 +29,137 @@
                     </form>
                 </div>
             }
+
+            @if (filterToolbar.visible$ | async) {
+                <div class="toolbar-filters">
+                    <div class="filter-dropdown-container chain-filter-container">
+                        <button
+                            type="button"
+                            class="filter-pill"
+                            [class.is-customized]="filterToolbar.hasCustomizedChainSelection"
+                            (click)="filterToolbar.toggleChainDropdown()">
+                            <tui-icon icon="@tui.layers" class="filter-pill-icon"></tui-icon>
+                            <span class="filter-pill-label">Chains</span>
+                            <span class="filter-pill-count">{{ filterToolbar.selectedChainNames.length }}<span class="filter-pill-count-divider">/</span>{{ filterToolbar.loadedChainNames.length }}</span>
+                            @if (filterToolbar.ignoredChainNames.length > 0) {
+                                <span class="filter-pill-warning" [attr.title]="filterToolbar.ignoredChainNames.length + ' chain(s) unavailable'">{{ filterToolbar.ignoredChainNames.length }}!</span>
+                            }
+                            <tui-icon icon="@tui.chevron-down" [class.rotated]="filterToolbar.chainDropdownOpen" class="filter-pill-chevron"></tui-icon>
+                        </button>
+
+                        @if (filterToolbar.chainDropdownOpen) {
+                            <div class="filter-dropdown-content" (wheel)="onFilterDropdownWheel($event)">
+                                <div class="filter-dropdown-header">
+                                    <span class="filter-dropdown-title">Chains</span>
+                                    <div class="filter-header-actions">
+                                        <button type="button" class="filter-link-button" (click)="filterToolbar.selectAllChains()">All</button>
+                                        <span class="filter-link-divider"></span>
+                                        <button type="button" class="filter-link-button" (click)="filterToolbar.clearChainSelection()">None</button>
+                                    </div>
+                                </div>
+                                @if (filterToolbar.loadedChainNames.length > 0) {
+                                    <div class="filter-dropdown-section">
+                                        <div class="filter-dropdown-list">
+                                            @for (chain of filterToolbar.loadedChainNames; track chain) {
+                                                <button
+                                                    type="button"
+                                                    class="filter-dropdown-item"
+                                                    [class.selected]="filterToolbar.isChainSelected(chain)"
+                                                    (click)="filterToolbar.toggleChain(chain)">
+                                                    @if (filterToolbar.chainLogo(chain); as logoSrc) {
+                                                        <img class="filter-dropdown-item-logo" [src]="logoSrc" [alt]="chain" loading="lazy">
+                                                    } @else {
+                                                        <span class="filter-dropdown-item-logo filter-dropdown-item-logo-fallback">{{ filterToolbar.chainInitials(chain) }}</span>
+                                                    }
+                                                    <span class="filter-dropdown-item-name">{{ chain }}</span>
+                                                    <span class="filter-dropdown-item-toggle">
+                                                        @if (filterToolbar.isChainSelected(chain)) {
+                                                            <tui-icon icon="@tui.check" class="filter-dropdown-item-check"></tui-icon>
+                                                        }
+                                                    </span>
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                                @if (filterToolbar.ignoredChainNames.length > 0) {
+                                    <div class="filter-dropdown-section filter-dropdown-section-muted">
+                                        <div class="filter-section-header">
+                                            <span class="filter-section-title">Ignored</span>
+                                            <span class="filter-section-note">Unavailable or timed out</span>
+                                        </div>
+                                        <div class="filter-dropdown-list">
+                                            @for (chain of filterToolbar.ignoredChainNames; track chain) {
+                                                <button
+                                                    type="button"
+                                                    class="filter-dropdown-item filter-dropdown-item-muted"
+                                                    disabled>
+                                                    @if (filterToolbar.chainLogo(chain); as logoSrc) {
+                                                        <img class="filter-dropdown-item-logo filter-dropdown-item-logo-muted" [src]="logoSrc" [alt]="chain" loading="lazy">
+                                                    } @else {
+                                                        <span class="filter-dropdown-item-logo filter-dropdown-item-logo-fallback filter-dropdown-item-logo-muted">{{ filterToolbar.chainInitials(chain) }}</span>
+                                                    }
+                                                    <span class="filter-dropdown-item-name">{{ chain }}</span>
+                                                    <span class="filter-dropdown-item-warning">Ignored</span>
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div class="filter-dropdown-container frontend-filter-container">
+                        <button
+                            type="button"
+                            class="filter-pill"
+                            [class.is-customized]="filterToolbar.hasCustomizedFrontendSelection"
+                            (click)="filterToolbar.toggleFrontendDropdown()">
+                            <tui-icon icon="@tui.app-window" class="filter-pill-icon"></tui-icon>
+                            <span class="filter-pill-label">Frontends</span>
+                            <span class="filter-pill-count">{{ filterToolbar.selectedFrontendNames.length }}<span class="filter-pill-count-divider">/</span>{{ filterToolbar.availableFrontendNames.length }}</span>
+                            <tui-icon icon="@tui.chevron-down" [class.rotated]="filterToolbar.frontendDropdownOpen" class="filter-pill-chevron"></tui-icon>
+                        </button>
+
+                        @if (filterToolbar.frontendDropdownOpen) {
+                            <div class="filter-dropdown-content" (wheel)="onFilterDropdownWheel($event)">
+                                <div class="filter-dropdown-header">
+                                    <span class="filter-dropdown-title">Frontends</span>
+                                    <div class="filter-header-actions">
+                                        <button type="button" class="filter-link-button" (click)="filterToolbar.selectAllFrontends()">All</button>
+                                        <span class="filter-link-divider"></span>
+                                        <button type="button" class="filter-link-button" (click)="filterToolbar.clearFrontendSelection()">None</button>
+                                    </div>
+                                </div>
+                                <div class="filter-dropdown-section">
+                                    <div class="filter-dropdown-list">
+                                        @for (frontend of filterToolbar.availableFrontendNames; track frontend) {
+                                            <button
+                                                type="button"
+                                                class="filter-dropdown-item"
+                                                [class.selected]="filterToolbar.isFrontendSelected(frontend)"
+                                                (click)="filterToolbar.toggleFrontend(frontend)">
+                                                @if (filterToolbar.frontendLogo(frontend); as logoSrc) {
+                                                    <img class="filter-dropdown-item-logo" [src]="logoSrc" [alt]="frontend" loading="lazy">
+                                                } @else {
+                                                    <span class="filter-dropdown-item-logo filter-dropdown-item-logo-fallback">{{ filterToolbar.chainInitials(frontend) }}</span>
+                                                }
+                                                <span class="filter-dropdown-item-name">{{ frontend }}</span>
+                                                <span class="filter-dropdown-item-toggle">
+                                                    @if (filterToolbar.isFrontendSelected(frontend)) {
+                                                        <tui-icon icon="@tui.check" class="filter-dropdown-item-check"></tui-icon>
+                                                    }
+                                                </span>
+                                            </button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
         </div>
         <div class="body flex-grow-1 w-full h-full pt-2">
             <router-outlet></router-outlet>

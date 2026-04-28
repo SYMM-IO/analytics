@@ -28,6 +28,11 @@
   border-bottom: 1px solid rgba(132, 125, 125, 0.12);
   box-shadow: 0 1px 8px rgba(10, 5, 5, 0.4);
   position: relative;
+  z-index: 30;
+  isolation: isolate;
+  overflow: visible;
+  flex-wrap: wrap;
+  gap: 0.6rem;
 
   // Subtle red accent glow on bottom edge
   &::after {
@@ -45,5 +50,373 @@
       rgba(233, 76, 61, 0.3) 70%,
       transparent 100%
     );
+  }
+}
+
+// ---- Filter pills (live in the top toolbar) -----------------------------------
+
+.toolbar-filters {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.filter-dropdown-container {
+  position: relative;
+  z-index: 6;
+}
+
+.filter-dropdown-container:has(.filter-dropdown-content) {
+  z-index: 50;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 999px;
+  background: rgba(28, 20, 20, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: rgba(245, 240, 240, 0.88);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+  font: inherit;
+  user-select: none;
+  white-space: nowrap;
+
+  &:hover {
+    background: rgba(40, 28, 28, 0.75);
+    border-color: rgba(255, 122, 110, 0.28);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &.is-customized {
+    border-color: rgba(255, 122, 110, 0.38);
+    box-shadow: 0 0 0 1px rgba(255, 122, 110, 0.12) inset;
+
+    .filter-pill-count {
+      color: #FFA69D;
+    }
+  }
+}
+
+.filter-pill-icon {
+  width: 14px;
+  height: 14px;
+  color: rgba(255, 122, 110, 0.85);
+}
+
+.filter-pill-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(245, 240, 240, 0.62);
+}
+
+.filter-pill-count {
+  display: inline-flex;
+  align-items: baseline;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: rgba(245, 240, 240, 0.85);
+  transition: color 0.15s ease;
+}
+
+.filter-pill-count-divider {
+  margin: 0 0.1rem;
+  opacity: 0.4;
+}
+
+.filter-pill-warning {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: rgba(255, 170, 122, 0.16);
+  color: rgba(255, 185, 145, 0.95);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.filter-pill-chevron {
+  width: 12px;
+  height: 12px;
+  margin-left: 0.1rem;
+  color: rgba(245, 240, 240, 0.55);
+  transition: transform 0.18s ease;
+
+  &.rotated {
+    transform: rotate(180deg);
+  }
+}
+
+.filter-dropdown-content {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  left: auto;
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgba(255, 122, 110, 0.06), transparent 60%),
+    linear-gradient(180deg, rgba(28, 20, 20, 0.96), rgba(18, 12, 12, 0.96));
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  box-shadow:
+    0 20px 50px rgba(10, 5, 5, 0.55),
+    0 2px 0 rgba(255, 255, 255, 0.04) inset,
+    0 0 0 1px rgba(255, 122, 110, 0.04);
+  z-index: 1000;
+  min-width: 264px;
+  max-width: 340px;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  animation: filterPopIn 0.18s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+@keyframes filterPopIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.filter-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid rgba(132, 125, 125, 0.1);
+}
+
+.filter-dropdown-section + .filter-dropdown-section {
+  border-top: 1px solid rgba(132, 125, 125, 0.08);
+}
+
+.filter-dropdown-section-muted {
+  padding-top: 0.25rem;
+}
+
+.filter-dropdown-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(245, 240, 240, 0.5);
+}
+
+.filter-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #FF7A6E;
+  cursor: pointer;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: #FFA69D;
+  }
+}
+
+.filter-link-divider {
+  width: 1px;
+  height: 12px;
+  background: rgba(132, 125, 125, 0.2);
+}
+
+.filter-dropdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0.4rem;
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(132, 125, 125, 0.2);
+    border-radius: 2px;
+    &:hover { background: rgba(132, 125, 125, 0.35); }
+  }
+}
+
+.filter-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.12s ease;
+  user-select: none;
+  font: inherit;
+  text-align: left;
+  border-radius: 8px;
+
+  &:hover {
+    background: linear-gradient(90deg, rgba(255, 122, 110, 0.08), rgba(255, 122, 110, 0.02));
+
+    .filter-dropdown-item-logo {
+      transform: scale(1.08);
+    }
+  }
+
+  &.selected {
+    background: rgba(255, 122, 110, 0.06);
+
+    .filter-dropdown-item-name {
+      color: #F5F0F0;
+      font-weight: 600;
+    }
+  }
+}
+
+.filter-dropdown-item-muted {
+  cursor: not-allowed;
+  opacity: 0.6;
+
+  &:hover {
+    background: transparent;
+    .filter-dropdown-item-logo { transform: none; }
+  }
+}
+
+.filter-dropdown-item-logo {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 2px 6px rgba(0, 0, 0, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.filter-dropdown-item-logo-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.78);
+  background: linear-gradient(135deg, rgba(255, 122, 110, 0.32), rgba(255, 122, 110, 0.12));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.filter-dropdown-item-logo-muted {
+  filter: grayscale(0.6) brightness(0.85);
+}
+
+.filter-dropdown-item-name {
+  flex: 1;
+  font-size: 0.85rem;
+  color: rgba(245, 240, 240, 0.78);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.12s ease;
+}
+
+.filter-dropdown-item-toggle {
+  flex-shrink: 0;
+  width: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-dropdown-item-check {
+  width: 14px;
+  height: 14px;
+  color: rgba(255, 122, 110, 0.95);
+}
+
+.filter-dropdown-item-warning {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255, 185, 145, 0.85);
+}
+
+.filter-section-header {
+  padding: 0.4rem 0.75rem 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.filter-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 185, 145, 0.85);
+}
+
+.filter-section-note {
+  font-size: 0.68rem;
+  color: rgba(245, 240, 240, 0.4);
+}
+
+@media (max-width: 56em) {
+  .toolbar-filters {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 40em) {
+  .toolbar-filters {
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .filter-dropdown-content {
+    right: 0;
+    left: auto;
+    width: min(100%, 320px);
+    max-width: calc(100vw - 2rem);
   }
 }

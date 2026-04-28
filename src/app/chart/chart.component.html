@@ -96,73 +96,80 @@
   <!-- Custom Legend -->
     <div class="custom-legend" [class.legend-hidden]="allSeries.length === 0">
       <!-- Dropdown Button -->
-      <div class="legend-dropdown-container">
-        <button
-          tuiButton
-          type="button"
-          size="l"
-          appearance="outline"
-          (click)="toggleLegendDropdown()"
-          class="legend-dropdown-button">
-          <tui-icon icon="@tui.filter" class="mr-1"></tui-icon>
-          <span class="mx-0.5">Filter</span>
-          <tui-icon icon="@tui.chevron-down" [class.rotated]="legendDropdownOpen" class="ml-1"></tui-icon>
-        </button>
+      @if (allowSeriesFilter) {
+        <div class="legend-dropdown-container">
+          <button
+            tuiButton
+            type="button"
+            size="l"
+            appearance="outline"
+            (click)="toggleLegendDropdown()"
+            class="legend-dropdown-button">
+            <tui-icon icon="@tui.filter" class="mr-1"></tui-icon>
+            <span class="mx-0.5">Series</span>
+            <tui-icon icon="@tui.chevron-down" [class.rotated]="legendDropdownOpen" class="ml-1"></tui-icon>
+          </button>
 
-        <!-- Dropdown Content -->
-        @if (legendDropdownOpen) {
-          <div class="legend-dropdown-content">
-            <div class="legend-dropdown-header">
-              <span class="legend-dropdown-title">Series</span>
-              <div class="legend-header-actions">
-                <button type="button" class="legend-link-button" (click)="selectAll()">All</button>
-                <span class="legend-link-divider"></span>
-                <button type="button" class="legend-link-button" (click)="deselectAll()">None</button>
+          <!-- Dropdown Content -->
+          @if (legendDropdownOpen) {
+            <div class="legend-dropdown-content" (wheel)="onLegendDropdownWheel($event)">
+              <div class="legend-dropdown-header">
+                <span class="legend-dropdown-title">Chart Series</span>
+                <div class="legend-header-actions">
+                  <button type="button" class="legend-link-button" (click)="selectAll()">All</button>
+                  <span class="legend-link-divider"></span>
+                  <button type="button" class="legend-link-button" (click)="deselectAll()">None</button>
+                </div>
+              </div>
+              <div class="legend-chips-container">
+                @for (series of allSeries; track series.name) {
+                  <div
+                    class="legend-chip"
+                    [class.selected]="isSeriesSelected(series.name)"
+                    (click)="toggleSeries(series.name)">
+                    <span
+                      class="legend-chip-color"
+                      [style.background-color]="series.color">
+                    </span>
+                    <span class="legend-chip-name">{{ series.name }}</span>
+                    <span class="legend-chip-toggle">
+                      @if (isSeriesSelected(series.name)) {
+                        <tui-icon icon="@tui.check" class="legend-chip-check"></tui-icon>
+                      }
+                    </span>
+                  </div>
+                }
               </div>
             </div>
-            <div class="legend-chips-container">
-              @for (series of allSeries; track series.name) {
-                <div
-                  class="legend-chip"
-                  [class.selected]="isSeriesSelected(series.name)"
-                  (click)="toggleSeries(series.name)">
-                  <span
-                    class="legend-chip-color"
-                    [style.background-color]="series.color">
-                  </span>
-                  <span class="legend-chip-name">{{ series.name }}</span>
-                  <span class="legend-chip-toggle">
-                    @if (isSeriesSelected(series.name)) {
-                      <tui-icon icon="@tui.check" class="legend-chip-check"></tui-icon>
-                    }
-                  </span>
-                </div>
-              }
-            </div>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
 
       <!-- Main Legend Items (Chips) -->
       <div class="legend-items">
         @for (series of allSeries; track series.name) {
-          @if (isSeriesSelected(series.name)) {
+          @if (!allowSeriesFilter || isSeriesSelected(series.name)) {
             <tui-chip
               class="legend-chip-item"
+              [class.legend-chip-item-toggleable]="!allowSeriesFilter"
+              [class.legend-chip-item-muted]="!allowSeriesFilter && !isSeriesSelected(series.name)"
+              (click)="!allowSeriesFilter && toggleSeries(series.name)"
               size="s">
               <span
                 class="legend-chip-indicator"
                 [style.background-color]="series.color">
               </span>
               <span class="legend-chip-label">{{ series.name }}</span>
-              <button
-                iconStart="@tui.x"
-                tuiIconButton
-                type="button"
-                tuiHint="Remove"
-                (click.stop)="removeSeries(series.name)"
-                class="legend-chip-remove">
-              </button>
+              @if (allowSeriesFilter) {
+                <button
+                  iconStart="@tui.x"
+                  tuiIconButton
+                  type="button"
+                  tuiHint="Remove"
+                  (click.stop)="removeSeries(series.name)"
+                  class="legend-chip-remove">
+                </button>
+              }
             </tui-chip>
           }
         }

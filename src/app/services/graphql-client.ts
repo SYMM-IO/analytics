@@ -18,7 +18,7 @@ export interface QueryConfig<T> {
 }
 
 export class GraphQlClient {
-	static readonly REQUEST_TIMEOUT_MS = 10000
+	static readonly REQUEST_TIMEOUT_MS = 20000
 
 	constructor(
 		private graphqlUrl: string,

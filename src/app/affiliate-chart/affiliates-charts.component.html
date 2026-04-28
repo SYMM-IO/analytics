@@ -2,55 +2,55 @@
 	<div class="chart-cell">
 		<app-chart
 			[groupedHistories]="groupedHistories" [fieldName]="'quotesCount'"
-			[chartTitle]="'Quotes'">
+			[chartTitle]="'Quotes'" [allowSeriesFilter]="false" [seriesVisibilityFilter]="selectedFrontendNames">
 		</app-chart>
 	</div>
 	<div class="chart-cell">
 		<app-chart
 			[groupedHistories]="groupedHistories" [fieldName]="'tradeVolume'"
 			[chartTitle]="'Trade Volume'"
-			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [partyBVolumeIncluded]="true">
+			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [partyBVolumeIncluded]="true" [allowSeriesFilter]="false" [seriesVisibilityFilter]="selectedFrontendNames">
 		</app-chart>
 	</div>
 	<div class="chart-cell">
 		<app-chart
 			[groupedHistories]="groupedHistories" [fieldName]="'platformFee'"
 			[chartTitle]="'Platform Revenue'"
-			[yAxisFormatter]="moneyValueFormatter" [decimals]="18">
+			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [allowSeriesFilter]="false" [seriesVisibilityFilter]="selectedFrontendNames">
 		</app-chart>
 	</div>
 	<div class="chart-cell">
 		<app-chart
 			[groupedHistories]="groupedHistories" [fieldName]="'openInterest'"
 			[chartTitle]="'Open Interest'"
-			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasCumulative]="false" [partyBVolumeIncluded]="false">
+			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [hasCumulative]="false" [partyBVolumeIncluded]="false" [allowSeriesFilter]="false" [seriesVisibilityFilter]="selectedFrontendNames">
 		</app-chart>
 	</div>
 	<div class="chart-cell">
 		<app-chart
 			[groupedHistories]="groupedHistories" [fieldName]="'activeUsers'"
 			[chartTitle]="'Active Users'"
-			[hasCumulative]="false" [hasGroupByMonthAction]="false">
+			[hasCumulative]="false" [hasGroupByMonthAction]="false" [allowSeriesFilter]="false" [seriesVisibilityFilter]="selectedFrontendNames">
 		</app-chart>
 	</div>
 	<div class="chart-cell">
 		<app-chart
 			[groupedHistories]="groupedHistories" [fieldName]="'newUsers'"
-			[chartTitle]="'New Users'">
+			[chartTitle]="'New Users'" [allowSeriesFilter]="false" [seriesVisibilityFilter]="selectedFrontendNames">
 		</app-chart>
 	</div>
 	<div class="chart-cell">
 		<app-chart
 			[groupedHistories]="groupedHistories" [fieldName]="'liquidateTradeVolume'"
 			[chartTitle]="'Liquidation volume'"
-			[yAxisFormatter]="moneyValueFormatter" [decimals]="18">
+			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [allowSeriesFilter]="false" [seriesVisibilityFilter]="selectedFrontendNames">
 		</app-chart>
 	</div>
 	<div class="chart-cell">
 		<app-chart
 			[groupedHistories]="groupedHistories" [fieldName]="'averagePositionSize'"
 			[chartTitle]="'Average Position Size'"
-			[yAxisFormatter]="moneyValueFormatter" [decimals]="18">
+			[yAxisFormatter]="moneyValueFormatter" [decimals]="18" [allowSeriesFilter]="false" [seriesVisibilityFilter]="selectedFrontendNames">
 		</app-chart>
 	</div>
 </div>
