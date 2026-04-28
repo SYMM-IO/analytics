@@ -32,6 +32,7 @@ import { BigNumberFormatPipe } from "./big-number-format.pipe"
 import { AffiliatesChartsComponent } from "./affiliate-chart/affiliates-charts.component"
 import { SolversChartsComponent } from "./solvers-charts/solvers-charts.component"
 import { GlowingDotsComponent } from "./glowing-dots/glowing-dots.component"
+import { SparklineComponent } from "./sparkline/sparkline.component"
 
 @NgModule({
 	declarations: [
@@ -44,6 +45,7 @@ import { GlowingDotsComponent } from "./glowing-dots/glowing-dots.component"
 		ChartComponent,
 		AffiliatesChartsComponent,
 		SolversChartsComponent,
+		SparklineComponent,
 	],
 	imports: [
 		BrowserModule,

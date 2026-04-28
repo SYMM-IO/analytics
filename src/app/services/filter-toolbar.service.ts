@@ -1,8 +1,10 @@
 import { Injectable } from "@angular/core"
 import { BehaviorSubject } from "rxjs"
 
+export type DashboardView = "FRONTENDS" | "SOLVERS"
+
 /**
- * Shared state for the global filter toolbar (chains, frontends).
+ * Shared state for the global filter toolbar (chains, frontends, view scope).
  *
  * Owns the canonical selection so that AppComponent can render the filter pills
  * inside the app's top toolbar while HomeComponent (and its children) consume
@@ -23,11 +25,21 @@ export class FilterToolbarService {
 	readonly availableFrontendNames$ = new BehaviorSubject<string[]>([])
 	readonly selectedFrontendNames$ = new BehaviorSubject<string[]>([])
 
+	readonly view$ = new BehaviorSubject<DashboardView>("FRONTENDS")
+
 	hasCustomizedChainSelection = false
 	hasCustomizedFrontendSelection = false
 
 	chainDropdownOpen = false
 	frontendDropdownOpen = false
+
+	get view(): DashboardView { return this.view$.value }
+	setView(view: DashboardView): void {
+		if (this.view$.value === view) return
+		this.view$.next(view)
+		// Frontend filter is meaningless in solver view — close any open dropdown.
+		if (view === "SOLVERS") this.frontendDropdownOpen = false
+	}
 
 	get loadedChainNames(): string[] { return this.loadedChainNames$.value }
 	get ignoredChainNames(): string[] { return this.ignoredChainNames$.value }
