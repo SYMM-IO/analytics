@@ -17,7 +17,23 @@ export const pear: Affiliate = {
 	fromTimestamp: "0",
 }
 
-export const carbon: Affiliate = {
+export const carbonMultiAccount: Affiliate = {
+	name: AffiliateName.CARBON,
+	mainColor: affiliateColors.get(AffiliateName.CARBON),
+	address: "0xbc029264eb164f36D7DfEfc46A607b66C2b4F379",
+	fromTimestamp: "0",
+}
+
+export const carbonAccountLayer: Affiliate = {
+	name: AffiliateName.CARBON,
+	mainColor: affiliateColors.get(AffiliateName.CARBON),
+	address: "0x5560266516865cd55460f3ab94c61d78e48d3d92",
+	fromTimestamp: "0",
+}
+
+// Deposits and Traded Volume intentionally retain the frontend population used
+// before symmioEntities became the source for chart and filter entities.
+export const legacyCarbonAffiliate: Affiliate = {
 	name: AffiliateName.CARBON,
 	mainColor: affiliateColors.get(AffiliateName.CARBON),
 	address: "0xd600A4F314D3F1ee8869A340D298a69Ff070E574",
@@ -63,6 +79,18 @@ export const perps3: Solver = {
 	mainColor: solverColors.get(SolverName.PERPS_HUB),
 }
 
+export const carbonSolver: Solver = {
+	name: SolverName.CARBON,
+	address: "0xd600A4F314D3F1ee8869A340D298a69Ff070E574",
+	mainColor: solverColors.get(SolverName.CARBON),
+}
+
+export const carbonSolver2: Solver = {
+	name: SolverName.CARBON,
+	address: "0xe72284fc2D56bE2C1649742FD131BceA41A94a6a",
+	mainColor: solverColors.get(SolverName.CARBON),
+}
+
 export const environment: EnvironmentInterface = {
 	name: "ARBITRUM",
 	serverUrl: "https://analytics-api.symm.io",
@@ -71,6 +99,7 @@ export const environment: EnvironmentInterface = {
 	collaterals: ["0xaf88d065e77c8cC2239327C5EDb3A432268e5831"],
 	version: Version.LATEST,
 	startDate: new Date(1715990400000),
-	affiliates: [pear, intentx, cloverfield, xpanse, carbon, NULL_AFFILIATE],
-	solvers: [perps1, perps2, perps3],
+	affiliates: [pear, intentx, cloverfield, xpanse, carbonMultiAccount, carbonAccountLayer, NULL_AFFILIATE],
+	legacyMetricAffiliates: [pear, intentx, cloverfield, xpanse, legacyCarbonAffiliate, NULL_AFFILIATE],
+	solvers: [perps1, perps2, perps3, carbonSolver, carbonSolver2],
 }

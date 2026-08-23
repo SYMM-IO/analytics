@@ -10,6 +10,7 @@ import { GroupedHistory } from "../groupedHistory"
 import BigNumber from "bignumber.js"
 import { aggregateSolverDailyHistories } from "../utils/aggregate-utils"
 import { aggregateHistories, collectAllDates, justifyHistoriesToDates } from "../utils/common-utils"
+import { normalizeAddress, resolveSolver } from "../utils/entity-utils"
 
 type SolverHistoryResult = {
 	environmentName: string
@@ -18,10 +19,10 @@ type SolverHistoryResult = {
 }
 
 @Component({
-    selector: "app-solvers-charts",
-    templateUrl: "./solvers-charts.component.html",
-    styleUrls: ["./solvers-charts.component.scss"],
-    standalone: false
+	selector: "app-solvers-charts",
+	templateUrl: "./solvers-charts.component.html",
+	styleUrls: ["./solvers-charts.component.scss"],
+	standalone: false,
 })
 export class SolversChartsComponent implements OnInit {
 	groupedHistories?: Observable<GroupedHistory[]>
@@ -40,56 +41,46 @@ export class SolversChartsComponent implements OnInit {
 	}
 
 	ngOnInit(): void {
+		const maxRangeDays = 730
+		const minFetchTimestamp = Math.floor((Date.now() - maxRangeDays * 24 * 60 * 60 * 1000) / 1000).toString()
+
 		const environmentResults$ = zip(
 			this.environments.map((env: EnvironmentInterface) => {
 				const graphQlClient = new GraphQlClient(env.subgraphUrl!, this.loadingService)
 
-				const configSets = env.solvers!.map(solver => ({
-					configs: [
-						{
-							method: "solverDailyHistories",
-							fields: [
-								"id",
-								"tradeVolume",
-								"averagePositionSize",
-								"positionsCount",
-								"fundingPaid",
-								"fundingReceived",
-								"openInterest",
-								"accountSource",
-								"solver",
-								"timestamp",
-							],
-							first: 1000,
-							orderBy: "timestamp",
-							conditions: [
-								{
-									field: "solver",
-									operator: "contains",
-									value: `"${solver.address!.toLowerCase()}"`,
-								},
-								{
-									field: "tradeVolume",
-									operator: "gt",
-									value: `"0"`,
-								},
-							],
-							createFunction: (obj: any) => SolverDailyHistory.fromRawObject(obj).applyDecimals(env.collateralDecimal!),
-						},
-					] as QueryConfig<any>[],
-				}))
+				const configs: QueryConfig<any>[] = [
+					{
+						method: "solverDailyHistories",
+						fields: [
+							"id",
+							"tradeVolume",
+							"averagePositionSize",
+							"positionsCount",
+							"fundingPaid",
+							"fundingReceived",
+							"openInterest",
+							"accountSource",
+							"solver",
+							"timestamp",
+						],
+						first: 1000,
+						orderBy: "timestamp",
+						conditions: [
+							{
+								field: "tradeVolume",
+								operator: "gt",
+								value: `"0"`,
+							},
+						],
+						createFunction: (obj: any) => SolverDailyHistory.fromRawObject(obj).applyDecimals(env.collateralDecimal!),
+					},
+				]
 
 				return this.loadEnvironmentResults(
 					env,
-					graphQlClient.batchLoadAll(configSets, 1000).pipe(
-						map(results =>
-							results.map((result, index) => ({
-								environmentName: env.name,
-								solver: env.solvers![index],
-								dailyHistories: (result["solverDailyHistories"] || []) as SolverDailyHistory[],
-							})),
-						),
-					),
+					graphQlClient
+						.loadAll(configs, 1000, { solverDailyHistories: minFetchTimestamp })
+						.pipe(map(result => this.groupEnvironmentHistories(env, (result["solverDailyHistories"] || []) as SolverDailyHistory[]))),
 					() =>
 						env.solvers!.map(solver => ({
 							environmentName: env.name,
@@ -162,6 +153,25 @@ export class SolversChartsComponent implements OnInit {
 			}),
 			shareReplay(1),
 		)
+	}
+
+	private groupEnvironmentHistories(env: EnvironmentInterface, dailyHistories: SolverDailyHistory[]): SolverHistoryResult[] {
+		const grouped = new Map<string, SolverHistoryResult>()
+		const getResult = (solverAddress?: string): SolverHistoryResult => {
+			const solver = resolveSolver(env, solverAddress)
+			const address = normalizeAddress(solver.address)
+			if (!grouped.has(address)) {
+				grouped.set(address, {
+					environmentName: env.name,
+					solver,
+					dailyHistories: [],
+				})
+			}
+			return grouped.get(address)!
+		}
+
+		for (const history of dailyHistories) getResult(history.solver).dailyHistories.push(history)
+		return [...grouped.values()]
 	}
 
 	private loadEnvironmentResults<T>(env: EnvironmentInterface, source$: Observable<T>, fallbackFactory: () => T): Observable<T> {

@@ -6,14 +6,14 @@
     <div class="hero-metrics">
       <div class="hero-metric">
         <div class="hero-spark"><app-sparkline [data]="depositsSpark" color="#FF7A6E"></app-sparkline></div>
-        <app-info title="Deposits" [totalValue]="totalHistory?.deposit" [lastMonthValue]="lastMonthHistory?.deposit"
+        <app-info title="Deposits" [totalValue]="legacyTotalHistory?.deposit" [lastMonthValue]="legacyLastMonthHistory?.deposit"
           [formatMoney]="true">
         </app-info>
       </div>
       <div class="hero-metric">
         <div class="hero-spark"><app-sparkline [data]="volumeSpark" color="#FFB36B"></app-sparkline></div>
-        <app-info title="Traded Volume" [totalValue]="totalHistory?.tradeVolume"
-          [lastMonthValue]="lastMonthHistory?.tradeVolume"
+        <app-info title="Traded Volume" [totalValue]="legacyTotalHistory?.tradeVolume"
+          [lastMonthValue]="legacyLastMonthHistory?.tradeVolume"
           [formatMoney]="true">
         </app-info>
       </div>

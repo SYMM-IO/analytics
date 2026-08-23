@@ -17,6 +17,14 @@ export interface QueryConfig<T> {
 	createFunction: (obj: any) => T
 }
 
+export interface PaginationOptions {
+	/**
+	 * Keep false only for calculations that must reproduce the legacy main-branch
+	 * behavior, where a completed method is fetched again while another method paginates.
+	 */
+	advancePartialPageCursors?: boolean
+}
+
 export class GraphQlClient {
 	static readonly REQUEST_TIMEOUT_MS = 20000
 
@@ -130,8 +138,10 @@ export class GraphQlClient {
 		limit: number = 1000,
 		startPaginationFields?: { [method: string]: string | null },
 		pageLimits?: { [method: string]: number },
+		paginationOptions: PaginationOptions = {},
 	): Observable<{ [method: string]: T[] }> {
 		const self = this
+		const advancePartialPageCursors = paginationOptions.advancePartialPageCursors ?? true
 
 		async function loadAllData(): Promise<{ [method: string]: T[] }> {
 			const results: { [method: string]: T[] } = {}
@@ -203,7 +213,7 @@ export class GraphQlClient {
 				if (continueLoading) {
 					configs.forEach(config => {
 						const items = result[config.method]
-						if (items.length > 0 && items.length === limit) {
+						if (items.length > 0 && (advancePartialPageCursors || items.length === limit)) {
 							const lastItem = items[items.length - 1]
 							const paginationField = config.orderBy || "timestamp"
 
@@ -240,6 +250,7 @@ export class GraphQlClient {
 	batchLoadAll<T>(
 		configSets: { configs: QueryConfig<T>[]; startPaginationFields?: { [method: string]: string | null } }[],
 		limit: number = 1000,
+		paginationOptions: PaginationOptions = {},
 	): Observable<{ [method: string]: T[] }[]> {
 		const self = this
 
@@ -307,7 +318,7 @@ export class GraphQlClient {
 
 				if (needsPagination) {
 					const fullResult = await lastValueFrom(
-						self.loadAll(original.configs, limit, original.startPaginationFields).pipe(take(1)),
+						self.loadAll(original.configs, limit, original.startPaginationFields, undefined, paginationOptions).pipe(take(1)),
 					)
 					finalResults.push(fullResult)
 				} else {

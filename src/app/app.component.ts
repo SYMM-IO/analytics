@@ -1,4 +1,4 @@
-import {Component, HostListener, Inject} from "@angular/core"
+import {Component, HostListener, Inject, isDevMode} from "@angular/core"
 import {Router} from "@angular/router"
 import {EnvironmentService} from "./services/enviroment.service"
 import {Observable} from "rxjs"
@@ -19,6 +19,7 @@ export class AppComponent {
 	readonly mainColor: string
 	readonly aggregated: boolean
 	readonly panel: boolean
+	readonly devMode = isDevMode()
 
 	environmentForm = new FormControl<EnvironmentInterface | null>(null)
 

@@ -407,6 +407,14 @@
   transition: color 0.12s ease;
 }
 
+.filter-dropdown-item-volume {
+  flex-shrink: 0;
+  color: rgba(245, 240, 240, 0.48);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .filter-dropdown-item-toggle {
   flex-shrink: 0;
   width: 1.1rem;
