@@ -10,6 +10,8 @@ export interface EnvironmentInterface {
 	collaterals?: string[]
 	collateralDecimal?: number
 	affiliates?: Affiliate[]
+	/** Affiliate population used by the legacy Deposits and Traded Volume cards. */
+	legacyMetricAffiliates?: Affiliate[]
 	solvers?: Solver[]
 	subgraphUrl?: string
 	assetsFolder?: string
@@ -18,6 +20,13 @@ export interface EnvironmentInterface {
 	version?: Version
 	startDate?: Date
 	environments?: EnvironmentInterface[]
+}
+
+export interface SymmioEntity {
+	address: string
+	type: string
+	name: string | null
+	brandColor: string | null
 }
 
 export interface GroupIndex {
@@ -48,7 +57,7 @@ export enum AffiliateName {
 	TREBLE = "Treble",
 }
 
-export let affiliateColors = new Map<AffiliateName, string>()
+export let affiliateColors = new Map<string, string>()
 affiliateColors.set(AffiliateName.INTENTX, "#F20C27")
 affiliateColors.set(AffiliateName.BEFI, "#FE9E0F")
 affiliateColors.set(AffiliateName.CLOVERFIELD, "#A2D4EA")
@@ -68,7 +77,7 @@ affiliateColors.set(AffiliateName.QUICKSWAP, "#448aff")
 affiliateColors.set(AffiliateName.TREBLE, "#2797ff")
 
 export interface Affiliate extends GroupIndex {
-	name?: AffiliateName
+	name?: string
 	mainColor?: string
 	address?: string
 	fromTimestamp: string | null
@@ -77,20 +86,22 @@ export interface Affiliate extends GroupIndex {
 
 export enum SolverName {
 	PERPS_HUB = "PerpsHub",
-	PRIVEX = "Privex Solver",
-	CARBON = "Carbon Solver",
+	PRIVEX = "PrivexSolver",
+	CARBON = "Carbon",
 	RASA = "Rasa",
 	ZENITH = "Zenith",
 	SUPERFLOW = "Superflow",
+	UNKNOWN = "Unknown",
 }
 
-export let solverColors = new Map<SolverName, string>()
+export let solverColors = new Map<string, string>()
 solverColors.set(SolverName.PERPS_HUB, "#ff6e7f")
 solverColors.set(SolverName.RASA, "#A2D4EA")
 solverColors.set(SolverName.ZENITH, "#e9de7d")
 solverColors.set(SolverName.PRIVEX, "#0000ff")
 solverColors.set(SolverName.CARBON, "#e7e7e7")
 solverColors.set(SolverName.SUPERFLOW, "#66d1ff")
+solverColors.set(SolverName.UNKNOWN, "#5470c6")
 
 export interface Solver extends GroupIndex {
 	name?: string

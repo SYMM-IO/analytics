@@ -12,6 +12,8 @@ import { MonthlyHistory, WeeklyHistory } from "../models"
 import { aggregateMonthlyHistories, aggregateWeeklyHistories } from "../utils/aggregate-utils"
 import BigNumber from "bignumber.js"
 import { aggregateHistories, collectAllDates, justifyHistoriesToDates } from "../utils/common-utils"
+import { normalizeAddress, resolveAffiliate } from "../utils/entity-utils"
+import { FilterToolbarService, OTHERS_FRONTEND_COLOR, OTHERS_FRONTEND_NAME } from "../services/filter-toolbar.service"
 
 type AffiliatePeriodHistoryResult = {
 	environmentName: string
@@ -21,10 +23,10 @@ type AffiliatePeriodHistoryResult = {
 }
 
 @Component({
-    selector: "app-affiliates-charts",
-    templateUrl: "./affiliates-charts.component.html",
-    styleUrls: ["./affiliates-charts.component.scss"],
-    standalone: false
+	selector: "app-affiliates-charts",
+	templateUrl: "./affiliates-charts.component.html",
+	styleUrls: ["./affiliates-charts.component.scss"],
+	standalone: false,
 })
 export class AffiliatesChartsComponent implements OnInit {
 	@Input() groupedHistories!: Observable<GroupedHistory[]>
@@ -50,6 +52,7 @@ export class AffiliatesChartsComponent implements OnInit {
 	constructor(
 		private loadingService: LoadingService,
 		readonly environmentService: EnvironmentService,
+		private readonly filterToolbar: FilterToolbarService,
 		protected readonly alert: TuiAlertService,
 	) {
 		this.environments = environmentService.getValue("environments")
@@ -66,55 +69,39 @@ export class AffiliatesChartsComponent implements OnInit {
 			this.environments.map((env: EnvironmentInterface) => {
 				const graphQlClient = new GraphQlClient(env.subgraphUrl!, this.loadingService)
 
-				const configSets = env.affiliates!.map(aff => ({
-					configs: [
-						{
-							method: "monthlyHistories",
-							fields: ["id", "timestamp", "tradeVolume", "activeUsers", "accountSource"],
-							first: 1000,
-							orderBy: "timestamp",
-							conditions: [
-								{
-									field: "accountSource",
-									operator: "contains",
-									value: `"${aff.address!.toLowerCase()}"`,
-								},
-							],
-							createFunction: (obj: any) => MonthlyHistory.fromRawObject(obj).applyDecimals(env.collateralDecimal!),
-						},
-						{
-							method: "weeklyHistories",
-							fields: ["id", "timestamp", "tradeVolume", "activeUsers", "accountSource"],
-							first: 1000,
-							orderBy: "timestamp",
-							conditions: [
-								{
-									field: "accountSource",
-									operator: "contains",
-									value: `"${aff.address!.toLowerCase()}"`,
-								},
-							],
-							createFunction: (obj: any) => WeeklyHistory.fromRawObject(obj).applyDecimals(env.collateralDecimal!),
-						},
-					] as QueryConfig<any>[],
-					startPaginationFields: {
-						monthlyHistories: minFetchTimestamp,
-						weeklyHistories: minFetchTimestamp,
+				const configs: QueryConfig<any>[] = [
+					{
+						method: "monthlyHistories",
+						fields: ["id", "timestamp", "tradeVolume", "activeUsers", "accountSource"],
+						first: 1000,
+						orderBy: "timestamp",
+						createFunction: (obj: any) => MonthlyHistory.fromRawObject(obj).applyDecimals(env.collateralDecimal!),
 					},
-				}))
+					{
+						method: "weeklyHistories",
+						fields: ["id", "timestamp", "tradeVolume", "activeUsers", "accountSource"],
+						first: 1000,
+						orderBy: "timestamp",
+						createFunction: (obj: any) => WeeklyHistory.fromRawObject(obj).applyDecimals(env.collateralDecimal!),
+					},
+				]
 
 				return this.loadEnvironmentResults(
 					env,
-					graphQlClient.batchLoadAll(configSets, 1000).pipe(
-						map(results =>
-							results.map((result, index) => ({
-								environmentName: env.name,
-								affiliate: env.affiliates![index],
-								monthlyHistories: result["monthlyHistories"] || [],
-								weeklyHistories: result["weeklyHistories"] || [],
-							})),
+					graphQlClient
+						.loadAll(configs, 1000, {
+							monthlyHistories: minFetchTimestamp,
+							weeklyHistories: minFetchTimestamp,
+						})
+						.pipe(
+							map(result =>
+								this.groupEnvironmentHistories(
+									env,
+									(result["monthlyHistories"] || []) as MonthlyHistory[],
+									(result["weeklyHistories"] || []) as WeeklyHistory[],
+								),
+							),
 						),
-					),
 					() =>
 						env.affiliates!.map(affiliate => ({
 							environmentName: env.name,
@@ -137,14 +124,17 @@ export class AffiliatesChartsComponent implements OnInit {
 		// Frontend filter is applied at the chart level via legend.selected (smooth animation),
 		// not in the data pipeline. Filtering data here would force ECharts to replaceMerge series
 		// on every toggle, causing a visible flicker.
-		this.groupedHistories = combineLatest([baseGroupedHistories, environmentResults$, this.selectedChainNames$]).pipe(
-			map(([value, environmentResults, selectedChainNames]) => {
+		this.groupedHistories = combineLatest([
+			baseGroupedHistories,
+			environmentResults$,
+			this.selectedChainNames$,
+			this.filterToolbar.lowVolumeFrontendNames$,
+		]).pipe(
+			map(([value, environmentResults, selectedChainNames, lowVolumeFrontendNames]) => {
 				const selectedChainsSet = new Set(selectedChainNames)
-				const filteredResults = environmentResults.filter(
-					result => selectedChainsSet.has(result.environmentName),
-				)
+				const filteredResults = environmentResults.filter(result => selectedChainsSet.has(result.environmentName))
 				const newValue: GroupedHistory[] = value.map(groupedHistory => ({
-					index: { ...groupedHistory.index },
+					index: this.groupFrontend(groupedHistory.index as Affiliate, lowVolumeFrontendNames),
 					dailyHistories: groupedHistory.dailyHistories.map(dh => ({ ...dh })),
 					weeklyHistories: groupedHistory.weeklyHistories.map(wh => ({ ...wh })),
 					monthlyHistories: groupedHistory.monthlyHistories.map(mh => ({ ...mh })),
@@ -155,7 +145,7 @@ export class AffiliatesChartsComponent implements OnInit {
 						dailyHistories: [],
 						monthlyHistories: result.monthlyHistories,
 						weeklyHistories: result.weeklyHistories,
-						index: result.affiliate,
+						index: this.groupFrontend(result.affiliate, lowVolumeFrontendNames),
 					})
 				}
 
@@ -224,6 +214,40 @@ export class AffiliatesChartsComponent implements OnInit {
 					this.totalMonthlyHistory.emit(new MonthlyHistory())
 				}
 			})
+	}
+
+	private groupFrontend(affiliate: Affiliate, lowVolumeNames: ReadonlySet<string>): Affiliate {
+		if (!affiliate.name || !lowVolumeNames.has(affiliate.name)) return { ...affiliate }
+		return {
+			...affiliate,
+			name: OTHERS_FRONTEND_NAME,
+			mainColor: OTHERS_FRONTEND_COLOR,
+		}
+	}
+
+	private groupEnvironmentHistories(
+		env: EnvironmentInterface,
+		monthlyHistories: MonthlyHistory[],
+		weeklyHistories: WeeklyHistory[],
+	): AffiliatePeriodHistoryResult[] {
+		const grouped = new Map<string, AffiliatePeriodHistoryResult>()
+		const getResult = (accountSource?: string): AffiliatePeriodHistoryResult => {
+			const affiliate = resolveAffiliate(env, accountSource)
+			const address = normalizeAddress(affiliate.address)
+			if (!grouped.has(address)) {
+				grouped.set(address, {
+					environmentName: env.name,
+					affiliate,
+					monthlyHistories: [],
+					weeklyHistories: [],
+				})
+			}
+			return grouped.get(address)!
+		}
+
+		for (const history of monthlyHistories) getResult(history.accountSource).monthlyHistories.push(history)
+		for (const history of weeklyHistories) getResult(history.accountSource).weeklyHistories.push(history)
+		return [...grouped.values()]
 	}
 
 	private loadEnvironmentResults<T>(env: EnvironmentInterface, source$: Observable<T>, fallbackFactory: () => T): Observable<T> {

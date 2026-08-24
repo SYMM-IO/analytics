@@ -222,7 +222,6 @@ export class ChartComponent implements OnInit, OnDestroy {
 					color: "#F5F0F0",
 				},
 				extraCssText: "box-shadow: 0 8px 32px rgba(10, 5, 5, 0.5); backdrop-filter: blur(12px); border-radius: 4px;",
-				triggerOn: "mousemove|click",
 			},
 			legend: {
 				show: false, // Hide default legend, we'll use custom one
@@ -372,9 +371,16 @@ export class ChartComponent implements OnInit, OnDestroy {
 	private prepareSeries(groupedHistories: GroupedHistory[], fieldName: string) {
 		const series = []
 		const view = this.selectedView.value
-		// Always include all series - visibility is controlled by ECharts legend selection
+		// Keep legends focused on series with values in the selected metric and date range.
 		for (const groupHistory of groupedHistories) {
 			const preparedResults = this.prepareResults(this.getHistoryByView(groupHistory, view!), fieldName)
+			const hasData = preparedResults.data.some((history: any) => {
+				const value = history[fieldName]
+				if (value == null) return false
+				const numericValue = new BigNumber(value)
+				return numericValue.isFinite() && !numericValue.isZero()
+			})
+			if (!hasData) continue
 			series.push(this.createSeriesItem(groupHistory, preparedResults, fieldName, view!))
 		}
 		return series
@@ -546,6 +552,7 @@ export class ChartComponent implements OnInit, OnDestroy {
 				})
 			}
 		})
+		validItems.sort((left, right) => right.value - left.value || left.name.localeCompare(right.name))
 
 		// Determine if we need multi-column layout
 		const useMultiColumn = validItems.length > 8

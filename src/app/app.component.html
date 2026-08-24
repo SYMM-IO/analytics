@@ -170,6 +170,9 @@
                                                     <span class="filter-dropdown-item-logo filter-dropdown-item-logo-fallback">{{ filterToolbar.chainInitials(frontend) }}</span>
                                                 }
                                                 <span class="filter-dropdown-item-name">{{ frontend }}</span>
+                                                @if (devMode) {
+                                                    <span class="filter-dropdown-item-volume">{{ filterToolbar.frontendVolume(frontend) }}</span>
+                                                }
                                                 <span class="filter-dropdown-item-toggle">
                                                     @if (filterToolbar.isFrontendSelected(frontend)) {
                                                         <tui-icon icon="@tui.check" class="filter-dropdown-item-check"></tui-icon>

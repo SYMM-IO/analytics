@@ -1,7 +1,11 @@
 import { Injectable } from "@angular/core"
 import { BehaviorSubject } from "rxjs"
+import BigNumber from "bignumber.js"
 
 export type DashboardView = "FRONTENDS" | "SOLVERS"
+
+export const OTHERS_FRONTEND_NAME = "Others"
+export const OTHERS_FRONTEND_COLOR = "#9a60b4"
 
 /**
  * Shared state for the global filter toolbar (chains, frontends, view scope).
@@ -16,6 +20,14 @@ export type DashboardView = "FRONTENDS" | "SOLVERS"
  */
 @Injectable({ providedIn: "root" })
 export class FilterToolbarService {
+	private static readonly FRONTEND_GROUPING_THRESHOLD = BigNumber(100_000).times(BigNumber(10).pow(18))
+	private static readonly COMPACT_USD_FORMATTER = new Intl.NumberFormat("en-US", {
+		style: "currency",
+		currency: "USD",
+		notation: "compact",
+		maximumFractionDigits: 2,
+	})
+
 	readonly visible$ = new BehaviorSubject<boolean>(false)
 
 	readonly loadedChainNames$ = new BehaviorSubject<string[]>([])
@@ -24,11 +36,13 @@ export class FilterToolbarService {
 
 	readonly availableFrontendNames$ = new BehaviorSubject<string[]>([])
 	readonly selectedFrontendNames$ = new BehaviorSubject<string[]>([])
+	readonly lowVolumeFrontendNames$ = new BehaviorSubject<ReadonlySet<string>>(new Set())
 
 	readonly view$ = new BehaviorSubject<DashboardView>("FRONTENDS")
 
 	hasCustomizedChainSelection = false
 	hasCustomizedFrontendSelection = false
+	private frontendVolumesByName = new Map<string, string>()
 
 	chainDropdownOpen = false
 	frontendDropdownOpen = false
@@ -78,6 +92,41 @@ export class FilterToolbarService {
 			const set = new Set(names)
 			this.selectedFrontendNames$.next(this.selectedFrontendNames.filter(n => set.has(n)))
 		}
+	}
+
+	setFrontendVolumes(volumes: Map<string, string>): void {
+		const lowVolumeNames = new Set<string>()
+		for (const [name, rawVolume] of volumes) {
+			const volume = BigNumber(rawVolume)
+			if (volume.gt(0) && volume.lt(FilterToolbarService.FRONTEND_GROUPING_THRESHOLD)) lowVolumeNames.add(name)
+		}
+
+		const groupedVolumes = new Map<string, BigNumber>()
+		for (const [name, rawVolume] of volumes) {
+			const displayName = lowVolumeNames.has(name) ? OTHERS_FRONTEND_NAME : name
+			groupedVolumes.set(displayName, (groupedVolumes.get(displayName) ?? BigNumber(0)).plus(rawVolume))
+		}
+
+		this.frontendVolumesByName = new Map(
+			[...groupedVolumes.entries()].map(([name, volume]) => [name, volume.toFixed()]),
+		)
+		if (!this.setsEqual(this.lowVolumeFrontendNames$.value, lowVolumeNames)) {
+			this.lowVolumeFrontendNames$.next(lowVolumeNames)
+		}
+	}
+
+	frontendDisplayName(name: string | undefined): string | undefined {
+		return name && this.lowVolumeFrontendNames$.value.has(name) ? OTHERS_FRONTEND_NAME : name
+	}
+
+	frontendVolume(name: string): string {
+		const volume = this.frontendVolumesByName.get(name)
+		const normalizedVolume = volume === undefined ? undefined : BigNumber(volume).div(BigNumber(10).pow(18))
+		return normalizedVolume === undefined ? "—" : FilterToolbarService.COMPACT_USD_FORMATTER.format(normalizedVolume.toNumber())
+	}
+
+	hasFrontendTradeVolume(name: string): boolean {
+		return BigNumber(this.frontendVolumesByName.get(name) ?? 0).gt(0)
 	}
 
 	toggleChainDropdown(): void {
@@ -183,5 +232,9 @@ export class FilterToolbarService {
 
 	chainInitials(name: string): string {
 		return name.slice(0, 2).toUpperCase()
+	}
+
+	private setsEqual(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
+		return a.size === b.size && [...a].every(value => b.has(value))
 	}
 }

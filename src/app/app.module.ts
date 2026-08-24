@@ -10,7 +10,7 @@ import {
 } from "@taiga-ui/legacy"
 import { NG_EVENT_PLUGINS } from "@taiga-ui/event-plugins"
 import { TuiAlert, TuiButton, TuiDataList, TuiDialog, TuiDropdown, TuiGroup, TuiHint, TuiIcon, TuiRoot, TuiSurface, TuiTitle } from "@taiga-ui/core"
-import { NgModule } from "@angular/core"
+import { inject, NgModule, provideAppInitializer } from "@angular/core"
 import { BrowserModule } from "@angular/platform-browser"
 
 import { provideHttpClient, withInterceptors } from "@angular/common/http"
@@ -19,7 +19,7 @@ import { NgxEchartsModule } from "ngx-echarts"
 import { AppRoutingModule } from "./app-routing.module"
 import { AppComponent } from "./app.component"
 import { InfoComponent } from "./info/info.component"
-import { ENVIRONMENT } from "./services/enviroment.service"
+import { ENVIRONMENT, EnvironmentService } from "./services/enviroment.service"
 import { environment } from "../environments/environment"
 import { ChartComponent } from "./chart/chart.component"
 import { HomeComponent } from "./home/home.component"
@@ -85,7 +85,12 @@ import { SparklineComponent } from "./sparkline/sparkline.component"
 		TuiChip,
 		GlowingDotsComponent,
 	],
-	providers: [provideHttpClient(withInterceptors([httpInterceptor])), { provide: ENVIRONMENT, useValue: environment }, NG_EVENT_PLUGINS],
+	providers: [
+		provideHttpClient(withInterceptors([httpInterceptor])),
+		{ provide: ENVIRONMENT, useValue: environment },
+		provideAppInitializer(() => inject(EnvironmentService).initializeEntities()),
+		NG_EVENT_PLUGINS,
+	],
 	bootstrap: [AppComponent],
 })
 export class AppModule {}
