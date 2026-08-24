@@ -222,7 +222,6 @@ export class ChartComponent implements OnInit, OnDestroy {
 					color: "#F5F0F0",
 				},
 				extraCssText: "box-shadow: 0 8px 32px rgba(10, 5, 5, 0.5); backdrop-filter: blur(12px); border-radius: 4px;",
-				triggerOn: "mousemove|click",
 			},
 			legend: {
 				show: false, // Hide default legend, we'll use custom one
